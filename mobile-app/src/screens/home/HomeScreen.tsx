@@ -1,0 +1,348 @@
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  SafeAreaView,
+  Dimensions,
+  Platform
+} from "react-native";
+import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useCart } from "../../contexts/CartContext";
+import { apiGet } from "../../api/client";
+import { MenuItem, Category } from "../../types";
+import FoodCard from "../../components/FoodCard";
+import { Ionicons } from "@expo/vector-icons";
+
+const { width } = Dimensions.get("window");
+
+export default function HomeScreen({ navigation }: any) {
+  const { user } = useAuth();
+  const { colors } = useTheme();
+  const { itemCount } = useCart();
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string>("");
+
+  useEffect(() => {
+    fetchHomeData();
+  }, []);
+
+  const fetchHomeData = async () => {
+    try {
+      setLoading(true);
+      const [catsRes, menuRes]: any = await Promise.all([
+        apiGet("/menu/categories"),
+        apiGet("/menu?featured=true")
+      ]);
+      
+      if (catsRes && catsRes.data) setCategories(catsRes.data);
+      if (menuRes && menuRes.data) setFeaturedItems(menuRes.data);
+    } catch (err) {
+      console.warn("Failed to retrieve live catalog. Using fallback stubs.");
+      // Fallback
+      setCategories([
+        { id: "1", name: "Biryani", isActive: true, sortOrder: 1 },
+        { id: "2", name: "Pulao", isActive: true, sortOrder: 2 },
+        { id: "3", name: "Raita", isActive: true, sortOrder: 3 },
+        { id: "4", name: "Drinks", isActive: true, sortOrder: 4 }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning! 🌞";
+    if (hour < 18) return "Good afternoon! 🍛";
+    return "Good evening! 🌙";
+  };
+
+  // Mock banners
+  const banners = [
+    { id: "b1", title: "Naseeb Special Biryani", desc: "Traditional Karachi Spices cooked fresh", color: ["#7C2D12", "#D97706"] },
+    { id: "b2", title: "Free Delivery", desc: "On orders above Rs. 500+", color: ["#14532D", "#16A34A"] },
+  ];
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header bar */}
+      <View style={[styles.header, { backgroundColor: colors.cardBg }]}>
+        <View>
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>{getGreeting()}</Text>
+          <Text style={[styles.userName, { color: colors.textPrimary }]}>{user?.name || "Guest"}</Text>
+        </View>
+        <TouchableOpacity style={styles.cartBtn} onPress={() => navigation.navigate("Cart")}>
+          <Ionicons name="cart-outline" size={24} color={colors.primary} />
+          {itemCount > 0 && (
+            <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+              <Text style={styles.badgeText}>{itemCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Delivery Radius Hint */}
+        <View style={[styles.deliveryInfo, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+          <Ionicons name="location-outline" size={20} color={colors.primary} />
+          <View style={{ marginLeft: 8, flex: 1 }}>
+            <Text style={[styles.deliveryTitle, { color: colors.textPrimary }]}>UCP Branch Delivery Zone</Text>
+            <Text style={[styles.deliverySubtitle, { color: colors.textSecondary }]}>We deliver within 2.2 km Opp. UCP Campus</Text>
+          </View>
+        </View>
+
+        {/* Promo Slider Banner */}
+        <View style={styles.section}>
+          <FlatList
+            data={banners}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={width - 48}
+            decelerationRate="fast"
+            contentContainerStyle={{ paddingRight: 24 }}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={[styles.bannerCard, { backgroundColor: colors.cardBg, shadowColor: colors.shadow }]}>
+                <View style={[styles.bannerInner, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.bannerTitle}>{item.title}</Text>
+                  <Text style={styles.bannerSubtitle}>{item.desc}</Text>
+                </View>
+              </View>
+            )}
+          />
+        </View>
+
+        {/* Categories Tab selector */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Explore Categories</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
+            <TouchableOpacity
+              style={[
+                styles.categoryChip,
+                { borderColor: colors.border, backgroundColor: activeCategory === "" ? colors.primary : colors.cardBg }
+              ]}
+              onPress={() => {
+                setActiveCategory("");
+                navigation.navigate("Explore");
+              }}
+            >
+              <Text style={[styles.categoryText, { color: activeCategory === "" ? "#FFFFFF" : colors.textPrimary }]}>
+                🔥 All Items
+              </Text>
+            </TouchableOpacity>
+            {categories.map((cat) => (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.categoryChip,
+                  { borderColor: colors.border, backgroundColor: activeCategory === cat.id ? colors.primary : colors.cardBg }
+                ]}
+                onPress={() => {
+                  setActiveCategory(cat.id);
+                  navigation.navigate("Explore", { categoryId: cat.id });
+                }}
+              >
+                <Text style={[styles.categoryText, { color: activeCategory === cat.id ? "#FFFFFF" : colors.textPrimary }]}>
+                  🍛 {cat.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Popular Recommendations */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Today's Featured Picks 🔥</Text>
+          {loading ? (
+            <ActivityIndicator size="small" color={colors.primary} style={{ margin: 20 }} />
+          ) : (
+            <FlatList
+              data={featuredItems}
+              numColumns={2}
+              scrollEnabled={false}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ paddingHorizontal: 8 }}
+              renderItem={({ item }) => <FoodCard item={item} />}
+              ListEmptyComponent={
+                <Text style={{ textAlign: "center", color: colors.textSecondary, margin: 20, fontStyle: "italic" }}>
+                  Featured dishes will be loaded soon.
+                </Text>
+              }
+            />
+          )}
+        </View>
+
+        {/* Restaurant Status Card */}
+        <View style={[styles.statusCard, { backgroundColor: colors.cardBg, shadowColor: colors.shadow }]}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <View>
+              <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>Karachi Naseeb Baryani UCP</Text>
+              <Text style={[styles.statusTime, { color: colors.textSecondary }]}>Opening hours: 11:00 AM - 11:00 PM</Text>
+            </View>
+            <View style={styles.statusIndicator}>
+              <View style={[styles.indicatorDot, { backgroundColor: colors.success }]} />
+              <Text style={[styles.indicatorText, { color: colors.success }]}>Open</Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: Platform.OS === "android" ? 40 : 0,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.03)",
+  },
+  greeting: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  userName: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  cartBtn: {
+    padding: 8,
+    borderRadius: 50,
+    position: "relative",
+  },
+  badge: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontWeight: "700",
+  },
+  scrollContainer: {
+    paddingBottom: 40,
+  },
+  deliveryInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 24,
+    marginTop: 18,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1.5,
+  },
+  deliveryTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  deliverySubtitle: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  section: {
+    marginTop: 22,
+  },
+  sectionTitle: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 16,
+    fontWeight: "700",
+    paddingHorizontal: 24,
+    marginBottom: 12,
+  },
+  bannerCard: {
+    width: width - 48,
+    marginLeft: 24,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  bannerInner: {
+    padding: 24,
+    height: 130,
+    justifyContent: "center",
+  },
+  bannerTitle: {
+    color: "#FFFFFF",
+    fontFamily: "Poppins-Bold",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  bannerSubtitle: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 13,
+    marginTop: 4,
+  },
+  categoriesScroll: {
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  categoryChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 50,
+    borderWidth: 1.5,
+    marginRight: 8,
+  },
+  categoryText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  statusCard: {
+    marginHorizontal: 24,
+    marginTop: 24,
+    padding: 20,
+    borderRadius: 20,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+  },
+  statusTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  statusTime: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  statusIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(22, 163, 74, 0.1)",
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  indicatorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  indicatorText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+});
