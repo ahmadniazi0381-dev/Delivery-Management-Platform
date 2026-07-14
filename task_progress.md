@@ -1,0 +1,11 @@
+- [x] Read all relevant source files
+- [x] Fix AddressModal.tsx — remove duplicate legacy autocomplete code, fix broken structure  
+- [x] Fix mobile CheckoutScreen.tsx — remove broken duplicate JSX at line 269  
+- [x] Verify Bank Transfer removal across all layers  
+- [x] Verify Delivery Options logic (Standard/Priority) across all layers  
+- [x] **REQ-PAYMENT-003** — Admin enable/disable payment methods  
+- [x] **REQ-PAYMENT-004** — Payment-first order flow (online payments processed before order creation)  
+- [x] **REQ-PAYMENT-005** — One Order = One Payment enforcement  
+- [x] Update website checkout to fetch enabled payment methods from API  
+- [x] Update mobile checkout to fetch enabled payment methods from API  
+- [x] Run build verification

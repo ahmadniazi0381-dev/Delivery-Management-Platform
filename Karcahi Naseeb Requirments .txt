@@ -1,0 +1,665 @@
+# Naseeb Baryani & Pulao — Online Ordering Platform
+### Project Roadmap & Technical Plan
+
+**Shop:** Karachi Naseeb Baryani and Pulao — UCP branch (single location)
+**Last updated:** July 9, 2026
+
+---
+
+## 1. Project Overview
+
+A food ordering system for a single-branch restaurant delivering biryani, pulao, and related dishes within a fixed **2–2.2km radius** of the shop. Unlike Foodpanda-style platforms, there is no independent rider network — the shop owner dispatches their own delivery staff. The system has two actors: **Customer** and **Shop Owner**.
+
+Three front-ends will share one backend:
+- Customer mobile app
+- Customer website
+- Shop owner admin dashboard (web)
+
+---
+
+## 2. Actors & Features
+
+### Customer
+- Register/login: phone + password, or Gmail
+- Phone OTP verification (2FA) required before an order can be placed
+- Browse menu, search food, filter by category
+- Add/remove items from cart
+- Place order, pay via cash, bank transfer, JazzCash, Easypaisa, or credit/debit card
+- Live order status tracking + order history
+- Delivery availability check — blocked at checkout if the address is beyond ~2.2km from the shop
+
+### Shop Owner
+- Manage categories and menu items (add/edit/remove, mark unavailable)
+- Manage discounts and offers
+- Manage delivery charges
+- Receive incoming orders, accept or reject
+- Update order status: Pending → Preparing → Ready → Out for Delivery → Delivered
+- View sales analytics (revenue, top items, order volume)
+
+---
+
+## 3. System Architecture
+
+One backend, three clients:
+
+```
+Backend API (Node.js + Express, MySQL)
+        |
+        |-- REST endpoints (auth, menu, cart, orders, payments)
+        |-- WebSocket / polling (order status push)
+        |
+   --------------------------------------------------------
+   |                        |                              |
+Customer Mobile App    Customer Website          Owner Admin Dashboard
+React Native (Expo)    Next.js + TypeScript       React (Vite) SPA
+```
+
+All three clients call the same REST API, so business logic (pricing, delivery eligibility, order rules) lives in one place, not duplicated per client.
+
+---
+
+## 4. Recommended Tech Stack
+
+| Layer | Technology | Why |
+|---|---|---|
+| Backend | Node.js + Express | Chosen |
+| Database | MySQL + Prisma (or Sequelize) ORM | MySQL as specified; an ORM adds type safety and versioned migrations |
+| Customer Mobile App | React Native (Expo) + TypeScript | One codebase for Android/iOS; Expo simplifies push notifications and updates |
+| Customer Website | Next.js + TypeScript | Server-side rendering helps menu/landing pages get found on Google ("naseeb baryani ucp order online"); plain React + Vite is a simpler fallback if SEO isn't a priority |
+| Owner Admin Dashboard | React (Vite) + TypeScript | Login-gated internal tool — no SEO need, faster to build than Next.js |
+| Auth | JWT (access + refresh tokens), bcrypt, Google OAuth | Standard, well-supported in Express |
+| Real-time order status | Socket.io, or short-interval polling as a simpler fallback | Pushes "status changed" events without needing a full GPS tracking system |
+| Maps / distance | Google Maps Geocoding API + Haversine formula | Turns an address into lat/long, then checks straight-line distance against the shop |
+| Image storage | Cloudinary, AWS S3, or local disk to start | Menu photos, category images |
+
+---
+
+## 5. Database Schema — MySQL Entity Overview
+
+| Table | Purpose | Key Fields |
+|---|---|---|
+| `users` | Customer + owner accounts | id, name, email, phone, password_hash, role, phone_verified, google_id, created_at |
+| `otp_verifications` | OTP codes for phone verification | id, user_id, otp_code, purpose, expires_at, is_verified |
+| `addresses` | Saved delivery addresses | id, user_id, label, address_line, latitude, longitude, is_default |
+| `categories` | Menu categories | id, name, description, image_url, is_active, sort_order |
+| `menu_items` | Food items | id, category_id, name, description, price, image_url, is_available |
+| `discounts` | Offers/discounts | id, title, type (percent/flat), value, scope (item/category/order), promo_code, start_date, end_date, is_active |
+| `cart_items` | Active cart per user | id, user_id, menu_item_id, quantity |
+| `orders` | Order header | id, customer_id, address_id, status, subtotal, delivery_charge, discount_amount, total, distance_km, payment_method, payment_status, placed_at, accepted_at, ready_at, out_for_delivery_at, delivered_at, cancelled_at |
+| `order_items` | Line items per order | id, order_id, menu_item_id, item_name, unit_price, quantity, line_total |
+| `payments` | Payment transaction records | id, order_id, method, transaction_ref, amount, status, gateway_payload, created_at |
+| `delivery_settings` | Delivery config | id, shop_latitude, shop_longitude, max_delivery_km, base_delivery_charge, per_km_charge, min_order_amount |
+| `shop_settings` | General shop config | id, shop_name, contact_number, opening_time, closing_time, is_accepting_orders |
+
+Since this is a single branch, "owner" is just a role in `users` rather than a separate multi-tenant structure — no need for the restaurant-per-vendor complexity a Foodpanda-style schema would need.
+
+---
+
+## 6. Authentication & OTP (2FA) Flow
+
+1. Customer registers via phone + password, or Gmail OAuth. Account starts with `phone_verified = false` unless already confirmed.
+2. Customer can log in and browse/cart freely without a verified phone.
+3. At checkout (first order, or whenever the phone isn't yet verified):
+   - Customer confirms their phone number
+   - Backend generates a 6-digit OTP, stores it in `otp_verifications` with a short expiry (e.g., 5 minutes), sends it via SMS API
+   - Customer enters the code; backend verifies and sets `phone_verified = true`
+   - Order placement proceeds only after verification succeeds
+4. Later orders skip OTP since the phone is already verified (until the number is changed).
+
+---
+
+## 7. Delivery Radius Logic
+
+1. Customer enters/selects a delivery address (manual entry or map picker)
+2. Address is geocoded to latitude/longitude (Google Maps Geocoding API)
+3. Straight-line distance from the shop's fixed coordinates is calculated with the Haversine formula:
+
+```
+a = sin²(Δlat/2) + cos(lat1) · cos(lat2) · sin²(Δlong/2)
+c = 2 · atan2(√a, √(1−a))
+distance = R · c        (R = 6371 km)
+```
+
+4. If `distance ≤ max_delivery_km` (configurable, default 2.2km) → order allowed
+5. If `distance > max_delivery_km` → checkout blocked with a clear "outside delivery area" message
+6. Run this check both when the address is saved *and* again at checkout, in case the owner later tightens the radius
+
+---
+
+## 8. Order Lifecycle
+
+```
+Pending → Accepted → Preparing → Ready → Out for Delivery → Delivered
+   |          |
+   |          └──→ (owner can still cancel in edge cases)
+   └──────────────→ Rejected (owner declines)
+   └──────────────→ Cancelled (customer cancels pre-acceptance)
+```
+
+- **Pending → Preparing → Ready → Out for Delivery → Delivered** is the flow you specified
+- **Rejected** / **Cancelled** are recommended additions so every order reaches a clean end state instead of hanging
+
+---
+
+## 9. Payment Methods
+
+- **Cash on Delivery** — no integration, just a flag on the order
+- **Bank Transfer** — simplest to build first: customer enters a transaction reference, owner manually confirms in the dashboard
+- **JazzCash / Easypaisa / Card** — two paths:
+  - **Direct integration**: a separate merchant account and API credentials with JazzCash and with Easypaisa individually, plus a separate card gateway. More setup work, but no aggregator fee on top.
+  - **Payment aggregator**: services such as PayFast, Safepay, Simpaisa, XPay, or a bank gateway (HBL Konnect, Bank Alfalah's Alfa Payment Gateway) bundle JazzCash + Easypaisa + cards + bank transfers under one integration and one dashboard, so you onboard once instead of separately with each wallet. Typical fees across providers run roughly 2–3.5% per transaction, and onboarding is generally faster than going direct with each wallet.
+  - For a single-branch shop just starting out, the aggregator route usually means less overhead — worth getting quotes from 2–3 before committing, since terms and fees shift.
+
+---
+
+## 10. API Structure Overview
+
+**Auth**
+`POST /auth/register` · `POST /auth/login` · `POST /auth/google` · `POST /auth/otp/send` · `POST /auth/otp/verify`
+
+**Menu (public)**
+`GET /categories` · `GET /menu` · `GET /menu/:id` · `GET /menu/search?q=`
+
+**Cart**
+`GET /cart` · `POST /cart/items` · `PUT /cart/items/:id` · `DELETE /cart/items/:id`
+
+**Address & Delivery**
+`POST /addresses` · `GET /addresses` · `POST /delivery/check-eligibility`
+
+**Orders — Customer**
+`POST /orders` · `GET /orders` · `GET /orders/:id` · `POST /orders/:id/cancel`
+
+**Orders — Owner**
+`GET /owner/orders` · `PUT /owner/orders/:id/accept` · `PUT /owner/orders/:id/reject` · `PUT /owner/orders/:id/status`
+
+**Menu Management — Owner**
+`POST/PUT/DELETE /owner/categories` · `POST/PUT/DELETE /owner/menu-items`
+
+**Discounts — Owner**
+`POST/PUT/DELETE /owner/discounts`
+
+**Analytics — Owner**
+`GET /owner/analytics/sales` · `GET /owner/analytics/top-items`
+
+**Payments**
+`POST /payments/initiate` · `POST /payments/webhook` · `GET /payments/:orderId/status`
+
+---
+
+## 11. Suggested Repo Structure
+
+```
+naseeb-baryani/
+├── backend/              Node.js + Express + MySQL
+│   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── middleware/
+│   │   └── services/      (SMS, maps, payment gateways)
+│   └── migrations/
+├── mobile-app/            React Native (Expo) + TypeScript
+├── website/               Next.js + TypeScript
+├── admin-dashboard/       React (Vite) + TypeScript
+└── docs/
+```
+
+---
+
+## 12. Development Phases
+
+| Phase | Focus | Key Deliverables |
+|---|---|---|
+| 0 | Setup & decisions | Repo, MySQL instance, shop's exact GPS coordinates, apply for payment aggregator/merchant accounts (start early), Google Maps API key, pick SMS provider |
+| 1 | Backend foundation | Express scaffold, MySQL schema + migrations, register/login (phone + Gmail), JWT, OTP send/verify |
+| 2 | Menu management | Owner CRUD for categories/menu items, public browse/search APIs, admin dashboard shell |
+| 3 | Customer ordering core | Address entry + geocoding + distance check, cart APIs, customer website (browse → cart → checkout) |
+| 4 | Order placement & status | Place order (COD first), owner accept/reject + status updates, order history, admin order queue, real-time status push |
+| 5 | Payments | Bank transfer (manual) first, then JazzCash/Easypaisa/card via the chosen integration path |
+| 6 | Discounts, delivery charges, analytics | Owner offer management, delivery charge config, sales dashboard |
+| 7 | Mobile app | Rebuild customer flows in React Native/Expo, push notifications for order status |
+| 8 | Polish & deploy | Testing, error/loading states, backend hosting, website deployment, mobile app distribution, domain + SSL |
+
+---
+
+## 13. Open Questions to Confirm Before Building
+
+- Exact GPS coordinates of the shop (needed for accurate distance calculation)
+- Payment approach: direct merchant accounts with JazzCash/Easypaisa, or an aggregator (PayFast, Safepay, Simpaisa, etc.)?
+- SMS/OTP provider — worth a short comparison for reliability and per-SMS cost before committing; many exist and quality varies
+- Does "live tracking" mean GPS map tracking of the delivery employee, or just live status updates (Preparing/Ready/etc.)? This significantly changes Phase 4/7 scope
+- Existing branding: logo, menu photography, color palette — or design from scratch?
+- Hosting budget/preference for deployment (shared hosting, VPS, cloud)
+- Should the owner dashboard be responsive for phone-browser use, since day-to-day order management will likely happen on the go?
+
+---
+
+## 14. Next Steps
+
+Once the shop's GPS coordinates and payment approach are settled, Phase 1 is the natural starting point: the MySQL schema and Express backend foundation, including auth and OTP.
+====================================================================================================================================
+🍛 Naseeb Baryani & Pulao UCP
+Complete Software Requirements & Project Scope (Version 1.0)
+1. Project Overview
+
+Project Name:
+Naseeb Baryani & Pulao UCP
+
+This project is a complete online food ordering ecosystem developed exclusively for Naseeb Baryani & Pulao UCP, a single-branch restaurant. Unlike Foodpanda or similar marketplaces, this system serves only one restaurant and allows customers to order food through a mobile application or website.
+
+The restaurant manages its menu, orders, offers, customers, and business analytics through a dedicated admin dashboard. Deliveries are performed by the restaurant's own employees, so no rider application is required.
+
+2. Platforms
+Customer
+Android Mobile App
+iOS Mobile App
+Responsive Website
+Restaurant
+Admin Dashboard (Web)
+3. Technology Stack
+Frontend
+Mobile
+React Native (Expo)
+Website
+React.js + Vite
+Admin Dashboard
+React.js + Vite
+Backend
+Node.js
+Express.js
+Database
+MySQL
+Authentication
+JWT
+Google Login
+Phone Login
+OTP Verification
+Password Reset
+Maps & Location
+Google Maps SDK
+Google Places API
+Geocoding API
+Distance calculation using Google Maps services
+Notifications
+Firebase Cloud Messaging (Push Notifications)
+SMS OTP
+Email Notifications (optional)
+Payments
+Cash on Delivery
+JazzCash
+Easypaisa
+Credit Cards
+Debit Cards
+Bank Transfer
+4. Actors
+Customer
+Restaurant Owner (Admin)
+
+(Restaurant staff members who deliver orders do not need individual system accounts in Version 1.)
+
+5. Customer Features
+Authentication
+Register
+Login
+Phone Number Login
+Email Login
+Google Login
+OTP Verification
+Forgot Password
+Reset Password
+Logout
+Home Screen
+Restaurant Information
+Restaurant Status (Open/Closed)
+Featured Foods
+Popular Foods
+Recommended Foods
+Today's Deals
+Banner Slider
+Search Bar
+Categories
+Food Browsing
+Browse Categories
+Browse Menu
+Search Food
+Food Images
+Description
+Price
+Availability
+Ingredients (optional)
+Spice Level (optional)
+Add-ons (optional)
+Favourite Items
+Share Food Item
+Shopping Cart
+Add Item
+Remove Item
+Increase Quantity
+Decrease Quantity
+Apply Coupon
+Delivery Charges
+Taxes (if applicable)
+Grand Total
+Estimated Delivery Time
+Checkout
+Delivery Address
+Multiple Saved Addresses
+Google Maps Location Picker
+Payment Selection
+Order Summary
+Place Order
+Payment Methods
+Cash on Delivery
+JazzCash
+Easypaisa
+Credit Card
+Debit Card
+Bank Transfer
+Orders
+Place Order
+Track Live Status
+Order Timeline
+Estimated Delivery Time
+Cancel Before Preparation
+Repeat Previous Order
+Order History
+Order Details
+Download Invoice
+QR Code Receipt
+Reviews & Ratings
+Rate Food
+Review Food
+Rate Restaurant
+Edit Review
+Delete Review
+Loyalty Program
+Earn Points
+Redeem Points
+Loyalty Wallet
+Reward Levels
+Referral System
+Referral Code
+Invite Friends
+Referral Rewards
+Notifications
+New Offers
+Discounts
+Order Updates
+Payment Updates
+Promotional Notifications
+Wishlist
+Favourite Foods
+Save for Later
+Stock Notifications
+Notify Me When Available
+Profile
+Edit Profile
+Profile Picture
+Change Password
+Saved Addresses
+Payment History
+Order History
+Loyalty Points
+Referral Code
+Notification Preferences
+Language Selection
+Dark Mode
+6. Restaurant Owner Features
+Dashboard
+Total Sales
+Daily Sales
+Weekly Sales
+Monthly Sales
+Annual Sales
+Total Revenue
+Total Customers
+Pending Orders
+Delivered Orders
+Cancelled Orders
+Best Selling Foods
+Peak Hours
+Revenue Graphs
+Menu Management
+Add Food
+Edit Food
+Delete Food
+Upload Images
+Featured Foods
+Food Availability
+Out of Stock
+Food Variants
+Add-ons
+Category Management
+Add Category
+Edit Category
+Delete Category
+Sort Categories
+Order Management
+View Orders
+Accept Orders
+Reject Orders
+Cancel Orders
+Update Order Status
+
+Workflow:
+
+Pending
+↓
+Accepted
+↓
+Preparing
+↓
+Ready
+↓
+Out for Delivery
+↓
+Delivered
+Customer Management
+View Customers
+Customer Details
+Customer Order History
+Customer Statistics
+Block/Unblock Customers
+Discount Management
+Coupon Codes
+Percentage Discounts
+Flat Discounts
+Limited-Time Offers
+Free Delivery Promotions
+Festival Promotions
+Delivery Settings
+Delivery Radius
+Delivery Charges
+Minimum Order Amount
+Estimated Delivery Time
+Delivery Availability
+Inventory
+In Stock
+Low Stock
+Out of Stock
+Automatic Stock Alerts
+Banner Management
+Homepage Banner
+Promotional Banner
+Festival Banner
+Announcements
+Restaurant Settings
+Restaurant Profile
+Opening Hours
+Closing Hours
+Temporary Closure
+Delivery Charges
+Tax Settings
+Contact Information
+Social Media Links
+Reports
+Daily Report
+Weekly Report
+Monthly Report
+Yearly Report
+Revenue Report
+Payment Report
+Customer Report
+Food Sales Report
+Export CSV
+Export PDF
+Analytics
+Revenue Analytics
+Customer Analytics
+Food Popularity
+Peak Ordering Hours
+Average Order Value
+Conversion Rate
+Payment Method Analytics
+Reviews
+View Reviews
+Reply to Reviews
+Hide Inappropriate Reviews
+Admin Activity Logs
+Login History
+Menu Changes
+Order Changes
+Discount Changes
+Settings Changes
+7. Delivery Rules
+Restaurant delivers only within 2.2 km.
+Distance is calculated using Google Maps services.
+Customers outside the delivery area cannot complete checkout.
+The app should inform customers if an address is outside the delivery zone before payment.
+8. Order Lifecycle
+Customer Places Order
+        │
+        ▼
+Payment Verification
+        │
+        ▼
+Restaurant Receives Order
+        │
+        ▼
+Accept / Reject
+        │
+        ▼
+Preparing
+        │
+        ▼
+Ready
+        │
+        ▼
+Out for Delivery
+        │
+        ▼
+Delivered
+9. Security
+JWT Authentication
+Password Hashing (bcrypt)
+OTP Verification
+Role-Based Access Control
+Secure API Validation
+SQL Injection Protection
+XSS Protection
+CORS Configuration
+Rate Limiting
+HTTPS (Production)
+Secure File Upload Validation
+10. Database Modules
+Admin
+Customers
+Addresses
+Categories
+Menu Items
+Food Images
+Cart
+Orders
+Order Items
+Payments
+Payment Transactions
+Coupons
+Offers
+Loyalty Points
+Referral Codes
+Notifications
+Reviews
+Restaurant Settings
+Inventory
+Banners
+Activity Logs
+11. Additional Features
+Dark Mode
+Light Mode
+English Language
+Urdu Language
+Automatic Invoice Generation
+QR Code on Receipts
+Download PDF Invoice
+Push Notifications
+SMS Notifications
+Email Notifications
+Share Food Items
+Search Suggestions
+Recently Ordered Items
+Recently Viewed Items
+Restaurant Announcements
+Scheduled Orders (pre-order for a future date/time)
+Basic SEO Optimization for the Website
+Progressive Web App (PWA) support for the customer website
+Contact Us page
+About Us page
+FAQ page
+Privacy Policy page
+Terms & Conditions page
+Delivery Policy page
+Refund & Cancellation Policy page
+12. Future Expansion (Version 2)
+
+The architecture should be designed so it can support future enhancements without major redesign, such as:
+
+Multiple restaurant branches
+Multiple admin accounts with different permissions
+Dedicated delivery employee accounts and tracking
+Table reservations
+Pickup orders
+Kitchen display system
+AI-powered food recommendations
+Inventory forecasting
+Customer support chat
+Gift cards and vouchers
+Corporate/bulk ordering
+Final Vision
+
+The completed system will be a full-featured, production-ready restaurant ordering platform for Naseeb Baryani & Pulao UCP, consisting of:
+
+📱 React Native customer mobile app
+💻 React customer website
+🖥️ React admin dashboard
+⚙️ Node.js + Express backend
+🗄️ MySQL database
+📍 Location-based delivery within a 2.2 km service area
+🔐 Secure authentication with JWT, Google Sign-In, and OTP verification
+💳 Multiple payment options (COD, JazzCash, Easypaisa, bank transfer, and cards)
+📊 Comprehensive analytics and reporting
+⭐ Customer reviews, loyalty points, referrals, scheduled orders, multilingual support, dark mode, automated invoicing, and QR-coded receipts
+🏗️ An extensible architecture capable of supporting future multi-branch and multi-role expansion while maintaining a clean and scalable codebase.
+using these skills 
+gemini extensions install github.com/DietrichGebert/ponytail
+npx skills add alchaincyf/huashu-design
+https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+npx skills add Leonxlnx/taste-skill
+npm init playwright@latest
+
+Security :
+Rate Limiting ->
+ add rate limiting appropriate to each endpoint type: sticker limits on authentication routes eg( login, sign up, passwordreset) moderate limits on public endpoint and lossers limit on authentication users actions 
+for auth routes use a combination of per-IP and per-account limits with exponential backoff rather than a hard lockoutmake all thresholds configurable not hardcoded 
+Input Validaiton->
+ Validate every input against a strict schema (type,length , format) and rejects anything that does't match - dont just sanitize/escape 
+Secrets->
+ scan complete codebase for any hardcoded API key tokens or passwords Use enviorment variables and verify that nothing sensitive is shipped into frontend or pushed to git 
+Dependency Vulnerabilities->
+ Run a dependency audit across the project identify any packeges with known vulnerabilities and updates or replace them where safe to do so
+Error handeling and Information leakage ->
+REview all error handeling across the app Ensure users never stack trace internal file paths or raw database errors -return messages instead while still loggong full errors details server - side for debugging 
+File Upload Saftey ->
+Review file upload suntionality Confirm file type size and content are validated (not just for extentions) uploads are stored outside the web root or in isolated storage and uploaded are stored outside the web root or in isolated storage and uploaded files can never be executed as code
+
+

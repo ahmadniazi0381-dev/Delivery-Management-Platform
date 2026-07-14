@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-serif: "Cinzel", Georgia, serif;
+  --font-traditional: "Reem Kufi", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-brand-saffron: #f17829;
+  --color-brand-gold: #e2ab22;
+  --color-brand-red: #c51d24;
+  --color-brand-cream: #faf8f5;
+  --color-brand-charcoal: #2c1a11;
+  --color-brand-green: #14532d;
+}
+
+/* Base custom styles to enhance UI */
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-brand-cream);
+    color: var(--color-brand-charcoal);
+  }
+}
+
+/* Subtle texture & decorative styles */
+.brand-gradient-saffron {
+  background: linear-gradient(135deg, #f17829 0%, #e2ab22 100%);
+}
+
+.brand-gradient-red {
+  background: linear-gradient(135deg, #c51d24 0%, #f17829 100%);
+}
+
+.brand-radial-glow {
+  background: radial-gradient(circle, rgba(241, 120, 41, 0.15) 0%, transparent 70%);
+}

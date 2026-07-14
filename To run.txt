@@ -1,0 +1,15 @@
+cd backend
+# Generate Prisma Client and Start server (it will seed settings and +923000000000 admin automatically)
+npm run dev
+
+cd admin-dashboard
+npm run dev
+
+
+
+cd website
+npm run dev
+
+
+cd mobile-app
+npx expo start

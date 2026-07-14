@@ -1,0 +1,144 @@
+first of all its a demo 
+
+second i am not able to login into my admin dashboard 
+
+third i am not able to open it on my phone using expo go 
+
+and the location is not opening 
+
+its not using my gogle api which i ave told you and i am not able to see the locaiton 
+
+i cant add my google account 
+
+i cant add my phone number 
+
+their are much flaws in this app
+
+use Q/A testing for this whole website beckend mobile app 
+
+AI-Assisted Test-Driven Development (TDD)
+
+it should be flaw less and ready to use in industry product not a demo code 
+
+You are a QA engineer specializing in end-to-end testing across web, backend, and mobile platforms. Your task is to conduct comprehensive Q&A testing on this full-stack application (React/Next.js frontend, Node.js/Express backend, React Native/Expo mobile) and fix all critical blockers preventing production deployment.
+
+
+
+**Critical blockers to test, diagnose, and fix:**
+
+
+
+1. **Admin Dashboard Login** — Test authentication flow; identify why login is failing and fix the underlying issue (credentials validation, session management, API endpoint, or token generation).
+
+
+
+2. **Mobile App (Expo Go)** — Test app opening and runtime stability on mobile; resolve any crashes, connection issues, or platform-specific bugs preventing the app from launching.
+
+
+
+3. **Location Services** — Test location permission flow, GPS data retrieval, and display. Verify the Google Maps API is properly integrated and the API key is correctly configured across web, backend, and mobile environments.
+
+
+
+4. **Google Account Integration** — Test OAuth flow for Google account linking; identify why account addition is failing and fix authentication/authorization logic.
+
+
+
+5. **Phone Number Input** — Test phone number validation, storage, and submission; identify why the field is not accepting or saving phone numbers correctly.
+
+
+
+**Approach:**
+
+
+
+- Use **AI-Assisted Test-Driven Development (TDD)** methodology: write tests that expose each failure, then fix the code to pass those tests.
+
+- Test all layers: frontend (React/Next.js + React Native), backend APIs (Node.js/Express), and third-party integrations (Google Maps, Google OAuth).
+
+- Document each bug found, its root cause, and the fix applied.
+
+- Write regression tests for each issue fixed to prevent future breakage.
+
+- Ensure the application is production-ready—no workarounds, no technical debt, no known failures.
+
+
+
+**Deliverable:**
+
+
+
+Return a comprehensive test report listing:
+
+- Each failure found and reproduced
+
+- Root cause analysis for each failure
+
+- Code fixes applied to resolve each issue
+
+- Tests written to prevent regression
+
+- Confirmation that all blockers are resolved and the app is ready for production deployment
+do all the Q/A test and fix all the issues 
+wher as this is my Google Maps APi key 
+You are a QA engineer specializing in end-to-end testing across web, backend, and mobile platforms. Your task is to conduct comprehensive quality assurance testing on this full-stack application and systematically identify, diagnose, and fix all critical issues preventing production deployment.
+
+
+
+**Critical blockers to test, diagnose, and fix:**
+
+
+
+1. **Admin Dashboard Login** — Test the complete authentication flow. Identify why login is failing by examining credentials validation, session management, API endpoints, and token generation. Fix the root cause.
+
+
+
+2. **Mobile App (Expo Go)** — Test app launch and runtime stability on mobile. Resolve crashes, connection issues, or platform-specific bugs preventing the app from opening and functioning.
+
+
+
+3. **Location Services** — Test location permission flow, GPS data retrieval, and map display. Verify Google Maps API integration, confirm the API key is correctly configured across web, backend, and mobile environments, and ensure location data displays properly.
+
+
+
+4. **Google Account Integration** — Test the OAuth flow for Google account linking. Identify why Google account addition is failing and fix authentication or authorization logic.
+
+
+
+5. **Phone Number Input** — Test phone number validation, storage, and submission. Identify why the field is not accepting or saving phone numbers correctly and fix the issue.
+
+
+
+**Testing and fixing approach:**
+
+
+
+- Write test cases that expose each failure before fixing code (test-driven approach).
+
+- Test all layers: frontend (React/Next.js and React Native), backend APIs (Node.js/Express), and third-party integrations (Google Maps, Google OAuth).
+
+- For each issue: reproduce the failure, identify root cause, apply code fix, and write a regression test.
+
+- Use the .env files provided to configure Google API credentials, API keys, and environment variables across all environments (web, backend, mobile).
+
+- Ensure fixes are permanent solutions, not workarounds—no technical debt, no known failures remaining.
+
+
+
+**Deliverable:**
+
+
+
+Provide a comprehensive test report that includes:
+
+
+
+- Each failure found with steps to reproduce it
+
+- Root cause analysis for each failure
+
+- Complete code fixes applied to resolve each issue
+
+- Test cases written to prevent regression
+
+- Final confirmation that all blockers are resolved and the application is production-ready
