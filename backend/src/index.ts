@@ -75,6 +75,7 @@ app.use('/api', ownerRoutes);
 app.use('/api', paymentRoutes);
 
 app.get('/api/health', healthCheck);
+app.get('/healthz', healthCheck);
 
 // Safe error handler middleware
 app.use(safeErrorHandler);
