@@ -195,9 +195,10 @@ Response:
 
 In `.env.local`:
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
 NEXT_PUBLIC_GOOGLE_MAPS_KEY=YOUR_GOOGLE_MAPS_API_KEY
 ```
+
 
 ## Features Implemented
 

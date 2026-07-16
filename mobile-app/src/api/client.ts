@@ -3,19 +3,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
 // API URL Resolution:
-// - EXPO_PUBLIC_API_URL env var takes priority (set in .env for physical device LAN IP)
-// - Android Emulator: 10.0.2.2 maps to host machine localhost
-// - iOS Simulator: localhost works directly
-// - ⚠️  Physical device (Expo Go): MUST set EXPO_PUBLIC_API_URL=http://YOUR_LAN_IP:5000/api
-//       Your current LAN IP: 192.168.0.116
-//       Set EXPO_PUBLIC_API_URL=http://192.168.0.116:5000/api in mobile-app/.env
+// - EXPO_PUBLIC_API_URL takes priority (set in .env — see .env.example)
+// - Production: https://YOUR_RENDER_SERVICE.onrender.com/api
+// - Android Emulator fallback: 10.0.2.2 → host machine localhost
+// - iOS Simulator fallback: localhost
+// - Physical device: set EXPO_PUBLIC_API_URL=http://YOUR_LAN_IP:5000/api
 
 const getApiUrl = (): string => {
-  // Explicit override always wins
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
-  // Emulator defaults
   if (Platform.OS === "android") return "http://10.0.2.2:5000/api";
   return "http://localhost:5000/api";
 };

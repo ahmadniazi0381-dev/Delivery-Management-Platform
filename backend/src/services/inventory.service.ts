@@ -18,6 +18,8 @@ type LockedMenuItem = {
  * Uses SELECT ... FOR UPDATE to serialize concurrent reservations on the same item.
  * Two users reserving the last unit: second transaction blocks until first commits,
  * then re-reads availability and rejects if stock is gone.
+ *
+ * Identifiers are quoted for PostgreSQL camelCase columns created by Prisma.
  */
 export async function validateAndReserveInventory(
   tx: Prisma.TransactionClient,
@@ -29,12 +31,12 @@ export async function validateAndReserveInventory(
       SELECT
         m.id,
         m.name,
-        m.stockQuantity,
-        m.inStock,
-        m.isAvailable,
-        c.isActive AS categoryIsActive
+        m."stockQuantity",
+        m."inStock",
+        m."isAvailable",
+        c."isActive" AS "categoryIsActive"
       FROM menu_items m
-      INNER JOIN categories c ON c.id = m.categoryId
+      INNER JOIN categories c ON c.id = m."categoryId"
       WHERE m.id = ${item.menuItemId}
       FOR UPDATE
     `;
@@ -117,10 +119,13 @@ export async function confirmInventoryForSession(
     if (menuItem?.stockQuantity !== null && menuItem?.stockQuantity !== undefined) {
       const decremented = await tx.$executeRaw`
         UPDATE menu_items
-        SET stockQuantity = stockQuantity - ${reservation.quantity},
-            inStock = IF(stockQuantity - ${reservation.quantity} > 0, inStock, 0)
+        SET "stockQuantity" = "stockQuantity" - ${reservation.quantity},
+            "inStock" = CASE
+              WHEN "stockQuantity" - ${reservation.quantity} > 0 THEN "inStock"
+              ELSE false
+            END
         WHERE id = ${reservation.menuItemId}
-          AND stockQuantity >= ${reservation.quantity}
+          AND "stockQuantity" >= ${reservation.quantity}
       `;
       if (decremented === 0) {
         const err = new Error(`Stock changed during payment for item ${menuItem.name}.`);

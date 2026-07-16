@@ -1,0 +1,37 @@
+# Render Blueprint for Karachi Naseeb Baryani backend
+# Docs: https://render.com/docs/blueprint-spec
+#
+# After creating the service, set secret env vars in the Render dashboard
+# (DATABASE_URL, DIRECT_URL, JWT_SECRET, CORS_ORIGINS, webhook secrets, etc.)
+services:
+  - type: web
+    name: naseeb-baryani-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGINS
+        sync: false
+      - key: PUBLIC_API_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: JAZZCASH_WEBHOOK_SECRET
+        sync: false
+      - key: EASYPAISA_WEBHOOK_SECRET
+        sync: false
+      - key: SAFEPAY_WEBHOOK_SECRET
+        sync: false

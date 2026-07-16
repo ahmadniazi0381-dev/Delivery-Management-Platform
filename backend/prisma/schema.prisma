@@ -1,6 +1,9 @@
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Optional: set DIRECT_URL to the Supabase direct/session connection (port 5432)
+  // when DATABASE_URL uses the transaction pooler (port 6543). Required for migrate.
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {

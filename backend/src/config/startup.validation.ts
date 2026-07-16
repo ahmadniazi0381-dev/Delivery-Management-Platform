@@ -9,7 +9,7 @@ const REQUIRED_WEBHOOK_SECRETS = [
   'SAFEPAY_WEBHOOK_SECRET',
 ] as const;
 
-const REQUIRED_ALWAYS = ['JWT_SECRET', 'DATABASE_URL'] as const;
+const REQUIRED_ALWAYS = ['JWT_SECRET', 'DATABASE_URL', 'DIRECT_URL'] as const;
 
 export function validateStartupEnvironment(): void {
   const missing: string[] = [];

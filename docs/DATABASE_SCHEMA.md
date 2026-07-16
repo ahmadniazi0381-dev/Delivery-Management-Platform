@@ -1,6 +1,6 @@
 # Database Schema - Karachi Naseeb Baryani & Pulao UCP
 
-This document outlines the MySQL database schema definition, field descriptions, and relations used in the platform, managed via Prisma ORM.
+This document outlines the PostgreSQL (Supabase) database schema definition, field descriptions, and relations used in the platform, managed via Prisma ORM.
 
 ---
 

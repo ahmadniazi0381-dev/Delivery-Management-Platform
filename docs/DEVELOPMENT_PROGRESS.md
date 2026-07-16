@@ -8,7 +8,7 @@ This document serves as the master tracking sheet and progress report for the Ka
 
 | Module / Component | Target | Estimated Completion | Status | Key Deliverables |
 |---|---|---|---|---|
-| **Express Backend API** | 100% | 100% | **Complete** | MySQL schemas, auth, CRUD menu APIs, orders flow, distance checking, gateway webhooks. |
+| **Express Backend API** | 100% | 100% | **Complete** | PostgreSQL schemas, auth, CRUD menu APIs, orders flow, distance checking, gateway webhooks. |
 | **Admin Dashboard (Vite React)**| 100% | 100% | **Complete** | Order queue, menu/category control panels, analytics, discount creation, settings. |
 | **Customer Website (Next.js)** | 100% | 100% | **Complete** | Hero slider, category filters, cart, checkout location picker, order tracker. |
 | **Customer Mobile App (Expo)** | 100% | 100% | **Complete** | Navigation stacks, screen rendering, local notifications context, OTP picker. |
@@ -19,7 +19,7 @@ This document serves as the master tracking sheet and progress report for the Ka
 ## 2. Component Progress Breakdown
 
 ### A. Express Backend API
-- [x] **Database Schema**: Unified relational schema using Prisma ORM with MySQL.
+- [x] **Database Schema**: Unified relational schema using Prisma ORM with PostgreSQL (Supabase).
 - [x] **Authentication**:
   - [x] JWT access + refresh tokens.
   - [x] Bcrypt password hashing.

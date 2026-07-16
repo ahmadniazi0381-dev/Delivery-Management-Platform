@@ -12,7 +12,7 @@ import {
   Alert
 } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
-import { apiGet, apiPut } from "../../api/client";
+import { apiGet, apiPut, SOCKET_BASE_URL } from "../../api/client";
 import { Order } from "../../types";
 import StatusBadge from "../../components/StatusBadge";
 import { Ionicons } from "@expo/vector-icons";
@@ -54,9 +54,8 @@ export default function AdminOrdersScreen({ navigation }: any) {
 
   const connectSocket = async () => {
     try {
-      const baseUrl = Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
       const token = await AsyncStorage.getItem("@naseeb_token");
-      const socket = io(baseUrl, { transports: ["websocket"] });
+      const socket = io(SOCKET_BASE_URL, { transports: ["websocket"] });
 
       socket.on("connect", () => {
         if (token) socket.emit("admin:join", { token });

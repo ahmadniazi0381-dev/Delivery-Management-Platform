@@ -118,7 +118,7 @@ async function runTests() {
 
     // Verify Admin user exists in DB
     const admin = await prisma.user.findFirst({ where: { phone: testAdminPhone, role: 'ADMIN' } });
-    assert(!!admin, 'Default administrator account successfully seeded in MySQL database');
+    assert(!!admin, 'Default administrator account successfully seeded in PostgreSQL database');
 
     if (admin && admin.passwordHash) {
       const match = await bcrypt.compare(rawPass, admin.passwordHash);

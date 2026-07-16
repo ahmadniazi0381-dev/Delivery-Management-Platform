@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "description": "Backend API for Karachi Naseeb Baryani and Pulao UCP online ordering platform",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/index.js",
     "dev": "nodemon --watch \"src/**/*.ts\" --exec \"ts-node\" src/index.ts",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate:dev": "prisma migrate dev",
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
@@ -21,6 +26,7 @@
     "express-rate-limit": "^8.5.2",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "prisma": "^5.12.1",
     "socket.io": "^4.7.5",
     "twilio": "^5.0.4",
     "zod": "^3.22.4"
@@ -32,7 +38,6 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.12.7",
     "nodemon": "^3.1.0",
-    "prisma": "^5.12.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }

@@ -17,7 +17,7 @@ graph TD
 
     %% Backend Services
     API["Node.js + Express.js Backend API"]
-    DB[("MySQL Database<br/>(via Prisma ORM)")]
+    DB[("PostgreSQL Database<br/>(Supabase via Prisma ORM)")]
     
     %% External Integrations
     GMaps["Google Maps API<br/>(Geocoding & Distance)"]
@@ -44,7 +44,7 @@ graph TD
 | Layer | Component | Technologies | Configuration / Purpose |
 |---|---|---|---|
 | **API Backend** | Core Server | Node.js, Express.js, TypeScript | Serves all authenticated and public REST endpoints; maintains WebSocket server for order status updates. |
-| | Database Access | Prisma ORM | Provides static type safety, migration histories, and relational queries for MySQL. |
+| | Database Access | Prisma ORM | Provides static type safety, migration histories, and relational queries for PostgreSQL (Supabase). |
 | | Security | Helmet, CORS, express-rate-limit, Zod | Rate limiting, HTTP header hardening, CORS configuration, database error isolation, and schema validation. |
 | **Clients** | Mobile App | React Native, Expo, TypeScript | Built for iOS and Android; uses Expo for push notifications and camera/location integrations. |
 | | Website | Next.js, React, Tailwind CSS | Server-side rendered (SSR) pages optimized for public menu indexing and local SEO search terms. |

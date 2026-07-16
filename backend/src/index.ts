@@ -32,11 +32,35 @@ validateStartupEnvironment();
 const app = express();
 const server = http.createServer(app);
 
-// Socket.io setup
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : ['http://localhost:5173', 'http://localhost:3000'];
+
+const isOriginAllowed = (origin: string | undefined): boolean => {
+  if (!origin) return true; // Mobile apps, curl, Postman
+  if (process.env.NODE_ENV !== 'production') return true;
+  if (allowedOrigins.includes(origin)) return true;
+  // Allow Vercel preview deployments when a production Vercel origin is configured
+  try {
+    const hostname = new URL(origin).hostname;
+    if (hostname.endsWith('.vercel.app') && allowedOrigins.some((o) => o.includes('vercel.app'))) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+};
+
+// Socket.io setup — same origin policy as Express CORS; events/namespaces unchanged
 const io = new Server(server, {
   cors: {
-    origin: '*', // Allow all origins for dev/testing ease
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) return callback(null, true);
+      return callback(new Error(`CORS: origin ${origin} is not allowed.`), false);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
   },
 });
 
@@ -44,18 +68,11 @@ app.set('io', io);
 
 // Middlewares
 app.use(helmet());
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
-  : ['http://localhost:5173', 'http://localhost:3000'];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman)
-      if (!origin) return callback(null, true);
-      // Allow all origins in development to facilitate testing on physical mobile devices and local networks
-      if (process.env.NODE_ENV !== 'production') return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (isOriginAllowed(origin)) return callback(null, true);
       return callback(new Error(`CORS: origin ${origin} is not allowed.`));
     },
     credentials: true,
