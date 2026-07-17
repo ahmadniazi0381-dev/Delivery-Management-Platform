@@ -10,7 +10,7 @@ if (!JWT_SECRET) {
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
-    phone: string;
+    phone: string | null;
     role: 'CUSTOMER' | 'ADMIN' | 'RIDER';
     phoneVerified: boolean;
   };
@@ -31,7 +31,7 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
   try {
     const decoded = jwt.verify(token, JWT_SECRET as string) as unknown as {
       id: string;
-      phone: string;
+      phone: string | null;
       role: 'CUSTOMER' | 'ADMIN' | 'RIDER';
       phoneVerified: boolean;
     };

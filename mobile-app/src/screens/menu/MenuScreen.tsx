@@ -6,56 +6,35 @@ import {
   FlatList,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   SafeAreaView,
-  Platform
+  Platform,
 } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
-import { apiGet } from "../../api/client";
+import { useMenu } from "../../hooks/useMenu";
 import { MenuItem, Category } from "../../types";
 import FoodCard from "../../components/FoodCard";
+import { SkeletonFoodCard } from "../../components/SkeletonLoader";
 import { Ionicons } from "@expo/vector-icons";
+import ItemDetailBottomSheet from "./ItemDetailBottomSheet";
 
 export default function MenuScreen({ route }: any) {
   const { colors } = useTheme();
   const initialCategoryId = route?.params?.categoryId || "";
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [items, setItems] = useState<MenuItem[]>([]);
+  const { categories, items, loading, refetch } = useMenu();
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
   const [activeCategory, setActiveCategory] = useState(initialCategoryId);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
-  useEffect(() => {
-    fetchMenu();
-  }, []);
+  // Filters state
+  const [spicyOnly, setSpicyOnly] = useState(false);
+  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [inStockOnly, setInStockOnly] = useState(false);
 
   useEffect(() => {
     filterItems();
-  }, [activeCategory, search, items]);
-
-  const fetchMenu = async () => {
-    try {
-      setLoading(true);
-      const [catsRes, menuRes]: any = await Promise.all([
-        apiGet("/menu/categories"),
-        apiGet("/menu")
-      ]);
-      if (catsRes?.data) setCategories(catsRes.data);
-      if (menuRes?.data) setItems(menuRes.data);
-    } catch (err) {
-      // Fallback stubs for offline
-      setCategories([
-        { id: "1", name: "Biryani", isActive: true, sortOrder: 1 },
-        { id: "2", name: "Pulao", isActive: true, sortOrder: 2 },
-        { id: "3", name: "Raita & Sides", isActive: true, sortOrder: 3 },
-        { id: "4", name: "Drinks", isActive: true, sortOrder: 4 }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [activeCategory, search, items, spicyOnly, featuredOnly, inStockOnly]);
 
   const filterItems = () => {
     let result = [...items];
@@ -68,19 +47,32 @@ export default function MenuScreen({ route }: any) {
         (i) => i.name.toLowerCase().includes(q) || i.description?.toLowerCase().includes(q)
       );
     }
+    if (spicyOnly) {
+      result = result.filter((i) => i.isSpicy);
+    }
+    if (featuredOnly) {
+      result = result.filter((i) => i.isFeatured);
+    }
+    if (inStockOnly) {
+      result = result.filter((i) => i.isAvailable);
+    }
     setFilteredItems(result);
+  };
+
+  const handleSelectItem = (item: MenuItem) => {
+    setSelectedItem(item);
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Search bar */}
       <View style={[styles.searchContainer, { backgroundColor: colors.cardBg }]}>
-        <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Menu</Text>
+        <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Menu Catalog</Text>
         <View style={[styles.searchBar, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
           <Ionicons name="search-outline" size={18} color={colors.textMuted} />
           <TextInput
             style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder="Search biryani, pulao..."
+            placeholder="Search catalog..."
             placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={setSearch}
@@ -93,10 +85,37 @@ export default function MenuScreen({ route }: any) {
         </View>
       </View>
 
+      {/* Filter Row */}
+      <View style={styles.filterRow}>
+        <TouchableOpacity
+          style={[styles.filterChip, spicyOnly && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+          onPress={() => setSpicyOnly(!spicyOnly)}
+        >
+          <Ionicons name="flame" size={14} color={spicyOnly ? '#fff' : colors.primary} />
+          <Text style={[styles.filterChipText, { color: spicyOnly ? '#fff' : colors.textPrimary }]}>Spicy</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.filterChip, featuredOnly && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+          onPress={() => setFeaturedOnly(!featuredOnly)}
+        >
+          <Ionicons name="star" size={14} color={featuredOnly ? '#fff' : colors.primary} />
+          <Text style={[styles.filterChipText, { color: featuredOnly ? '#fff' : colors.textPrimary }]}>Featured</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.filterChip, inStockOnly && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+          onPress={() => setInStockOnly(!inStockOnly)}
+        >
+          <Ionicons name="checkmark-circle" size={14} color={inStockOnly ? '#fff' : colors.primary} />
+          <Text style={[styles.filterChipText, { color: inStockOnly ? '#fff' : colors.textPrimary }]}>Available</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Category pills */}
       <View style={styles.categoryRow}>
         <FlatList
-          data={[{ id: "", name: "All" }, ...categories]}
+          data={[{ id: "", name: "All Items" }, ...categories]}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16 }}
@@ -127,25 +146,43 @@ export default function MenuScreen({ route }: any) {
 
       {/* Food grid */}
       {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+        <FlatList
+          data={[1, 2, 3, 4]}
+          numColumns={2}
+          keyExtractor={(item) => String(item)}
+          contentContainerStyle={{ padding: 8 }}
+          renderItem={() => <SkeletonFoodCard />}
+        />
       ) : (
         <FlatList
           data={filteredItems}
           numColumns={2}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 8, paddingBottom: 100 }}
-          renderItem={({ item }) => <FoodCard item={item} />}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleSelectItem(item)} activeOpacity={0.9}>
+              <FoodCard item={item} />
+            </TouchableOpacity>
+          )}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyEmoji}>🍽️</Text>
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-                {search ? "No items match your search" : "No items in this category"}
+                No items match your preferences.
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-                Try a different search or category filter
+                Try toggling the search query or filter chips.
               </Text>
             </View>
           }
+        />
+      )}
+
+      {selectedItem && (
+        <ItemDetailBottomSheet
+          item={selectedItem}
+          visible={!!selectedItem}
+          onClose={() => setSelectedItem(null)}
         />
       )}
     </SafeAreaView>
@@ -183,8 +220,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     height: "100%",
   },
+  filterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#FAF0E0',
+    gap: 4,
+  },
+  filterChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
   categoryRow: {
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   pill: {
     paddingHorizontal: 18,

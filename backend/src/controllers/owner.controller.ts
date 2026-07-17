@@ -1373,3 +1373,467 @@ export async function updateSystemConfig(req: AuthenticatedRequest, res: Respons
     return res.status(500).json({ success: false, error: 'Failed to update system config.' });
   }
 }
+
+export async function createRider(req: AuthenticatedRequest, res: Response) {
+  try {
+    const {
+      name, email, phone, password,
+      cnicNumber, dateOfBirth, gender,
+      houseNumber, street, area, city, province, postalCode,
+      emergencyContactName, emergencyContactPhone,
+      vehicleType, vehicleNumber, drivingLicenseNumber
+    } = req.body;
+
+    if (!name || !phone || !password || !cnicNumber) {
+      return res.status(400).json({ success: false, message: 'name, phone, password, cnicNumber are required' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const fullAddress = `${houseNumber || ''}, ${street || ''}, ${area || ''}, ${city || 'Karachi'}, ${province || 'Sindh'} ${postalCode || ''}`;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name,
+          email: email || null,
+          phone,
+          passwordHash,
+          role: 'RIDER',
+          phoneVerified: true,
+        }
+      });
+
+      const profile = await tx.riderProfile.create({
+        data: {
+          userId: user.id,
+          cnicNumber,
+          dateOfBirth: new Date(dateOfBirth || Date.now()),
+          gender: gender || 'MALE',
+          houseNumber: houseNumber || '',
+          street: street || '',
+          area: area || '',
+          city: city || 'Karachi',
+          province: province || 'Sindh',
+          postalCode: postalCode || '',
+          fullAddress,
+          emergencyContactName: emergencyContactName || '',
+          emergencyContactPhone: emergencyContactPhone || '',
+          vehicleType: vehicleType || 'BIKE',
+          vehicleNumber: vehicleNumber || '',
+          drivingLicenseNumber: drivingLicenseNumber || null,
+          status: 'ACTIVE',
+        }
+      });
+
+      return { user, profile };
+    });
+
+    await logAdminAction(req, 'CREATE_RIDER' as any, { riderId: result.user.id, name });
+    return res.status(201).json({ success: true, data: result });
+  } catch (err: any) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ success: false, message: 'Phone, email, or CNIC already registered' });
+    }
+    return res.status(500).json({ success: false, message: 'Failed to create rider' });
+  }
+}
+
+export async function updateRider(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    const {
+      name, email, phone,
+      cnicNumber, dateOfBirth, gender,
+      houseNumber, street, area, city, province, postalCode,
+      emergencyContactName, emergencyContactPhone,
+      vehicleType, vehicleNumber, drivingLicenseNumber,
+      cnicFrontUrl, cnicBackUrl, profilePhotoUrl
+    } = req.body;
+
+    const riderProfile = await prisma.riderProfile.findFirst({
+      where: { userId: id }
+    });
+    if (!riderProfile) {
+      return res.status(404).json({ success: false, message: 'Rider not found' });
+    }
+
+    const fullAddress = houseNumber ? `${houseNumber}, ${street}, ${area}, ${city}, ${province} ${postalCode}` : riderProfile.fullAddress;
+
+    await prisma.$transaction(async (tx) => {
+      if (name || email || phone) {
+        await tx.user.update({
+          where: { id },
+          data: {
+            ...(name && { name }),
+            ...(email && { email }),
+            ...(phone && { phone }),
+          }
+        });
+      }
+
+      await tx.riderProfile.update({
+        where: { id: riderProfile.id },
+        data: {
+          ...(cnicNumber && { cnicNumber }),
+          ...(dateOfBirth && { dateOfBirth: new Date(dateOfBirth) }),
+          ...(gender && { gender }),
+          ...(houseNumber && { houseNumber }),
+          ...(street && { street }),
+          ...(area && { area }),
+          ...(city && { city }),
+          ...(province && { province }),
+          ...(postalCode && { postalCode }),
+          fullAddress,
+          ...(emergencyContactName && { emergencyContactName }),
+          ...(emergencyContactPhone && { emergencyContactPhone }),
+          ...(vehicleType && { vehicleType }),
+          ...(vehicleNumber && { vehicleNumber }),
+          ...(drivingLicenseNumber !== undefined && { drivingLicenseNumber }),
+          ...(cnicFrontUrl && { cnicFrontUrl }),
+          ...(cnicBackUrl && { cnicBackUrl }),
+          ...(profilePhotoUrl && { profilePhotoUrl }),
+        }
+      });
+    });
+
+    await logAdminAction(req, 'UPDATE_RIDER' as any, { riderId: id });
+    return res.json({ success: true, message: 'Rider updated successfully' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: 'Failed to update rider' });
+  }
+}
+
+export async function deleteRider(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const profile = await prisma.riderProfile.findFirst({ where: { userId: id } });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Rider not found' });
+    }
+
+    await prisma.riderProfile.update({
+      where: { id: profile.id },
+      data: {
+        deletedAt: new Date(),
+        deletedBy: req.user?.id,
+        deletedReason: reason || 'Deleted by admin',
+        status: 'INACTIVE'
+      }
+    });
+
+    await logAdminAction(req, 'DELETE_RIDER' as any, { riderId: id, reason });
+    return res.json({ success: true, message: 'Rider deleted successfully' });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to delete rider' });
+  }
+}
+
+export async function updateRiderStatus(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'ON_BREAK'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: `Status must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    const profile = await prisma.riderProfile.findFirst({ where: { userId: id } });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Rider not found' });
+    }
+
+    await prisma.riderProfile.update({
+      where: { id: profile.id },
+      data: { status }
+    });
+
+    await logAdminAction(req, 'UPDATE_RIDER_STATUS' as any, { riderId: id, status });
+    return res.json({ success: true, message: `Rider status updated to ${status}` });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to update rider status' });
+  }
+}
+
+export async function getCustomerDetail(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true, name: true, email: true, phone: true,
+        role: true, phoneVerified: true, googleId: true,
+        profilePicture: true, referralCode: true, loyaltyPoints: true,
+        blockedAt: true, createdAt: true, updatedAt: true,
+        addresses: true,
+        ordersPlaced: {
+          orderBy: { placedAt: 'desc' },
+          take: 50,
+          select: {
+            id: true, orderNumber: true, status: true,
+            total: true, placedAt: true, deliveredAt: true,
+            paymentMethod: true, paymentStatus: true,
+            orderItems: { select: { itemName: true, quantity: true, lineTotal: true } }
+          }
+        },
+        loyaltyPointHistory: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: { id: true, points: true, reason: true, createdAt: true }
+        },
+        reviews: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: { id: true, rating: true, comment: true, createdAt: true }
+        },
+        referralsSent: {
+          select: { id: true, createdAt: true, rewardGranted: true }
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Customer not found' });
+    }
+
+    const totalOrders = user.ordersPlaced.length;
+    const totalSpend = user.ordersPlaced
+      .filter(o => o.status === 'DELIVERED')
+      .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0);
+    const cancelledOrders = user.ordersPlaced.filter(o => o.status === 'CANCELLED').length;
+
+    return res.json({
+      success: true,
+      data: {
+        ...user,
+        stats: { totalOrders, totalSpend, cancelledOrders, loyaltyPoints: user.loyaltyPoints }
+      }
+    });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to get customer detail' });
+  }
+}
+
+export async function sendCustomerNotification(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    const { title, body } = req.body;
+
+    if (!title || !body) {
+      return res.status(400).json({ success: false, message: 'title and body are required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ success: false, message: 'Customer not found' });
+
+    await sendPushToUser(id, title, body);
+
+    await prisma.notification.create({
+      data: { userId: id, title, body, type: 'ADMIN_MESSAGE' }
+    });
+
+    await logAdminAction(req, 'SEND_NOTIFICATION' as any, { targetUserId: id, title });
+    return res.json({ success: true, message: 'Notification sent' });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to send notification' });
+  }
+}
+
+export async function adjustCustomerLoyalty(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    const { points, reason, type } = req.body; // type: 'ADD' | 'REMOVE'
+
+    if (!points || !reason) {
+      return res.status(400).json({ success: false, message: 'points and reason are required' });
+    }
+
+    const absPoints = Math.abs(parseInt(points));
+    const delta = type === 'REMOVE' ? -absPoints : absPoints;
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ success: false, message: 'Customer not found' });
+
+    if (delta < 0 && user.loyaltyPoints < absPoints) {
+      return res.status(400).json({ success: false, message: 'Insufficient loyalty points' });
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({ where: { id }, data: { loyaltyPoints: { increment: delta } } }),
+      prisma.loyaltyPoint.create({ data: { userId: id, points: delta, reason: `ADMIN: ${reason}` } })
+    ]);
+
+    await logAdminAction(req, 'ADJUST_LOYALTY' as any, { targetUserId: id, delta, reason });
+    return res.json({ success: true, message: `Loyalty points ${type === 'REMOVE' ? 'removed' : 'added'} successfully` });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to adjust loyalty points' });
+  }
+}
+
+export async function getRevenueAnalytics(req: AuthenticatedRequest, res: Response) {
+  try {
+    const period = (req.query.period as string) || '7d';
+    const fromParam = req.query.from as string;
+    const toParam = req.query.to as string;
+
+    let startDate: Date;
+    let endDate = new Date();
+
+    if (fromParam && toParam) {
+      startDate = new Date(fromParam);
+      endDate = new Date(toParam);
+    } else {
+      startDate = new Date();
+      const days = period === '30d' ? 30 : period === '90d' ? 90 : 7;
+      startDate.setDate(startDate.getDate() - days);
+    }
+
+    const orders = await prisma.order.findMany({
+      where: {
+        status: 'DELIVERED',
+        placedAt: { gte: startDate, lte: endDate },
+      },
+      select: { total: true, placedAt: true, paymentMethod: true },
+    });
+
+    // Group by day
+    const revenueByDay: Record<string, { date: string; revenue: number; orders: number }> = {};
+    const d = new Date(startDate);
+    while (d <= endDate) {
+      const key = d.toISOString().split('T')[0];
+      revenueByDay[key] = { date: key, revenue: 0, orders: 0 };
+      d.setDate(d.getDate() + 1);
+    }
+
+    let totalRevenue = 0;
+    orders.forEach(o => {
+      const key = o.placedAt.toISOString().split('T')[0];
+      if (revenueByDay[key]) {
+        revenueByDay[key].revenue += parseFloat(o.total.toString());
+        revenueByDay[key].orders += 1;
+      }
+      totalRevenue += parseFloat(o.total.toString());
+    });
+
+    const dailyData = Object.values(revenueByDay);
+    const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+
+    return res.json({
+      success: true,
+      data: {
+        totalRevenue,
+        totalOrders: orders.length,
+        avgOrderValue: parseFloat(avgOrderValue.toFixed(2)),
+        dailyData,
+        period,
+      }
+    });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to get revenue analytics' });
+  }
+}
+
+export async function getPeakHoursAnalytics(req: AuthenticatedRequest, res: Response) {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const orders = await prisma.order.findMany({
+      where: { placedAt: { gte: thirtyDaysAgo } },
+      select: { placedAt: true },
+    });
+
+    // Build 7x24 grid: day 0-6 (Sun-Sat), hour 0-23
+    const grid: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
+    orders.forEach(o => {
+      const day = o.placedAt.getDay();
+      const hour = o.placedAt.getHours();
+      grid[day][hour]++;
+    });
+
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const heatmap = grid.map((row, dayIdx) => ({
+      day: days[dayIdx],
+      hours: row.map((count, hour) => ({ hour, count }))
+    }));
+
+    return res.json({ success: true, data: { heatmap } });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to get peak hours' });
+  }
+}
+
+export async function getPaymentAnalytics(req: AuthenticatedRequest, res: Response) {
+  try {
+    const grouped = await prisma.payment.groupBy({
+      by: ['method'],
+      where: { status: 'COMPLETED' },
+      _count: { _all: true },
+      _sum: { amount: true },
+    });
+
+    const data = grouped.map(g => ({
+      method: g.method,
+      count: g._count._all,
+      total: parseFloat(g._sum.amount?.toString() || '0'),
+    }));
+
+    return res.json({ success: true, data });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to get payment analytics' });
+  }
+}
+
+export async function getOrderDetail(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        customer: {
+          select: { id: true, name: true, phone: true, email: true, profilePicture: true }
+        },
+        rider: {
+          select: { id: true, name: true, phone: true, riderProfile: {
+            select: { vehicleNumber: true, vehicleType: true, status: true }
+          }}
+        },
+        address: true,
+        orderItems: {
+          include: { menuItem: { select: { imageUrl: true } } }
+        },
+        payment: true,
+        review: true,
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    return res.json({ success: true, data: order });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to get order detail' });
+  }
+}
+
+export async function updateOrderNotes(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    const { internalNotes } = req.body;
+
+    await prisma.order.update({
+      where: { id },
+      data: { internalNotes: internalNotes || '' }
+    });
+
+    await logAdminAction(req, 'UPDATE_ORDER_NOTES' as any, { orderId: id });
+    return res.json({ success: true, message: 'Notes updated' });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Failed to update notes' });
+  }
+}

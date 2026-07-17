@@ -19,7 +19,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Karachi Naseeb Baryani & Pulao | UCP Branch — Order Online",
+  title: "Karachi Naseeb Baryani & Pulao | UCP Branch - Order Online",
   description:
     "Order fresh, authentic Karachi Baryani and Pulao online from the UCP branch. Fast delivery within 2.2km. Pay via Cash, JazzCash, Easypaisa, or Card.",
   keywords: [
@@ -49,6 +49,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col antialiased">
+        <a href="#main-content" className="skip-nav">Skip to main content</a>
         <Providers>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>

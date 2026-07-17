@@ -1,10 +1,22 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useGoogleMaps } from "@/context/GoogleMapsContext";
 
 const SHOP_LAT = 31.4475531;
 const SHOP_LNG = 74.2690347;
+
+// Focusable elements selector for focus trap
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'area[href]',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  'button:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+  'details > summary',
+].join(',');
 
 interface AddressData {
   label: string;
@@ -39,10 +51,12 @@ export default function AddressModal({
   onCheckingEligibility,
   token,
 }: AddressModalProps) {
-  const { isLoaded } = useGoogleMaps();
+  const { isLoaded, error: mapsLoadError } = useGoogleMaps();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<Element | null>(null);
 
   const [addressLine, setAddressLine] = useState("");
   const [apartment, setApartment] = useState("");
@@ -65,6 +79,80 @@ export default function AddressModal({
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [geocodeFailed, setGeocodeFailed] = useState(false);
+
+  // Store trigger element and handle Escape key + focus trap
+  useEffect(() => {
+    if (isOpen) {
+      // Store the element that triggered the modal
+      triggerRef.current = document.activeElement;
+
+      // Focus first focusable element in dialog on open
+      const timer = setTimeout(() => {
+        const dialog = dialogRef.current;
+        if (dialog) {
+          const firstFocusable = dialog.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+          firstFocusable?.focus();
+        }
+      }, 50);
+
+      return () => clearTimeout(timer);
+    } else {
+      // Restore focus to trigger element on close
+      if (triggerRef.current instanceof HTMLElement) {
+        triggerRef.current.focus();
+        triggerRef.current = null;
+      }
+    }
+  }, [isOpen]);
+
+  // Escape key handler + focus trap
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+        const visible = focusable.filter(el => !el.closest('[hidden]'));
+        if (visible.length === 0) return;
+
+        const first = visible[0];
+        const last = visible[visible.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
 
   // Initialize map & the new Places Autocomplete element
   useEffect(() => {
@@ -132,10 +220,9 @@ export default function AddressModal({
         });
 
         autocomplete.setAttribute("placeholder", "Search for your society, street, or hostel...");
-        autocomplete.addEventListener("gmp-placeselect", async (event: any) => {
-          const place = event.place;
-          if (!place) return;
 
+        const applyPlace = async (place: any) => {
+          if (!place) return;
           try {
             await place.fetchFields({
               fields: ["displayName", "formattedAddress", "location", "id", "addressComponents"],
@@ -151,22 +238,39 @@ export default function AddressModal({
             setError("");
             setGeocodeFailed(false);
 
-            // Extract components
             extractNewAddressComponents(place.addressComponents);
 
-            // Center map & pin
             mapInstance.setCenter({ lat, lng });
             marker.setPosition({ lat, lng });
 
-            // Check eligibility
             checkDeliveryRadius(lat, lng);
-          } catch (err) {
+          } catch {
             setError("Could not get location details for this place.");
+          }
+        };
+
+        // Current Places API (New) event
+        autocomplete.addEventListener("gmp-select", async (event: any) => {
+          try {
+            const prediction = event.placePrediction;
+            if (prediction?.toPlace) {
+              const place = prediction.toPlace();
+              await applyPlace(place);
+              return;
+            }
+            if (event.place) await applyPlace(event.place);
+          } catch {
+            setError("Could not select this place.");
           }
         });
 
+        // Legacy fallback for older Places Autocomplete Element builds
+        autocomplete.addEventListener("gmp-placeselect", async (event: any) => {
+          await applyPlace(event.place);
+        });
+
         container.appendChild(autocomplete);
-      } catch (err) {
+      } catch {
         setError("Places Autocomplete library failed to load.");
       }
     };
@@ -250,7 +354,7 @@ export default function AddressModal({
         setIsDeliverable(false);
         setError(data.error || "Could not check delivery eligibility.");
       }
-    } catch (err) {
+    } catch {
       setIsDeliverable(false);
       setError("Network error checking delivery eligibility.");
     } finally {
@@ -355,47 +459,115 @@ export default function AddressModal({
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fp-modal-backdrop" onClick={onClose}>
+    <div
+      className="fp-modal-backdrop"
+      onClick={handleBackdropClick}
+      role="presentation"
+    >
       <section
+        ref={dialogRef}
         className="fp-address-modal"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="address-modal-title"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="fp-modal-head">
           <div>
-            <h2>📍 Delivery Address</h2>
+            <h2 id="address-modal-title">Delivery Address</h2>
             <p>Search and select your delivery location</p>
           </div>
-          <button onClick={onClose} aria-label="Close">
+          <button
+            onClick={onClose}
+            aria-label="Close delivery address dialog"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "36px",
+              height: "36px",
+              borderRadius: "var(--radius-full)",
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--border-color)",
+              color: "var(--text-secondary)",
+              fontSize: "1.1rem",
+              cursor: "pointer",
+              flexShrink: 0,
+              transition: "all var(--transition-fast)",
+            }}
+          >
             ✕
           </button>
         </div>
 
         {error && (
-          <div style={{ padding: "12px 16px", backgroundColor: "#FEE2E2", borderRadius: "12px", color: "#B91C1C", fontSize: "14px", marginBottom: "16px" }}>
+          <div
+            role="alert"
+            aria-live="assertive"
+            style={{
+              padding: "12px 16px",
+              backgroundColor: "color-mix(in srgb, var(--error) 10%, var(--bg-card))",
+              borderRadius: "var(--radius-md)",
+              color: "var(--error)",
+              fontSize: "14px",
+              marginBottom: "16px",
+              border: "1px solid color-mix(in srgb, var(--error) 28%, var(--border-color))",
+            }}
+          >
             {error}
+          </div>
+        )}
+
+        {mapsLoadError && (
+          <div
+            role="alert"
+            style={{
+              padding: "12px 16px",
+              backgroundColor: "var(--surface)",
+              borderRadius: "var(--radius-md)",
+              color: "var(--warning)",
+              fontSize: "14px",
+              marginBottom: "16px",
+              border: "1px solid var(--border-color)",
+            }}
+          >
+            {mapsLoadError}
+          </div>
+        )}
+
+        {!isLoaded && !mapsLoadError && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{ padding: "12px 16px", color: "var(--text-secondary)", fontSize: "14px", marginBottom: "12px" }}
+          >
+            Loading Google Maps…
           </div>
         )}
 
         {geocodeFailed && (
           <div
+            role="alert"
             style={{
               padding: "14px 16px",
-              backgroundColor: "#FEF3C7",
-              borderRadius: "12px",
+              backgroundColor: "var(--surface)",
+              borderRadius: "var(--radius-md)",
               marginBottom: "16px",
-              borderLeft: "4px solid #D97706",
+              borderLeft: "4px solid var(--saffron)",
               display: "flex",
               flexDirection: "column",
               gap: "10px",
             }}
           >
-            <strong style={{ color: "#92400E", display: "block" }}>
+            <strong style={{ color: "var(--warning)", display: "block" }}>
               Unable to determine address
             </strong>
-            <span style={{ color: "#92400E", fontSize: "14px" }}>
+            <span style={{ color: "var(--warning)", fontSize: "14px" }}>
               We could not find a readable address for this location. Please try again or use the search bar above.
             </span>
             <button
@@ -404,10 +576,10 @@ export default function AddressModal({
               style={{
                 alignSelf: "flex-start",
                 padding: "8px 16px",
-                borderRadius: "8px",
-                border: "1px solid #D97706",
-                backgroundColor: "#FFFBEB",
-                color: "#D97706",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--saffron)",
+                backgroundColor: "var(--bg-card)",
+                color: "var(--saffron-dark)",
                 cursor: "pointer",
                 fontSize: "13px",
                 fontWeight: 600,
@@ -419,45 +591,54 @@ export default function AddressModal({
         )}
 
         {/* Search address using Places Autocomplete Element (New) */}
-        <label className="fp-field">
-          <span style={{ fontWeight: 600, display: "block", marginBottom: "8px" }}>
+        <div className="fp-field">
+          <label
+            htmlFor="places-autocomplete-container"
+            style={{ fontWeight: 700, display: "block", marginBottom: "8px", fontSize: "0.875rem" }}
+          >
             Search Address
-          </span>
+          </label>
           <div id="places-autocomplete-container" style={{ width: "100%" }} />
-        </label>
+        </div>
 
         {/* Selected address display */}
         {addressLine && (
           <div
+            role="status"
+            aria-live="polite"
             style={{
               padding: "12px",
-              backgroundColor: "#F0FDF4",
-              borderRadius: "12px",
+              backgroundColor: "color-mix(in srgb, var(--success) 11%, var(--bg-card))",
+              borderRadius: "var(--radius-md)",
               marginBottom: "16px",
-              borderLeft: "4px solid #22C55E",
+              borderLeft: "4px solid var(--success)",
             }}
           >
-            <strong style={{ color: "#166534", display: "block", marginBottom: "4px" }}>
+            <strong style={{ color: "var(--success)", display: "block", marginBottom: "4px" }}>
               Selected Address
             </strong>
-            <span style={{ color: "#166534", fontSize: "14px" }}>{addressLine}</span>
+            <span style={{ color: "var(--success)", fontSize: "14px" }}>{addressLine}</span>
           </div>
         )}
 
         {/* Delivery status */}
         {isDeliverable !== null && (
           <div
+            role="status"
+            aria-live="polite"
             style={{
               padding: "12px",
-              backgroundColor: isDeliverable ? "#D1FAE5" : "#FEE2E2",
-              borderRadius: "12px",
+              backgroundColor: isDeliverable
+                ? "color-mix(in srgb, var(--success) 12%, var(--bg-card))"
+                : "color-mix(in srgb, var(--error) 12%, var(--bg-card))",
+              borderRadius: "var(--radius-md)",
               marginBottom: "16px",
-              borderLeft: `4px solid ${isDeliverable ? "#10B981" : "#DC2626"}`,
+              borderLeft: `4px solid ${isDeliverable ? "var(--success)" : "var(--error)"}`,
             }}
           >
             <strong
               style={{
-                color: isDeliverable ? "#065F46" : "#7F1D1D",
+                color: isDeliverable ? "var(--success)" : "var(--error)",
                 display: "block",
                 marginBottom: "4px",
               }}
@@ -466,7 +647,7 @@ export default function AddressModal({
             </strong>
             <span
               style={{
-                color: isDeliverable ? "#047857" : "#B91C1C",
+                color: isDeliverable ? "var(--success)" : "var(--error)",
                 fontSize: "14px",
                 display: "block",
               }}
@@ -481,115 +662,154 @@ export default function AddressModal({
         <div
           style={{
             height: "280px",
-            borderRadius: "16px",
+            borderRadius: "var(--radius-lg)",
             overflow: "hidden",
             marginBottom: "16px",
-            border: "1px solid #E5E7EB",
+            border: "1px solid var(--border-color)",
           }}
+          aria-label="Delivery location map — drag the marker or click to adjust"
         >
           <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
         </div>
 
         {/* Optional details */}
         <div className="fp-two" style={{ marginBottom: "16px" }}>
-          <label className="fp-field">
-            <span style={{ fontWeight: 600, display: "block", marginBottom: "4px" }}>
-              Apartment/Floor (Optional)
-            </span>
+          <div className="fp-field">
+            <label
+              htmlFor="address-apartment"
+              style={{ fontWeight: 600, display: "block", marginBottom: "4px", fontSize: "0.875rem" }}
+            >
+              Apartment / Floor <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(Optional)</span>
+            </label>
             <input
+              id="address-apartment"
               className="fp-input"
               value={apartment}
               onChange={(e) => setApartment(e.target.value)}
               placeholder="e.g., Apt 5, Floor 3"
+              autoComplete="address-line2"
             />
-          </label>
-          <label className="fp-field">
-            <span style={{ fontWeight: 600, display: "block", marginBottom: "4px" }}>
-              Landmark (Optional)
-            </span>
+          </div>
+          <div className="fp-field">
+            <label
+              htmlFor="address-landmark"
+              style={{ fontWeight: 600, display: "block", marginBottom: "4px", fontSize: "0.875rem" }}
+            >
+              Landmark <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(Optional)</span>
+            </label>
             <input
+              id="address-landmark"
               className="fp-input"
               value={landmark}
               onChange={(e) => setLandmark(e.target.value)}
               placeholder="e.g., Near mosque"
             />
-          </label>
+          </div>
         </div>
 
         {/* Delivery note */}
-        <label className="fp-field" style={{ marginBottom: "16px" }}>
-          <span style={{ fontWeight: 600, display: "block", marginBottom: "4px" }}>
-            Delivery Note (Optional)
-          </span>
+        <div className="fp-field" style={{ marginBottom: "16px" }}>
+          <label
+            htmlFor="address-delivery-note"
+            style={{ fontWeight: 600, display: "block", marginBottom: "4px", fontSize: "0.875rem" }}
+          >
+            Delivery Note <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(Optional)</span>
+          </label>
           <textarea
+            id="address-delivery-note"
             className="fp-input"
             value={deliveryNote}
             onChange={(e) => setDeliveryNote(e.target.value)}
             placeholder="e.g., Call before arriving, Ring 3 times"
             style={{ minHeight: "80px" }}
           />
-        </label>
+        </div>
 
-        {/* Address labels */}
-        <div style={{ marginBottom: "16px" }}>
-          <span style={{ fontWeight: 600, display: "block", marginBottom: "8px" }}>
+        {/* Address type buttons */}
+        <fieldset style={{ marginBottom: "16px", border: "none", padding: 0, margin: "0 0 16px" }}>
+          <legend style={{ fontWeight: 700, display: "block", marginBottom: "10px", fontSize: "0.875rem", color: "var(--text-primary)" }}>
             Address Type
-          </span>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
-            {["Home", "Work", "Hostel", "Other"].map((type) => (
+          </legend>
+          <div className="fp-address-type-grid">
+            {(["Home", "Work", "Hostel", "Other"] as const).map((type) => (
               <button
                 key={type}
+                type="button"
                 onClick={() => setLabel(type)}
+                aria-pressed={label === type}
                 style={{
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: label === type ? "2px solid #D97706" : "1px solid #E5E7EB",
-                  backgroundColor: label === type ? "#FEF3C7" : "#F9FAFB",
+                  padding: "10px 12px",
+                  borderRadius: "var(--radius-md)",
+                  border: label === type
+                    ? "2px solid var(--saffron)"
+                    : "1.5px solid var(--border-color)",
+                  backgroundColor: label === type
+                    ? "color-mix(in srgb, var(--saffron) 12%, var(--bg-card))"
+                    : "var(--bg-card)",
+                  color: label === type ? "var(--saffron-dark)" : "var(--text-primary)",
                   cursor: "pointer",
-                  fontWeight: label === type ? 600 : 500,
-                  fontSize: "14px",
+                  fontWeight: label === type ? 700 : 500,
+                  fontSize: "0.875rem",
+                  transition: "all var(--transition-fast)",
                 }}
               >
                 {type}
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         {/* Actions */}
-        <div className="fp-modal-actions" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
           <button
+            type="button"
             onClick={handleUseCurrentLocation}
             disabled={checking}
             style={{
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #D1D5DB",
-              backgroundColor: "#F9FAFB",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: 500,
+              padding: "13px 16px",
+              borderRadius: "var(--radius-md)",
+              border: "1.5px solid var(--border-color)",
+              backgroundColor: "var(--bg-card)",
+              color: "var(--text-primary)",
+              cursor: checking ? "not-allowed" : "pointer",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              transition: "all var(--transition-fast)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
+            aria-busy={checking}
           >
-            {checking ? "Locating..." : "📍 Use Current Location"}
+            <span aria-hidden="true">📍</span>
+            {checking ? "Locating…" : "Use My Location"}
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={!addressLine.trim() || isDeliverable === false || isSaving || geocodeFailed}
             style={{
-              padding: "12px",
-              borderRadius: "8px",
+              padding: "13px 16px",
+              borderRadius: "var(--radius-md)",
               backgroundColor:
-                !addressLine.trim() || isDeliverable === false || geocodeFailed ? "#D1D5DB" : "#D97706",
-              color: "#FFFFFF",
+                !addressLine.trim() || isDeliverable === false || geocodeFailed
+                  ? "color-mix(in srgb, var(--text-muted) 30%, var(--bg-card))"
+                  : "var(--saffron)",
+              color:
+                !addressLine.trim() || isDeliverable === false || geocodeFailed
+                  ? "var(--text-secondary)"
+                  : "#FFFFFF",
               border: "none",
               cursor:
                 !addressLine.trim() || isDeliverable === false || geocodeFailed ? "not-allowed" : "pointer",
-              fontSize: "14px",
-              fontWeight: 600,
+              fontSize: "0.875rem",
+              fontWeight: 700,
+              transition: "all var(--transition-fast)",
             }}
+            aria-busy={isSaving}
           >
-            {isSaving ? "Saving..." : "Confirm Address"}
+            {isSaving ? "Saving…" : "Confirm Address"}
           </button>
         </div>
       </section>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,13 +9,14 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Dimensions,
-  Platform
+  Platform,
 } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useCart } from "../../contexts/CartContext";
-import { apiGet } from "../../api/client";
-import { MenuItem, Category } from "../../types";
+import { MenuService, Banner } from "../../services/menu.service";
+import { OrderService } from "../../services/order.service";
+import { MenuItem, Category, Order } from "../../types";
 import FoodCard from "../../components/FoodCard";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -28,8 +29,13 @@ export default function HomeScreen({ navigation }: any) {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>("");
+
+  const bannerRef = useRef<FlatList>(null);
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
 
   useEffect(() => {
     fetchHomeData();
@@ -38,16 +44,21 @@ export default function HomeScreen({ navigation }: any) {
   const fetchHomeData = async () => {
     try {
       setLoading(true);
-      const [catsRes, menuRes]: any = await Promise.all([
-        apiGet("/menu/categories"),
-        apiGet("/menu?featured=true")
+      const [cats, featured, bannerList, orders] = await Promise.all([
+        MenuService.getCategories(),
+        MenuService.getFeaturedItems(),
+        MenuService.getBanners(),
+        user ? OrderService.getOrders() : Promise.resolve([]),
       ]);
       
-      if (catsRes && catsRes.data) setCategories(catsRes.data);
-      if (menuRes && menuRes.data) setFeaturedItems(menuRes.data);
+      setCategories(cats);
+      setFeaturedItems(featured);
+      setBanners(bannerList);
+      if (orders && orders.length > 0) {
+        setRecentOrders(orders.slice(0, 2));
+      }
     } catch (err) {
       console.warn("Failed to retrieve live catalog. Using fallback stubs.");
-      // Fallback
       setCategories([
         { id: "1", name: "Biryani", isActive: true, sortOrder: 1 },
         { id: "2", name: "Pulao", isActive: true, sortOrder: 2 },
@@ -66,11 +77,16 @@ export default function HomeScreen({ navigation }: any) {
     return "Good evening! 🌙";
   };
 
-  // Mock banners
-  const banners = [
-    { id: "b1", title: "Naseeb Special Biryani", desc: "Traditional Karachi Spices cooked fresh", color: ["#7C2D12", "#D97706"] },
-    { id: "b2", title: "Free Delivery", desc: "On orders above Rs. 500+", color: ["#14532D", "#16A34A"] },
-  ];
+  // Auto scroll for banners
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const interval = setInterval(() => {
+      const nextIndex = (activeBannerIndex + 1) % banners.length;
+      setActiveBannerIndex(nextIndex);
+      bannerRef.current?.scrollToIndex({ animated: true, index: nextIndex });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [activeBannerIndex, banners]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -100,26 +116,46 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Promo Slider Banner */}
-        <View style={styles.section}>
-          <FlatList
-            data={banners}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={width - 48}
-            decelerationRate="fast"
-            contentContainerStyle={{ paddingRight: 24 }}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={[styles.bannerCard, { backgroundColor: colors.cardBg, shadowColor: colors.shadow }]}>
-                <View style={[styles.bannerInner, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.bannerTitle}>{item.title}</Text>
-                  <Text style={styles.bannerSubtitle}>{item.desc}</Text>
+        {/* Promo Slider Banner Carousel */}
+        {banners.length > 0 && (
+          <View style={styles.section}>
+            <FlatList
+              ref={bannerRef}
+              data={banners}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              pagingEnabled
+              snapToInterval={width - 48}
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingRight: 24 }}
+              keyExtractor={(item) => item.id}
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / (width - 48));
+                setActiveBannerIndex(index);
+              }}
+              renderItem={({ item }) => (
+                <View style={[styles.bannerCard, { backgroundColor: colors.cardBg, shadowColor: colors.shadow }]}>
+                  <View style={[styles.bannerInner, { backgroundColor: colors.primary }]}>
+                    <Text style={styles.bannerTitle}>{item.title}</Text>
+                    {item.subtitle && <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>}
+                  </View>
                 </View>
-              </View>
-            )}
-          />
-        </View>
+              )}
+            />
+            {/* Carousel Dots */}
+            <View style={styles.dotsContainer}>
+              {banners.map((_, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.dot,
+                    { backgroundColor: idx === activeBannerIndex ? colors.primary : colors.border },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Categories Tab selector */}
         <View style={styles.section}>
@@ -180,6 +216,28 @@ export default function HomeScreen({ navigation }: any) {
             />
           )}
         </View>
+
+        {/* Recent Orders Strip */}
+        {recentOrders.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Orders</Text>
+            {recentOrders.map((order) => (
+              <TouchableOpacity
+                key={order.id}
+                style={[styles.recentOrderCard, { backgroundColor: colors.cardBg, borderColor: colors.border }]}
+                onPress={() => navigation.navigate("OrderDetail", { orderId: order.id })}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.recentOrderTitle, { color: colors.textPrimary }]}>Order #{order.id.slice(-6).toUpperCase()}</Text>
+                  <Text style={[styles.recentOrderDate, { color: colors.textSecondary }]}>
+                    {new Date(order.placedAt).toLocaleDateString()} · Rs. {order.total}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Restaurant Status Card */}
         <View style={[styles.statusCard, { backgroundColor: colors.cardBg, shadowColor: colors.shadow }]}>
@@ -294,6 +352,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 4,
   },
+  dotsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+    gap: 6,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
   categoriesScroll: {
     paddingHorizontal: 24,
     gap: 8,
@@ -308,6 +378,23 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 13,
     fontWeight: "600",
+  },
+  recentOrderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginHorizontal: 24,
+    marginBottom: 8,
+  },
+  recentOrderTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  recentOrderDate: {
+    fontSize: 12,
+    marginTop: 2,
   },
   statusCard: {
     marginHorizontal: 24,

@@ -75,8 +75,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   // Render standard Customer/Guest Layout
   return (
     <>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <Navbar />
-      <main className="flex-1 page-offset">{children}</main>
+      <main id="main-content" className="flex-1 page-offset">{children}</main>
       <Footer />
     </>
   );

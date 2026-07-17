@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -177,10 +177,16 @@ export default function ProfileScreen({ navigation }: any) {
       onPress: () => navigation.navigate("Orders")
     },
     {
-      icon: "star-outline" as const,
-      label: "Loyalty Points",
+      icon: "notifications-outline" as const,
+      label: "Notifications Inbox",
+      subtitle: "Alerts, coupons and status updates",
+      onPress: () => navigation.navigate("Notifications")
+    },
+    {
+      icon: "gift-outline" as const,
+      label: "Loyalty Points Balance",
       subtitle: `${user?.loyaltyPoints || 0} points`,
-      onPress: () => Alert.alert("Loyalty Points", `You have ${user?.loyaltyPoints || 0} loyalty points.`)
+      onPress: () => navigation.navigate("Loyalty")
     },
     {
       icon: "help-circle-outline" as const,

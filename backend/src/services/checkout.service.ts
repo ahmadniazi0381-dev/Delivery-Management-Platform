@@ -117,10 +117,15 @@ async function getVerifiedCustomer(userId: string) {
     (err as any).status = 403;
     throw err;
   }
-  if (!user.phoneVerified) {
-    const err = new Error('Phone number verification is required before placing an order.');
+  if (!user.phone || !user.phoneVerified) {
+    const err = new Error(
+      !user.phone
+        ? 'Add and verify a phone number before placing an order.'
+        : 'Phone number verification is required before placing an order.'
+    );
     (err as any).status = 403;
     (err as any).requirePhoneVerification = true;
+    (err as any).requirePhone = !user.phone;
     throw err;
   }
   return user;

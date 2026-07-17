@@ -161,12 +161,13 @@ model User {
   id                  String            @id @default(uuid())
   name                String
   email               String?           @unique
-  phone               String            @unique
+  phone               String?           @unique
   passwordHash        String?
   role                Role              @default(CUSTOMER)
   phoneVerified       Boolean           @default(false)
   googleId            String?           @unique
   profilePicture      String?
+  pushToken           String?
   referralCode        String?           @unique
   loyaltyPoints       Int               @default(0)
   blockedAt           DateTime?
@@ -325,6 +326,7 @@ model Order {
   cancelledAt              DateTime?
   rejectedAt               DateTime?
   specialInstructions      String?
+  internalNotes            String?       @db.Text
   estimatedDeliveryMinutes Int           @default(30)
   couponCode               String?
   recipientName            String?

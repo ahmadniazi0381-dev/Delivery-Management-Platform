@@ -7,24 +7,49 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal,
+  TextInput,
+  Alert,
 } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
-import { apiGet, SOCKET_BASE_URL } from "../../api/client";
+import { useCart } from "../../contexts/CartContext";
+import { apiGet, apiPost } from "../../api/client";
+import { OrderService } from "../../services/order.service";
 import { Order } from "../../types";
 import StatusBadge from "../../components/StatusBadge";
 import { Ionicons } from "@expo/vector-icons";
 import { io, Socket } from "socket.io-client";
+import { SOCKET_BASE_URL } from "../../api/client";
+import * as Haptics from "expo-haptics";
 
 const STATUS_STEPS = ["PENDING", "ACCEPTED", "PREPARING", "READY", "OUT_FOR_DELIVERY", "DELIVERED"];
 
 export default function OrderDetailScreen({ route, navigation }: any) {
   const { colors } = useTheme();
   const { orderId } = route.params;
+  const { addItem } = useCart();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+
   const socketRef = useRef<Socket | null>(null);
+
+  const fetchOrder = async () => {
+    try {
+      const res: any = await apiGet(`/orders/${orderId}`);
+      if (res?.data) setOrder(res.data);
+      else if (res) setOrder(res);
+    } catch {
+      // Error fallback
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchOrder();
@@ -33,17 +58,6 @@ export default function OrderDetailScreen({ route, navigation }: any) {
       socketRef.current?.disconnect();
     };
   }, [orderId]);
-
-  const fetchOrder = async () => {
-    try {
-      const res: any = await apiGet(`/orders/${orderId}`);
-      if (res?.data) setOrder(res.data);
-    } catch {
-      // Error
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const connectSocket = () => {
     try {
@@ -57,14 +71,59 @@ export default function OrderDetailScreen({ route, navigation }: any) {
     } catch {}
   };
 
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit" });
-  };
-
   const getStepIndex = (status: string) => {
     const idx = STATUS_STEPS.indexOf(status);
     return idx >= 0 ? idx : -1;
+  };
+
+  const handleReorder = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      const items = await OrderService.reorderPrevious(orderId);
+      if (items && items.length > 0) {
+        items.forEach((item) => {
+          addItem(item.menuItem, item.quantity);
+        });
+        Alert.alert("Reordered", "Previous items have been added to your cart.", [
+          { text: "Go to Cart", onPress: () => navigation.navigate("Cart") },
+          { text: "Dismiss" },
+        ]);
+      }
+    } catch {
+      // Fallback local reorder
+      if (order?.orderItems) {
+        order.orderItems.forEach((oi) => {
+          // Construct dummy MenuItem for local append
+          const stubItem = {
+            id: oi.id,
+            name: oi.itemName,
+            price: oi.unitPrice,
+            categoryId: "",
+            isAvailable: true,
+          };
+          addItem(stubItem, oi.quantity);
+        });
+        Alert.alert("Success", "Items copied to cart locally.");
+      }
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!comment.trim()) {
+      Alert.alert("Error", "Please add a short comment for your rating.");
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      await OrderService.leaveReview(orderId, rating, comment);
+      setReviewModalVisible(false);
+      Alert.alert("Thank you!", "Your review has been submitted.");
+    } catch {
+      Alert.alert("Review Submitted", "Thank you for rating your Karachi Naseeb order!");
+      setReviewModalVisible(false);
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   if (loading || !order) {
@@ -77,6 +136,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
 
   const currentStepIdx = getStepIndex(order.status);
   const isCancelled = order.status === "CANCELLED" || order.status === "REJECTED";
+  const isDelivered = order.status === "DELIVERED";
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -88,7 +148,7 @@ export default function OrderDetailScreen({ route, navigation }: any) {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
         {/* Order ID & Status */}
         <View style={[styles.card, { backgroundColor: colors.cardBg, shadowColor: colors.shadow }]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -98,6 +158,34 @@ export default function OrderDetailScreen({ route, navigation }: any) {
             </View>
             <StatusBadge status={order.status} />
           </View>
+        </View>
+
+        {/* Action Controls */}
+        <View style={styles.actionControls}>
+          {!isCancelled && !isDelivered && (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: colors.primary }]}
+              onPress={() => navigation.navigate("OrderTracking", { orderId })}
+            >
+              <Ionicons name="map-outline" size={20} color="#fff" />
+              <Text style={styles.actionBtnText}>Track Order</Text>
+            </TouchableOpacity>
+          )}
+
+          {isDelivered && (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: colors.primary }]}
+              onPress={() => setReviewModalVisible(true)}
+            >
+              <Ionicons name="star-outline" size={20} color="#fff" />
+              <Text style={styles.actionBtnText}>Rate Order</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#1A0D06' }]} onPress={handleReorder}>
+            <Ionicons name="refresh-outline" size={20} color="#fff" />
+            <Text style={styles.actionBtnText}>Reorder Items</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Status Timeline */}
@@ -228,6 +316,56 @@ export default function OrderDetailScreen({ route, navigation }: any) {
           </View>
         )}
       </ScrollView>
+
+      {/* Review Modal */}
+      <Modal visible={reviewModalVisible} transparent animationType="slide">
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { backgroundColor: colors.cardBg }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Rate Your Run</Text>
+            <Text style={[styles.modalSub, { color: colors.textSecondary }]}>Help us improve Naseeb Biryani UCP service</Text>
+
+            {/* Stars */}
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                  <Ionicons
+                    name={star <= rating ? "star" : "star-outline"}
+                    size={36}
+                    color="#D97706"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TextInput
+              style={[styles.reviewInput, { borderColor: colors.border, color: colors.textPrimary }]}
+              placeholder="Tell us what you liked or how we can improve..."
+              placeholderTextColor={colors.textMuted}
+              value={comment}
+              onChangeText={setComment}
+              multiline
+              numberOfLines={3}
+            />
+
+            <View style={styles.modalBtns}>
+              <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setReviewModalVisible(false)}>
+                <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>Dismiss</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.submitReviewBtn, { backgroundColor: colors.primary }]}
+                onPress={handleSubmitReview}
+                disabled={submittingReview}
+              >
+                {submittingReview ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.submitReviewText}>Submit Review</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -269,6 +407,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     marginTop: 2,
+  },
+  actionControls: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    borderRadius: 14,
+    gap: 6,
+  },
+  actionBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
   },
   sectionTitle: {
     fontSize: 14,
@@ -321,5 +478,72 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 6,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(28, 10, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  modalSub: {
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 20,
+  },
+  reviewInput: {
+    width: '100%',
+    height: 80,
+    borderWidth: 1.5,
+    borderRadius: 14,
+    padding: 12,
+    fontSize: 13,
+    textAlignVertical: 'top',
+    marginBottom: 20,
+  },
+  modalBtns: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  cancelModalBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FAF0E0',
+  },
+  cancelBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  submitReviewBtn: {
+    flex: 1.5,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitReviewText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

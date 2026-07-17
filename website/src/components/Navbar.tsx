@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -294,23 +295,48 @@ export default function Navbar() {
               </Link>
             )}
             {user && (
-              <button
-                onClick={() => { logout(); setMenuOpen(false); }}
-                style={{
-                  width: "100%",
-                  marginTop: "8px",
-                  padding: "12px 16px",
-                  borderRadius: "var(--radius-md)",
-                  fontWeight: 600,
-                  color: "#EF4444",
-                  background: "rgba(239, 68, 68, 0.08)",
-                  border: "none",
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-              >
-                Logout
-              </button>
+              <>
+                <Link
+                  href="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  style={{
+                    display: 'block',
+                    padding: '12px 16px',
+                    borderRadius: 'var(--radius-md)',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    background: 'transparent',
+                    marginBottom: '4px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  👤 Profile
+                </Link>
+                <Link
+                  href="/orders"
+                  onClick={() => setMenuOpen(false)}
+                  style={{ display: 'block', padding: '12px 16px', borderRadius: 'var(--radius-md)', fontWeight: 500, color: 'var(--text-secondary)', background: 'transparent', marginBottom: '4px', textDecoration: 'none' }}
+                >
+                  📦 My Orders
+                </Link>
+                <button
+                  onClick={() => { logout(); setMenuOpen(false); }}
+                  style={{
+                    width: "100%",
+                    marginTop: "8px",
+                    padding: "12px 16px",
+                    borderRadius: "var(--radius-md)",
+                    fontWeight: 600,
+                    color: "#EF4444",
+                    background: "rgba(239, 68, 68, 0.08)",
+                    border: "none",
+                    cursor: "pointer",
+                    textAlign: "center",
+                  }}
+                >
+                  Logout
+                </button>
+              </>
             )}
           </div>
         )}
@@ -329,14 +355,15 @@ export default function Navbar() {
   );
 }
 
-// ── Inline Logo Mark (Image) ──────────────────────────────────
+// ── Inline Logo Mark (Next Image) ────────────────────────────
 function LogoMark({ size = 40 }: { size?: number }) {
   return (
-    <img
+    <Image
       src="/logo.jpg"
-      alt="Logo"
+      alt="Karachi Naseeb Baryani logo"
       width={size}
       height={size}
+      priority
       style={{
         borderRadius: "50%",
         border: "1.5px solid var(--saffron, #D97706)",

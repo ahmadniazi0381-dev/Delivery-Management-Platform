@@ -8,7 +8,7 @@ import { useSocket } from "@/context/SocketContext";
 import { useOrderAlerts } from "./hooks/useOrderAlerts";
 import { ToastProvider, useToast } from "@/components/AdminToast";
 import {
-  TrendingUp,
+  LayoutDashboard,
   ShoppingBag,
   Users,
   Utensils,
@@ -18,17 +18,19 @@ import {
   LogOut,
   Bell,
   ChevronLeft,
+  Bike,
+  BarChart2,
 } from "lucide-react";
 
 // ─── Navigation links ─────────────────────────────────────────────────────────
 
 const ADMIN_LINKS = [
-  { href: "/dashboard",           label: "Dashboard",          icon: TrendingUp },
+  { href: "/dashboard",           label: "Dashboard",          icon: LayoutDashboard },
   { href: "/dashboard/orders",    label: "Orders",             icon: ShoppingBag },
   { href: "/dashboard/menu",      label: "Menu & Categories",  icon: Utensils },
   { href: "/dashboard/customers", label: "Customers",          icon: Users },
-  { href: "/dashboard/riders",    label: "Riders",             icon: Users },
-  { href: "/dashboard/reports",   label: "Reports & Analytics",icon: TrendingUp },
+  { href: "/dashboard/riders",    label: "Riders",             icon: Bike },
+  { href: "/dashboard/reports",   label: "Reports & Analytics",icon: BarChart2 },
   { href: "/dashboard/settings",  label: "Settings",           icon: Settings },
 ];
 
@@ -191,15 +193,16 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                     display: "flex",
                     alignItems: "center",
                     gap: "12px",
-                    padding: "12px",
+                    padding: "12px 12px 12px 8px",
                     borderRadius: "8px",
                     color: active ? "var(--saffron)" : "var(--text-secondary)",
-                    background: active ? "rgba(217,119,6,0.1)" : "transparent",
+                    background: active ? "rgba(217,119,6,0.08)" : "transparent",
                     fontWeight: active ? 600 : 500,
                     textDecoration: "none",
                     transition: "all 0.2s ease",
                     justifyContent: collapsed ? "center" : "flex-start",
                     position: "relative",
+                    borderLeft: active ? "3px solid var(--saffron)" : "3px solid transparent",
                   }}
                   title={collapsed ? link.label : undefined}
                 >

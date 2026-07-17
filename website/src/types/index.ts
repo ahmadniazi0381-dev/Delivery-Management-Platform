@@ -47,9 +47,12 @@ export interface Address {
 export interface User {
   id: number | string;
   name: string;
-  email?: string;
-  phone: string;
-  isPhoneVerified: boolean;
+  email?: string | null;
+  phone?: string | null;
+  /** Canonical flag from API */
+  phoneVerified?: boolean;
+  /** Legacy alias used by some UI pages */
+  isPhoneVerified?: boolean;
   addresses?: Address[];
   role?: "CUSTOMER" | "ADMIN" | "RIDER";
   permissions?: string[];

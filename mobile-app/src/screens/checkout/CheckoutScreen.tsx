@@ -102,7 +102,8 @@ export default function CheckoutScreen({ navigation, route }: any) {
 
   const grandTotal = totalPrice + currentDeliveryFee;
   const mapRef = React.useRef<MapView>(null);
-  const canPlaceOrder = deliveryEligible !== false && enabledPaymentMethods.includes(paymentMethod);
+  const phoneReady = !!(user?.phone && user.phoneVerified);
+  const canPlaceOrder = deliveryEligible !== false && enabledPaymentMethods.includes(paymentMethod) && phoneReady;
 
   useEffect(() => {
     fetchEnabledPaymentMethods();
@@ -267,6 +268,13 @@ export default function CheckoutScreen({ navigation, route }: any) {
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       Alert.alert("Select Address", "Please select a delivery address.");
+      return;
+    }
+    if (!phoneReady) {
+      Alert.alert(
+        "Phone verification required",
+        "Add and verify your phone number in Profile before placing an order."
+      );
       return;
     }
     if (!deliveryEligible) {
@@ -570,6 +578,20 @@ export default function CheckoutScreen({ navigation, route }: any) {
             <Text style={{ color: colors.primary, fontSize: 18, fontWeight: "700" }}>Rs. {grandTotal}</Text>
           </View>
         </View>
+
+        {!phoneReady && (
+          <TouchableOpacity
+            style={[styles.phoneGate, { backgroundColor: colors.surface, borderColor: colors.primary }]}
+            onPress={() => navigation.navigate("Profile")}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="call-outline" size={20} color={colors.primary} />
+            <Text style={[styles.phoneGateText, { color: colors.textPrimary }]}>
+              Phone verification is required to place orders. Tap here to add & verify your phone number in Profile.
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {/* Place Order CTA */}
@@ -584,7 +606,9 @@ export default function CheckoutScreen({ navigation, route }: any) {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
-              <Text style={styles.orderBtnText}>Place Order — Rs. {grandTotal}</Text>
+              <Text style={styles.orderBtnText}>
+                {phoneReady ? `Place Order - Rs. ${grandTotal}` : "Verify phone to order"}
+              </Text>
               <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
             </>
           )}
@@ -654,6 +678,21 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginTop: 10,
+  },
+  phoneGate: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+    borderWidth: 1,
+    borderRadius: 14,
+    marginTop: 18,
+  },
+  phoneGateText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "600",
   },
   paymentOption: {
     flexDirection: "row",

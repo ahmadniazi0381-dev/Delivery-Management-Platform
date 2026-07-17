@@ -23,7 +23,7 @@ export default function FAQPage() {
     },
     {
       q: "What payment methods do you accept?",
-      a: "We accept Cash on Delivery (COD), Direct Bank Transfer, JazzCash, Easypaisa, and Credit/Debit Cards. For bank transfers, you must enter your transaction reference number on checkout for manual confirmation."
+      a: "We accept Cash on Delivery (COD), JazzCash, Easypaisa, and Credit/Debit Cards. All digital payments are processed securely before your order is confirmed."
     },
     {
       q: "Can I cancel my order?",
@@ -55,56 +55,129 @@ export default function FAQPage() {
         
         {/* Title */}
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
-          <div className="section-tag" style={{ display: "inline-block" }}>❓ Support Help</div>
-          <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: "2.25rem", fontWeight: 900, color: "var(--text-primary)", marginTop: "12px" }}>
+          <div className="section-tag" style={{ display: "inline-flex" }}>❓ Support Help</div>
+          <h1 style={{
+            fontFamily: "Poppins, sans-serif",
+            fontSize: "clamp(1.75rem, 4vw, 2.25rem)",
+            fontWeight: 900,
+            color: "var(--text-primary)",
+            marginTop: "12px"
+          }}>
             Frequently Asked Questions
           </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "1.1rem", marginTop: "8px" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "1.0625rem", marginTop: "8px", maxWidth: "560px", margin: "8px auto 0" }}>
             Got questions? We have answers. Find general information about orders and delivery here.
           </p>
         </div>
 
-        {/* FAQ list */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        {/* FAQ Accordion */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }} role="list">
           {faqs.map((faq, i) => {
             const isOpen = activeIndex === i;
+            const panelId = `faq-panel-${i}`;
+            const buttonId = `faq-button-${i}`;
             return (
               <div
                 key={i}
                 className="card"
                 style={{
-                  padding: "20px 24px",
-                  cursor: "pointer",
-                  transition: "all var(--transition-fast)",
-                  border: isOpen ? "1.5px solid var(--saffron)" : "1px solid var(--border-color)"
+                  padding: 0,
+                  overflow: "hidden",
+                  border: isOpen ? "1.5px solid var(--saffron)" : "1px solid var(--border-color)",
+                  transition: "border-color var(--transition-fast), box-shadow var(--transition-fast)",
+                  boxShadow: isOpen ? "var(--shadow-saffron)" : "var(--shadow-card)",
                 }}
-                onClick={() => toggleAccordion(i)}
+                role="listitem"
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ fontSize: "1rem", color: "var(--text-primary)" }}>
+                <button
+                  id={buttonId}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                  onClick={() => toggleAccordion(i)}
+                  style={{
+                    width: "100%",
+                    padding: "20px 24px",
+                    textAlign: "left",
+                    background: "transparent",
+                    cursor: "pointer",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "16px",
+                  }}
+                >
+                  <span style={{
+                    fontSize: "0.9375rem",
+                    fontWeight: 700,
+                    color: "var(--text-primary)",
+                    lineHeight: 1.4,
+                  }}>
                     {faq.q}
-                  </strong>
-                  <span style={{ fontSize: "1.1rem", color: "var(--saffron)", transform: isOpen ? "rotate(45deg)" : "none", transition: "transform 0.2s" }}>
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      fontSize: "1.1rem",
+                      color: "var(--saffron)",
+                      transform: isOpen ? "rotate(45deg)" : "none",
+                      transition: "transform var(--transition-base)",
+                      flexShrink: 0,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                    }}
+                  >
                     +
                   </span>
-                </div>
-                
-                {isOpen && (
-                  <p style={{
-                    marginTop: "14px",
-                    color: "var(--text-secondary)",
-                    fontSize: "0.9rem",
-                    lineHeight: 1.7,
-                    borderTop: "1px solid var(--border-subtle)",
-                    paddingTop: "12px",
-                    animation: "fadeIn 0.25s ease-out"
-                  }}>
+                </button>
+
+                <div
+                  id={panelId}
+                  role="region"
+                  aria-labelledby={buttonId}
+                  hidden={!isOpen}
+                  style={{
+                    padding: isOpen ? "0 24px 20px" : "0 24px",
+                    maxHeight: isOpen ? "600px" : "0",
+                    overflow: "hidden",
+                    transition: "max-height var(--transition-slow)",
+                  }}
+                >
+                  <div
+                    style={{
+                      borderTop: "1px solid var(--border-subtle)",
+                      paddingTop: "16px",
+                      color: "var(--text-secondary)",
+                      fontSize: "0.9rem",
+                      lineHeight: 1.75,
+                    }}
+                  >
                     {faq.a}
-                  </p>
-                )}
+                  </div>
+                </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Bottom CTA */}
+        <div style={{
+          textAlign: "center",
+          marginTop: "48px",
+          padding: "32px 24px",
+          background: "var(--bg-card)",
+          borderRadius: "var(--radius-lg)",
+          border: "1px solid var(--border-color)",
+        }}>
+          <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: "12px" }}>
+            Still have questions?
+          </p>
+          <a
+            href="/contact"
+            className="btn btn-primary"
+            style={{ display: "inline-flex" }}
+          >
+            Contact Us
+          </a>
         </div>
 
       </div>

@@ -13,7 +13,7 @@ interface Address {
 }
 
 export default function ProfilePage() {
-  const { user, token, logout, setUser } = useAuth();
+  const { user, token, logout, setUser, applySession } = useAuth();
   const router = useRouter();
 
   // Edit info states
@@ -26,10 +26,97 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Phone add / verify (for Google users without phone)
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneStep, setPhoneStep] = useState<"idle" | "otp">("idle");
+  const [phoneLoading, setPhoneLoading] = useState(false);
+
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const normalizePhone = (raw: string): string => {
+    let c = raw.replace(/[^\d+]/g, "");
+    if (c.startsWith("0092")) c = "+" + c.slice(4);
+    if (c.startsWith("92") && c.length === 12) c = "+" + c;
+    if (c.startsWith("03") && c.length === 11) c = "+92" + c.slice(1);
+    if (c.startsWith("3") && c.length === 10) c = "+92" + c;
+    return c;
+  };
+
+  const handleRequestPhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    const normalized = normalizePhone(phoneInput);
+    if (!normalized || normalized.length < 11) {
+      setError("Enter a valid Pakistan mobile number.");
+      return;
+    }
+    setPhoneLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/phone/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ phone: normalized }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to send OTP.");
+        return;
+      }
+      setPhoneInput(normalized);
+      setPhoneStep("otp");
+      setSuccess("OTP sent. Enter the code to verify your phone.");
+    } catch {
+      setError("Network error while sending OTP.");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleConfirmPhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (!phoneOtp || phoneOtp.length !== 6) {
+      setError("Enter the 6-digit OTP.");
+      return;
+    }
+    setPhoneLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/phone/confirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ phone: phoneInput, code: phoneOtp }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to verify phone.");
+        return;
+      }
+      if (data.token && data.user) {
+        applySession(data.token, { ...data.user, phoneVerified: true, isPhoneVerified: true });
+      } else if (data.user) {
+        setUser({ ...data.user, phoneVerified: true, isPhoneVerified: true });
+      }
+      setPhoneStep("idle");
+      setPhoneOtp("");
+      setSuccess("Phone number verified successfully.");
+    } catch {
+      setError("Network error while verifying phone.");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) {
@@ -178,7 +265,9 @@ export default function ProfilePage() {
               {user.name}
             </h1>
             <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", margin: "4px 0 0" }}>
-              📞 {user.phone} {user.isPhoneVerified && "✅ Verified"}
+              {user.phone
+                ? `📞 ${user.phone}${(user.isPhoneVerified || user.phoneVerified) ? " ✅ Verified" : " · Not verified"}`
+                : "📞 No phone on file — add one before ordering"}
             </p>
           </div>
         </div>
@@ -191,6 +280,65 @@ export default function ProfilePage() {
         {success && (
           <div style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "var(--success)", padding: "12px", borderRadius: "var(--radius-md)", marginBottom: "20px", fontSize: "0.9rem" }}>
             🎉 {success}
+          </div>
+        )}
+
+        {/* Phone add / verify */}
+        {(!user.phone || !(user.isPhoneVerified || user.phoneVerified)) && (
+          <div className="card" style={{ padding: "24px", marginBottom: "24px" }}>
+            <h3 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>
+              {user.phone ? "Verify phone number" : "Add phone number"}
+            </h3>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginBottom: "14px" }}>
+              Required before placing an order. We send a one-time code via SMS.
+            </p>
+            {phoneStep === "idle" ? (
+              <form onSubmit={handleRequestPhone} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div className="input-group">
+                  <span className="input-icon">📱</span>
+                  <input
+                    className="input"
+                    type="tel"
+                    placeholder="03001234567"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    required
+                    aria-label="Phone number"
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary" disabled={phoneLoading} style={{ width: "100%" }}>
+                  {phoneLoading ? "Sending…" : "Send verification code"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleConfirmPhone} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Code sent to {phoneInput}</p>
+                <div className="input-group">
+                  <span className="input-icon">🔐</span>
+                  <input
+                    className="input"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6-digit OTP"
+                    value={phoneOtp}
+                    onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    required
+                    aria-label="Verification code"
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary" disabled={phoneLoading} style={{ width: "100%" }}>
+                  {phoneLoading ? "Verifying…" : "Confirm phone"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => { setPhoneStep("idle"); setPhoneOtp(""); }}
+                >
+                  Change number
+                </button>
+              </form>
+            )}
           </div>
         )}
 

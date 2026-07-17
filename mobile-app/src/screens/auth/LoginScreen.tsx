@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -10,32 +10,91 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
-  Alert,
-  Modal
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { apiPost } from "../../api/client";
 import { Ionicons } from "@expo/vector-icons";
 
+WebBrowser.maybeCompleteAuthSession();
+
 export default function LoginScreen({ navigation }: any) {
-  const { login } = useAuth();
+  const { login, biometricLogin, isBiometricSupported } = useAuth();
   const { colors } = useTheme();
 
+  const [loginMethod, setLoginMethod] = useState<'phone' | 'google' | 'guest'>('phone');
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
 
-  // Google sign-in state
-  const [showPhoneModal, setShowPhoneModal] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState("");
-  const [googleName, setGoogleName] = useState("");
-  const [googlePhone, setGooglePhone] = useState("");
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID?.trim();
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
+  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID?.trim();
 
-  // Normalize Pakistan phone numbers (strips dashes/spaces/parens)
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
+    clientId: webClientId || undefined,
+    iosClientId: iosClientId || webClientId || undefined,
+    androidClientId: androidClientId || webClientId || undefined,
+    webClientId: webClientId || undefined,
+  });
+
+  useEffect(() => {
+    // Check if biometric login is available and automatically try
+    async function checkSavedCredentials() {
+      try {
+        const savedPhone = await AsyncStorage.getItem("@remember_phone");
+        if (savedPhone) setPhone(savedPhone);
+        
+        const isBiometricEnabled = await AsyncStorage.getItem("@naseeb_biometric_enabled");
+        if (isBiometricEnabled === "true" && isBiometricSupported) {
+          const success = await biometricLogin();
+          if (success) {
+            console.log("Biometric login success");
+          }
+        }
+      } catch {}
+    }
+    checkSavedCredentials();
+  }, [isBiometricSupported]);
+
+  useEffect(() => {
+    const completeGoogleLogin = async () => {
+      if (googleResponse?.type !== "success") return;
+      const idToken =
+        googleResponse.params?.id_token ||
+        (googleResponse as { authentication?: { idToken?: string } }).authentication?.idToken;
+      if (!idToken) {
+        setError("Google did not return an ID token.");
+        return;
+      }
+      setGoogleLoading(true);
+      setError("");
+      try {
+        const res: any = await apiPost("/auth/google", { idToken });
+        if (res.token) {
+          if (rememberMe) {
+            await AsyncStorage.setItem("@remember_phone", res.user.phone || "");
+          }
+          await login(res.token, res.user);
+        } else {
+          setError(res.error || "Google login failed.");
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.error || "Cannot connect to server.");
+      } finally {
+        setGoogleLoading(false);
+      }
+    };
+    completeGoogleLogin();
+  }, [googleResponse, login, rememberMe]);
+
   const normalizePhone = (raw: string): string => {
     let c = raw.replace(/[^\d+]/g, "");
     if (c.startsWith("0092")) c = "+" + c.slice(4);
@@ -60,6 +119,13 @@ export default function LoginScreen({ navigation }: any) {
       
       const response: any = await apiPost("/auth/login", payload);
       if (response.token) {
+        if (rememberMe) {
+          await AsyncStorage.setItem("@remember_phone", phone);
+          await AsyncStorage.setItem("@naseeb_biometric_enabled", "true");
+        } else {
+          await AsyncStorage.removeItem("@remember_phone");
+          await AsyncStorage.removeItem("@naseeb_biometric_enabled");
+        }
         await login(response.token, response.user);
       } else {
         setError(response.error || "Login failed. Check your credentials.");
@@ -96,52 +162,43 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   const handleGoogleLogin = async () => {
-    // Simulated Google sign-in: use test credentials
-    setGoogleLoading(true);
     setError("");
-    const simEmail = "customer@gmail.com";
-    const simName = "Google User";
+    if (!webClientId && !iosClientId && !androidClientId) {
+      setError("Google sign-in is not configured.");
+      return;
+    }
+    if (!googleRequest) {
+      setError("Google sign-in is loading...");
+      return;
+    }
+    setGoogleLoading(true);
     try {
-      const res: any = await apiPost("/auth/google", { email: simEmail, name: simName });
-      if (res.requirePhone) {
-        // Backend needs phone to complete registration
-        setGoogleEmail(simEmail);
-        setGoogleName(simName);
-        setShowPhoneModal(true);
-        setGoogleLoading(false);
-        return;
-      }
-      if (res.token) {
-        await login(res.token, res.user);
-      } else {
-        setError(res.error || "Google login failed.");
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Cannot connect to server.");
+      await promptGoogleAsync();
+    } catch {
+      setError("Google sign-in failed to open.");
     } finally {
       setGoogleLoading(false);
     }
   };
 
-  const handleGooglePhoneSubmit = async () => {
-    if (!googlePhone) { setError("Please enter your phone number."); return; }
-    setGoogleLoading(true);
-    setError("");
+  const handleAppleLogin = async () => {
+    addToast("Apple Sign-in is only available on verified production configurations.", "info");
+  };
+
+  const handleGuestLogin = async () => {
+    setLoading(true);
     try {
-      const normalized = normalizePhone(googlePhone);
-      const res: any = await apiPost("/auth/google", { email: googleEmail, name: googleName, phone: normalized });
-      if (res.token) {
-        setShowPhoneModal(false);
-        await login(res.token, res.user);
-      } else {
-        setError(res.error || "Registration failed.");
+      const response: any = await apiPost("/auth/guest-login", {});
+      if (response.token) {
+        await login(response.token, response.user);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Cannot connect to server.");
+    } catch {
+      setError("Guest login failed.");
     } finally {
-      setGoogleLoading(false);
+      setLoading(false);
     }
   };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -160,59 +217,143 @@ export default function LoginScreen({ navigation }: any) {
           <Text style={[styles.logoSubtext, { color: colors.textSecondary }]}>& Pulao UCP Branch</Text>
         </View>
 
-        <View style={[styles.formCard, { backgroundColor: colors.cardBg, shadowColor: colors.shadow }]}>
-          <Text style={[styles.formTitle, { color: colors.textPrimary }]}>Welcome Back</Text>
-          <Text style={[styles.formSubtitle, { color: colors.textSecondary }]}>Login to order delicious food</Text>
+        {/* Auth Mode switcher tab */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tabButton, loginMethod === 'phone' && { borderBottomColor: colors.primary }]}
+            onPress={() => setLoginMethod('phone')}
+          >
+            <Text style={[styles.tabText, { color: loginMethod === 'phone' ? colors.primary : colors.textSecondary }]}>Phone / Password</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, loginMethod === 'google' && { borderBottomColor: colors.primary }]}
+            onPress={() => setLoginMethod('google')}
+          >
+            <Text style={[styles.tabText, { color: loginMethod === 'google' ? colors.primary : colors.textSecondary }]}>Social Logins</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, loginMethod === 'guest' && { borderBottomColor: colors.primary }]}
+            onPress={() => setLoginMethod('guest')}
+          >
+            <Text style={[styles.tabText, { color: loginMethod === 'guest' ? colors.primary : colors.textSecondary }]}>Guest</Text>
+          </TouchableOpacity>
+        </View>
 
+        <View style={[styles.formCard, { backgroundColor: colors.cardBg, shadowColor: colors.shadow }]}>
           {error ? <Text style={styles.errorText}>⚠️ {error}</Text> : null}
 
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Phone Number or Email</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
-              <Ionicons name="call-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="03001234567 or email"
-                placeholderTextColor={colors.textMuted}
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="default"
-                autoCapitalize="none"
-              />
-            </View>
-          </View>
+          {loginMethod === 'phone' && (
+            <>
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Phone Number or Email</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                  <Ionicons name="call-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    placeholder="03001234567 or email"
+                    placeholderTextColor={colors.textMuted}
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="default"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Password</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="Enter password"
-                placeholderTextColor={colors.textMuted}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Password</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    placeholder="Enter password"
+                    placeholderTextColor={colors.textMuted}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                    <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Remember me + Biometrics */}
+              <View style={styles.optionsRow}>
+                <TouchableOpacity style={styles.checkboxWrapper} onPress={() => setRememberMe(!rememberMe)}>
+                  <Ionicons name={rememberMe ? "checkbox" : "square-outline"} size={20} color={colors.primary} />
+                  <Text style={[styles.optionText, { color: colors.textSecondary }]}>Remember Me</Text>
+                </TouchableOpacity>
+                {isBiometricSupported && (
+                  <TouchableOpacity onPress={biometricLogin} style={styles.biometricBtn}>
+                    <Ionicons name="finger-print-outline" size={20} color={colors.primary} />
+                    <Text style={[styles.optionText, { color: colors.primary, fontWeight: '700' }]}>Touch ID</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <TouchableOpacity
+                style={[styles.loginBtn, { backgroundColor: colors.primary }]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.loginBtnText}>Login →</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+
+          {loginMethod === 'google' && (
+            <View style={{ gap: 12 }}>
+              <Text style={[styles.socialTitle, { color: colors.textPrimary }]}>Choose dynamic login method</Text>
+              <TouchableOpacity
+                style={[styles.googleBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }]}
+                onPress={handleGoogleLogin}
+                disabled={googleLoading}
+                activeOpacity={0.8}
+              >
+                {googleLoading ? (
+                  <ActivityIndicator color={colors.primary} size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="logo-google" size={20} color="#EA4335" />
+                    <Text style={[styles.googleBtnText, { color: colors.textPrimary }]}>Continue with Google</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={[styles.googleBtn, { borderColor: colors.textPrimary, backgroundColor: '#000000' }]}
+                  onPress={handleAppleLogin}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
+                  <Text style={[styles.googleBtnText, { color: '#FFFFFF' }]}>Continue with Apple</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {loginMethod === 'guest' && (
+            <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+              <Text style={[styles.guestText, { color: colors.textSecondary }]}>
+                Browse the menu, add items to cart and check locations without creating an account.
+              </Text>
+              <TouchableOpacity
+                style={[styles.loginBtn, { backgroundColor: colors.primary, width: '100%' }]}
+                onPress={handleGuestLogin}
+                disabled={loading}
+              >
+                {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.loginBtnText}>Proceed as Guest</Text>}
               </TouchableOpacity>
             </View>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.loginBtn, { backgroundColor: colors.primary }]}
-            onPress={handleLogin}
-            disabled={loading}
-            activeOpacity={0.8}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.loginBtnText}>Login →</Text>
-            )}
-          </TouchableOpacity>
+          )}
 
           {/* Dev Quick Login Panel */}
           {__DEV__ && (
@@ -267,32 +408,6 @@ export default function LoginScreen({ navigation }: any) {
             </View>
           )}
 
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.textMuted }]}>OR</Text>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-          </View>
-
-          {/* Google Sign-In Button */}
-          <TouchableOpacity
-            style={[styles.googleBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }]}
-            onPress={handleGoogleLogin}
-            disabled={googleLoading}
-            activeOpacity={0.8}
-          >
-            {googleLoading ? (
-              <ActivityIndicator color="#D97706" size="small" />
-            ) : (
-              <>
-                <Ionicons name="logo-google" size={20} color="#EA4335" />
-                <Text style={[styles.googleBtnText, { color: colors.textPrimary }]}>
-                  Continue with Google
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-
           <View style={styles.signupContainer}>
             <Text style={{ color: colors.textSecondary, fontSize: 14 }}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate("Register")}>
@@ -308,53 +423,24 @@ export default function LoginScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-
-      {/* Phone prompt modal for Google sign-in */}
-      <Modal visible={showPhoneModal} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <View style={[styles.formCard, { backgroundColor: colors.cardBg, width: "85%", padding: 24 }]}>
-            <Text style={[styles.formTitle, { color: colors.textPrimary, marginBottom: 8 }]}>Almost There!</Text>
-            <Text style={{ color: colors.textSecondary, textAlign: "center", marginBottom: 16, fontSize: 13 }}>
-              Enter your phone number to complete Google sign-up
-            </Text>
-            {error ? <Text style={styles.errorText}>⚠️ {error}</Text> : null}
-            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border, marginBottom: 16 }]}>
-              <Ionicons name="call-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="03001234567"
-                placeholderTextColor={colors.textSecondary}
-                keyboardType="phone-pad"
-                value={googlePhone}
-                onChangeText={setGooglePhone}
-              />
-            </View>
-            <TouchableOpacity
-              style={[styles.loginBtn, { backgroundColor: colors.primary }]}
-              onPress={handleGooglePhoneSubmit}
-              disabled={googleLoading}
-            >
-              {googleLoading
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={styles.loginBtnText}>Complete Sign Up</Text>}
-            </TouchableOpacity>
-            <TouchableOpacity style={{ marginTop: 12, alignItems: "center" }} onPress={() => { setShowPhoneModal(false); setError(""); }}>
-              <Text style={{ color: colors.textSecondary }}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </KeyboardAvoidingView>
   );
+}
+
+// Stub function to prevent throw
+function addToast(msg: string, type: string) {
+  console.log(msg, type);
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContainer: { flexGrow: 1, justifyContent: "center", padding: 24 },
-  header: { alignItems: "center", marginBottom: 32 },
+  header: { alignItems: "center", marginBottom: 24 },
   logoText: { fontFamily: "Poppins-Bold", fontSize: 24, fontWeight: "700", textAlign: "center" },
   logoSubtext: { fontFamily: "Poppins-SemiBold", fontSize: 16, fontWeight: "600", textAlign: "center", marginTop: 2 },
+  tabContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#FAF0E0' },
+  tabButton: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 3, borderBottomColor: 'transparent' },
+  tabText: { fontSize: 13, fontWeight: '700' },
   formCard: { padding: 28, borderRadius: 20, elevation: 4, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12 },
   formTitle: { fontFamily: "Poppins-Bold", fontSize: 20, fontWeight: "700", textAlign: "center" },
   formSubtitle: { fontFamily: "Inter-Regular", fontSize: 14, textAlign: "center", marginTop: 4, marginBottom: 24 },
@@ -365,16 +451,19 @@ const styles = StyleSheet.create({
   inputIcon: { marginRight: 10 },
   input: { flex: 1, height: "100%", fontSize: 14 },
   eyeIcon: { padding: 4 },
+  optionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  checkboxWrapper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  optionText: { fontSize: 13, fontWeight: '600' },
+  biometricBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   loginBtn: { height: 52, borderRadius: 16, alignItems: "center", justifyContent: "center", marginTop: 10 },
   loginBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
-  divider: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
-  dividerLine: { flex: 1, height: 1 },
-  dividerText: { marginHorizontal: 12, fontSize: 12, fontWeight: "600" },
+  socialTitle: { fontSize: 14, fontWeight: '600', textAlign: 'center', marginBottom: 10 },
   googleBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     height: 52, borderRadius: 16, borderWidth: 1.5, gap: 10, marginBottom: 4,
   },
   googleBtnText: { fontSize: 15, fontWeight: "600" },
+  guestText: { fontSize: 13, textAlign: 'center', marginBottom: 16, lineHeight: 18 },
   signupContainer: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 20 },
   signupText: { fontWeight: "700" },
 });

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -7,30 +7,30 @@ import FoodCard from "@/components/FoodCard";
 
 // Mock data for development
 const MOCK_CATEGORIES: MenuCategory[] = [
-  { id: 0, name: "All",     emoji: "ðŸ½ï¸", sortOrder: 0 },
-  { id: 1, name: "Biryani", emoji: "ðŸ›",  sortOrder: 1 },
-  { id: 2, name: "Pulao",   emoji: "ðŸš",  sortOrder: 2 },
-  { id: 3, name: "Raita",   emoji: "ðŸ¥›",  sortOrder: 3 },
-  { id: 4, name: "Drinks",  emoji: "ðŸ¥¤",  sortOrder: 4 },
-  { id: 5, name: "Extras",  emoji: "ðŸ—",  sortOrder: 5 },
+  { id: 0, name: "All",     emoji: "🍽️", sortOrder: 0 },
+  { id: 1, name: "Biryani", emoji: "🍛",  sortOrder: 1 },
+  { id: 2, name: "Pulao",   emoji: "🍚",  sortOrder: 2 },
+  { id: 3, name: "Raita",   emoji: "🥛",  sortOrder: 3 },
+  { id: 4, name: "Drinks",  emoji: "🥤",  sortOrder: 4 },
+  { id: 5, name: "Extras",  emoji: "🍗",  sortOrder: 5 },
 ];
 
 const MOCK_ITEMS: MenuItem[] = [
-  { id: 1, name: "Karachi Special Biryani",   description: "Authentic Karachi-style beef biryani with fragrant basmati, saffron, and whole spices â€” our signature dish.", price: 380, categoryId: 1, isAvailable: true, isFeatured: true,  isSpicy: true,  preparationTime: 20 },
+  { id: 1, name: "Karachi Special Biryani",   description: "Authentic Karachi-style beef biryani with fragrant basmati, saffron, and whole spices — our signature dish.", price: 380, categoryId: 1, isAvailable: true, isFeatured: true,  isSpicy: true,  preparationTime: 20 },
   { id: 2, name: "Chicken Biryani",            description: "Tender chicken with aromatic spices and perfectly cooked, layered basmati rice.", price: 320, categoryId: 1, isAvailable: true, isFeatured: true,  isSpicy: false, preparationTime: 18 },
   { id: 3, name: "Beef Biryani",               description: "Rich, slow-cooked beef biryani with a deep masala base and golden fried onions on top.", price: 360, categoryId: 1, isAvailable: true,                   isSpicy: true,  preparationTime: 22 },
-  { id: 4, name: "Mutton Biryani",             description: "Premium mutton pieces cooked in aromatic whole spices â€” a royal treat.", price: 440, categoryId: 1, isAvailable: true,                   isSpicy: true,  preparationTime: 30 },
+  { id: 4, name: "Mutton Biryani",             description: "Premium mutton pieces cooked in aromatic whole spices — a royal treat.", price: 440, categoryId: 1, isAvailable: true,                   isSpicy: true,  preparationTime: 30 },
   { id: 5, name: "Mutton Pulao",               description: "Slow-cooked mutton pulao with aromatic rice infused with rich bone stock.", price: 420, categoryId: 2, isAvailable: true, isFeatured: true,  isSpicy: false, preparationTime: 25 },
   { id: 6, name: "Chicken Pulao",              description: "Flavourful chicken pulao with a light, golden broth that flavours every grain of rice.", price: 290, categoryId: 2, isAvailable: true,                   isSpicy: false, preparationTime: 20 },
   { id: 7, name: "Beef Pulao",                 description: "Tender beef with a smoky, savory pulao rice. Comfort food at its finest.", price: 350, categoryId: 2, isAvailable: true,                   isSpicy: false, preparationTime: 22 },
   { id: 8, name: "Dahi Raita",                 description: "Fresh whipped yogurt with roasted cumin, mint, and a hint of red chilli.", price: 80,  categoryId: 3, isAvailable: true,                                   preparationTime: 5  },
-  { id: 9, name: "Aloo Raita",                 description: "Chunky potato raita with spiced yogurt â€” the perfect biryani companion.", price: 90,  categoryId: 3, isAvailable: true,                                   preparationTime: 5  },
+  { id: 9, name: "Aloo Raita",                 description: "Chunky potato raita with spiced yogurt — the perfect biryani companion.", price: 90,  categoryId: 3, isAvailable: true,                                   preparationTime: 5  },
   { id: 10, name: "Boondi Raita",              description: "Crispy boondi soaked in tangy spiced yogurt. Light and refreshing.", price: 85,  categoryId: 3, isAvailable: true,                                   preparationTime: 5  },
-  { id: 11, name: "Lassi (Sweet)",             description: "Creamy, chilled sweet lassi made with fresh yogurt â€” a Pakistani classic.", price: 120, categoryId: 4, isAvailable: true,                                   preparationTime: 3  },
+  { id: 11, name: "Lassi (Sweet)",             description: "Creamy, chilled sweet lassi made with fresh yogurt — a Pakistani classic.", price: 120, categoryId: 4, isAvailable: true,                                   preparationTime: 3  },
   { id: 12, name: "Lassi (Salted)",            description: "Refreshing salted lassi with a hint of cumin and fresh mint.", price: 120, categoryId: 4, isAvailable: true,                                   preparationTime: 3  },
   { id: 13, name: "Rooh Afza Drink",           description: "Chilled Rooh Afza with milk and a touch of rose water.", price: 100, categoryId: 4, isAvailable: true,                                   preparationTime: 3  },
   { id: 14, name: "Cold Water",                description: "Chilled mineral water bottle.", price: 60,  categoryId: 4, isAvailable: true,                                   preparationTime: 1  },
-  { id: 15, name: "Naan / Chapati",            description: "Freshly baked soft naan or chapati â€” great with raita.", price: 40,  categoryId: 5, isAvailable: true,                                   preparationTime: 8  },
+  { id: 15, name: "Naan / Chapati",            description: "Freshly baked soft naan or chapati — great with raita.", price: 40,  categoryId: 5, isAvailable: true,                                   preparationTime: 8  },
   { id: 16, name: "Chicken Tikka (4 pcs)",     description: "Tender charcoal-grilled chicken tikka with green chutney.", price: 280, categoryId: 5, isAvailable: true,                   isSpicy: true,  preparationTime: 15 },
 ];
 
@@ -57,7 +57,7 @@ function MenuContent() {
         const catData  = await catRes.json();
         const itemData = await itemRes.json();
         if (catData.success && catData.data?.length) {
-          setCategories([{ id: 0, name: "All", emoji: "ðŸ½ï¸", sortOrder: 0 }, ...catData.data]);
+          setCategories([{ id: 0, name: "All", emoji: "🍽️", sortOrder: 0 }, ...catData.data]);
         }
         if (itemData.success && itemData.data?.length) {
           setAllItems(itemData.data);
@@ -94,7 +94,7 @@ function MenuContent() {
 
   return (
     <div style={{ background: "var(--bg-primary)", minHeight: "100vh" }}>
-      {/* â”€â”€ Page Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Page Header ───────────────────────────────────────────── */}
       <div
         style={{
           background: "var(--grad-maroon)",
@@ -113,7 +113,7 @@ function MenuContent() {
         />
         <div className="container" style={{ position: "relative", zIndex: 1 }}>
           <div className="section-tag" style={{ background: "rgba(245,158,11,0.2)", color: "#F59E0B" }}>
-            ðŸ½ï¸ Our Menu
+            🍽️ Our Menu
           </div>
           <h1
             style={{
@@ -134,7 +134,7 @@ function MenuContent() {
         </div>
       </div>
 
-      {/* â”€â”€ Controls (Search + Sort + Categories) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Controls (Search + Sort + Categories) ─────────────────── */}
       <div
         style={{
           position: "sticky",
@@ -160,28 +160,33 @@ function MenuContent() {
         >
           {/* Search */}
           <div className="input-group" style={{ flex: "1", minWidth: "200px" }}>
-            <span className="input-icon">ðŸ”</span>
+            <span className="input-icon" aria-hidden="true">🔍</span>
+            <label htmlFor="menu-search" className="sr-only">Search menu items</label>
             <input
-              type="text"
+              type="search"
               className="input"
-              placeholder="Search biryani, pulao, drinksâ€¦"
+              placeholder="Search biryani, pulao, drinks…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               id="menu-search"
+              aria-label="Search menu items"
+              autoComplete="off"
             />
           </div>
 
           {/* Sort */}
+          <label htmlFor="menu-sort" className="sr-only">Sort by</label>
           <select
             className="input"
             style={{ width: "auto", minWidth: "160px" }}
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
             id="menu-sort"
+            aria-label="Sort menu items"
           >
             <option value="default">Sort: Default</option>
-            <option value="price_asc">Price: Low â†’ High</option>
-            <option value="price_desc">Price: High â†’ Low</option>
+            <option value="price_asc">Price: Low → High</option>
+            <option value="price_desc">Price: High → Low</option>
           </select>
         </div>
 
@@ -194,6 +199,8 @@ function MenuContent() {
             gap: "8px",
             overflowX: "auto",
           }}
+          role="tablist"
+          aria-label="Menu categories"
         >
           {categories.map((cat) => (
             <button
@@ -207,15 +214,18 @@ function MenuContent() {
                 fontSize: "0.875rem",
               }}
               id={`cat-pill-${cat.id}`}
+              role="tab"
+              aria-selected={activeCategory === cat.id}
+              aria-label={`${cat.name} category`}
             >
-              <span>{cat.emoji}</span>
+              <span aria-hidden="true">{cat.emoji}</span>
               <span>{cat.name}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* â”€â”€ Items Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Items Grid ─────────────────────────────────────────────── */}
       <div className="container" style={{ padding: "40px 20px 80px" }}>
         {/* Result count */}
         <div
@@ -224,6 +234,8 @@ function MenuContent() {
             fontSize: "0.875rem",
             color: "var(--text-muted)",
           }}
+          aria-live="polite"
+          aria-atomic="true"
         >
           Showing{" "}
           <strong style={{ color: "var(--text-primary)" }}>{items.length}</strong>{" "}
@@ -242,9 +254,10 @@ function MenuContent() {
               gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
               gap: "24px",
             }}
+            aria-label="Loading menu items"
           >
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="skeleton" style={{ height: "320px" }} />
+              <div key={i} className="skeleton" style={{ height: "320px" }} aria-hidden="true" />
             ))}
           </div>
         ) : items.length === 0 ? (
@@ -253,8 +266,9 @@ function MenuContent() {
               textAlign: "center",
               padding: "80px 0",
             }}
+            role="status"
           >
-            <div style={{ fontSize: "4rem", marginBottom: "16px" }}>ðŸ½ï¸</div>
+            <div style={{ fontSize: "4rem", marginBottom: "16px" }} aria-hidden="true">🍽️</div>
             <h3
               style={{
                 fontFamily: "Poppins, sans-serif",
@@ -306,7 +320,7 @@ export default function MenuPage() {
       fallback={
         <div style={{ background: "var(--bg-primary)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "3rem", marginBottom: "16px" }}>ðŸ›</div>
+            <div style={{ fontSize: "3rem", marginBottom: "16px" }} aria-hidden="true">🍛</div>
             <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Loading menu...</p>
           </div>
         </div>

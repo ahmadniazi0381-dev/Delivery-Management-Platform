@@ -55,6 +55,18 @@ import {
   getRiders,
   getSystemConfig,
   updateSystemConfig,
+  createRider,
+  updateRider,
+  deleteRider,
+  updateRiderStatus,
+  getCustomerDetail,
+  sendCustomerNotification,
+  adjustCustomerLoyalty,
+  getRevenueAnalytics,
+  getPeakHoursAnalytics,
+  getPaymentAnalytics,
+  getOrderDetail,
+  updateOrderNotes,
 } from '../controllers/owner.controller';
 import {
   getMonitoringDashboard,
@@ -129,6 +141,24 @@ router.put('/owner/payment-settings',      updatePaymentSetting);
 
 // Riders
 router.get('/owner/riders',                getRiders);
+router.post('/owner/riders',               createRider);
+router.put('/owner/riders/:id',            updateRider);
+router.delete('/owner/riders/:id',         deleteRider);
+router.put('/owner/riders/:id/status',     updateRiderStatus);
+
+// Customers Details & Actions
+router.get('/owner/customers/:id',         getCustomerDetail);
+router.post('/owner/customers/:id/notify', sendCustomerNotification);
+router.post('/owner/customers/:id/loyalty', adjustCustomerLoyalty);
+
+// Analytics
+router.get('/owner/analytics/revenue',     getRevenueAnalytics);
+router.get('/owner/analytics/peak-hours',  getPeakHoursAnalytics);
+router.get('/owner/analytics/payments',     getPaymentAnalytics);
+
+// Order details and notes
+router.get('/owner/orders/:id',            getOrderDetail);
+router.put('/owner/orders/:id/notes',      updateOrderNotes);
 
 // System config, monitoring, search
 router.get('/owner/system-config',         getSystemConfig);

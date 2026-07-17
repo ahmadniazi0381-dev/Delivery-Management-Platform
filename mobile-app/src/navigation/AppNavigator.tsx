@@ -11,7 +11,10 @@ import AdminTabs from "./AdminTabs";
 import RiderTabs from "./RiderTabs";
 import CheckoutScreen from "../screens/checkout/CheckoutScreen";
 import OrderDetailScreen from "../screens/orders/OrderDetailScreen";
+import OrderTrackingScreen from "../screens/orders/OrderTrackingScreen";
 import AddressScreen from "../screens/address/AddressScreen";
+import LoyaltyScreen from "../screens/profile/LoyaltyScreen";
+import NotificationsScreen from "../screens/notifications/NotificationsScreen";
 
 type RootStackParamList = {
   Auth: undefined;
@@ -21,6 +24,9 @@ type RootStackParamList = {
   Checkout: { selectedAddressId?: string } | undefined;
   Address: { selectMode?: boolean } | undefined;
   OrderDetail: { orderId: string };
+  OrderTracking: { orderId: string };
+  Loyalty: undefined;
+  Notifications: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -58,6 +64,9 @@ export default function AppNavigator() {
                 <Stack.Screen name="Checkout" component={CheckoutScreen} />
                 <Stack.Screen name="Address" component={AddressScreen} />
                 <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+                <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+                <Stack.Screen name="Loyalty" component={LoyaltyScreen} />
+                <Stack.Screen name="Notifications" component={NotificationsScreen} />
               </>
             )}
           </>

@@ -4,7 +4,7 @@ import prisma from '../config/db';
 
 export type SocketUser = {
   id: string;
-  phone: string;
+  phone: string | null;
   role: 'CUSTOMER' | 'ADMIN' | 'RIDER';
   phoneVerified: boolean;
 };

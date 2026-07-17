@@ -24,50 +24,18 @@ const STATUS_FLOW = [
   "REJECTED"
 ];
 
-const MOCK_ORDERS = [
-  {
-    id: 'ord-1024',
-    status: 'PENDING',
-    subtotal: 750,
-    deliveryCharge: 60,
-    discountAmount: 0,
-    total: 810,
-    distanceKm: 1.2,
-    paymentMethod: 'COD',
-    placedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    customer: { name: 'Ali Ahmed', phone: '+92 301 2345678' },
-    address: { addressLine: 'Block C, Johar Town, Lahore (Near UCP Campus)' },
-    orderItems: [
-      { itemName: 'Naseeb Special Biryani', quantity: 2, unitPrice: 350 },
-      { itemName: 'Raita & Salad Cup', quantity: 2, unitPrice: 50 }
-    ]
-  },
-  {
-    id: 'ord-1023',
-    status: 'PREPARING',
-    subtotal: 350,
-    deliveryCharge: 50,
-    discountAmount: 35,
-    total: 365,
-    distanceKm: 0.8,
-    paymentMethod: 'JAZZCASH',
-    placedAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-    customer: { name: 'Ayesha Khan', phone: '+92 321 9876543' },
-    address: { addressLine: 'Girls Hostel 3, UCP Road, Lahore' },
-    orderItems: [
-      { itemName: 'Sada Pulao (Double)', quantity: 1, unitPrice: 350 }
-    ]
-  }
-];
+// No mock data — all orders come from the real API (/owner/orders)
 
 export default function AdminOrders() {
-  const [orders, setOrders] = useState<any[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>("PENDING");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [detailedOrder, setDetailedOrder] = useState<any>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [riders, setRiders] = useState<any[]>([]);
   const [assigningRiderId, setAssigningRiderId] = useState<string>("");
   const [liveFlash, setLiveFlash] = useState(false);
+  const [notesSaving, setNotesSaving] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
   const { socket } = useSocket();
   const { addToast } = useToast();
@@ -114,10 +82,34 @@ export default function AdminOrders() {
     } catch {}
   }, []);
 
+  const fetchOrderDetail = useCallback(async (id: string) => {
+    const token = localStorage.getItem("naseeb_token");
+    if (!token || token === "sandbox_demo_token") return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/owner/orders/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          setDetailedOrder(data.data);
+        }
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
     fetchOrders();
     fetchRiders();
   }, [fetchOrders, fetchRiders]);
+
+  useEffect(() => {
+    if (selectedOrder?.id) {
+      fetchOrderDetail(selectedOrder.id);
+    } else {
+      setDetailedOrder(null);
+    }
+  }, [selectedOrder, fetchOrderDetail]);
 
   // ── Live socket updates (REQ-ORDER-ALERT-001 dashboard update) ────────────
   useEffect(() => {
@@ -193,6 +185,29 @@ export default function AdminOrders() {
     if (!assigningRiderId || !selectedOrder) return;
     updateStatus(selectedOrder.id, "READY", assigningRiderId);
     setAssigningRiderId("");
+  };
+
+  const handleSaveNotes = async (notesText: string) => {
+    if (!selectedOrder?.id) return;
+    setNotesSaving(true);
+    const token = localStorage.getItem("naseeb_token");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/owner/orders/${selectedOrder.id}/notes`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ internalNotes: notesText })
+      });
+      if (res.ok) {
+        addToast({ type: "success", title: "Notes Saved", message: "Internal staff notes updated." });
+        setDetailedOrder((prev: any) => prev ? { ...prev, internalNotes: notesText } : prev);
+      } else {
+        addToast({ type: "error", title: "Save Failed", message: "Failed to update order notes." });
+      }
+    } catch {
+      addToast({ type: "error", title: "Save Failed", message: "Network connection error." });
+    } finally {
+      setNotesSaving(false);
+    }
   };
 
   const handlePrint = () => {
@@ -436,6 +451,24 @@ export default function AdminOrders() {
               <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: "1rem", borderTop: "1px dashed var(--border)", paddingTop: "8px", marginTop: "4px" }}>
                 <span>Grand Total</span><span style={{ color: "var(--saffron)" }}>Rs. {selectedOrder.total}</span>
               </div>
+            </div>
+
+            {/* Internal Staff Notes */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" }}>
+              <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>Internal Dispatcher Notes</label>
+              <textarea
+                key={selectedOrder.id}
+                rows={3}
+                placeholder="e.g. Leave with security guard, call customer when outside..."
+                defaultValue={detailedOrder?.internalNotes || ""}
+                onBlur={(e) => handleSaveNotes(e.target.value)}
+                style={{
+                  padding: "10px", borderRadius: "8px", border: "1px solid var(--border)",
+                  background: "var(--bg-secondary)", color: "var(--text-primary)",
+                  fontFamily: "inherit", fontSize: "0.85rem", resize: "vertical"
+                }}
+              />
+              {notesSaving && <span style={{ fontSize: "0.75rem", color: "var(--saffron)" }}>Saving notes...</span>}
             </div>
 
             {/* Workflow Buttons */}

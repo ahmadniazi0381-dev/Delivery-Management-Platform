@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import AddressModal from "@/components/AddressModal";
 import { paymentRedirectUrl, submitGatewayRedirect } from "@/lib/payment-gateway";
+import { buildStaticMapUrl, getGoogleMapsApiKey } from "@/context/GoogleMapsContext";
 
 type PaymentMethod = "COD" | "JAZZCASH" | "EASYPAISA" | "CARD";
 type DeliveryType = "STANDARD" | "PRIORITY";
@@ -93,7 +94,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [checkingEligibility, setCheckingEligibility] = useState(false);
+  const [, setCheckingEligibility] = useState(false);
 
   const selectedAddress = useMemo(
     () => addresses.find((address) => address.id === selectedAddressId),
@@ -117,7 +118,8 @@ export default function CheckoutPage() {
 
   const mapLat = selectedAddress?.latitude ?? SHOP_LAT;
   const mapLng = selectedAddress?.longitude ?? SHOP_LNG;
-  const mapSrc = `https://maps.google.com/maps?q=${mapLat},${mapLng}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+  const mapsKey = getGoogleMapsApiKey();
+  const staticMapSrc = mapsKey ? buildStaticMapUrl(mapLat, mapLng, mapsKey) : null;
 
   // How many delivery options are active
   const activeDeliveryCount = [deliveryOptions.standard.enabled, deliveryOptions.priority.enabled].filter(Boolean).length;
@@ -132,6 +134,23 @@ export default function CheckoutPage() {
       setDeliveryType("STANDARD");
     }
   }, [deliveryOptions, isEligible]);
+
+  const fetchDeliveryOptions = useCallback(async (lat: number, lng: number) => {
+    if (!API_URL || !token) return;
+    try {
+      const res = await fetch(`${API_URL}/addresses/check-eligibility`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ latitude: lat, longitude: lng }),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.delivery) {
+        setDeliveryOptions(data.data.delivery);
+      }
+    } catch {
+      // Keep checkout usable with default delivery options if this call fails.
+    }
+  }, [token]);
 
   const fetchAddresses = useCallback(async () => {
     if (!API_URL || !token) return;
@@ -159,23 +178,6 @@ export default function CheckoutPage() {
       setError("Could not load saved addresses.");
     }
   }, [token]);
-
-  const fetchDeliveryOptions = async (lat: number, lng: number) => {
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_URL}/addresses/check-eligibility`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ latitude: lat, longitude: lng }),
-      });
-      const data = await res.json();
-      if (data.success && data.data?.delivery) {
-        setDeliveryOptions(data.data.delivery);
-      }
-    } catch {
-      // Silently ignore — use defaults
-    }
-  };
 
   useEffect(() => {
     if (isLoading) return;
@@ -327,14 +329,21 @@ export default function CheckoutPage() {
 
   const hasDeliveryLocation = selectedAddressId && isEligible === true;
 
+  const phoneReady = !!(user?.phone && (user.phoneVerified || user.isPhoneVerified));
+
   const canPlaceOrder =
     cart.items.length > 0 &&
     hasDeliveryLocation &&
+    phoneReady &&
     enabledPaymentMethods.includes(paymentMethod) &&
     (deliveryType === "STANDARD" ? deliveryOptions.standard.enabled : deliveryOptions.priority.enabled);
 
   const handlePlaceOrder = async () => {
     if (!API_URL || !token || !canPlaceOrder) return;
+    if (!phoneReady) {
+      setError("Add and verify your phone number in Profile before placing an order.");
+      return;
+    }
     setIsSubmitting(true);
     setError("");
 
@@ -413,6 +422,15 @@ export default function CheckoutPage() {
         {error && <div className="fp-alert error">{error}</div>}
         {success && <div className="fp-alert success">{success}</div>}
 
+        {(!user?.phone || !(user.phoneVerified || user.isPhoneVerified)) && (
+          <div className="fp-alert error" role="alert">
+            Add and verify your phone number before placing an order.{" "}
+            <Link href="/profile" style={{ textDecoration: "underline", fontWeight: 700 }}>
+              Go to Profile
+            </Link>
+          </div>
+        )}
+
         <div className="fp-grid">
           <section className="fp-main">
             {/* Delivery Address */}
@@ -425,7 +443,31 @@ export default function CheckoutPage() {
               </div>
 
               <div className="fp-mini-map">
-                <iframe title="Delivery location map" src={mapSrc} loading="lazy" />
+                {staticMapSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={staticMapSrc}
+                    alt="Delivery location map preview"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "var(--bg-secondary, #f5f5f5)",
+                      color: "var(--text-secondary, #555)",
+                      fontSize: "0.9rem",
+                      padding: 16,
+                      textAlign: "center",
+                    }}
+                  >
+                    Map preview unavailable — set NEXT_PUBLIC_GOOGLE_MAPS_KEY (enable Maps Static API).
+                  </div>
+                )}
               </div>
 
               <div className="fp-address-line">
@@ -462,8 +504,8 @@ export default function CheckoutPage() {
               )}
 
               {addresses.length > 0 && (
-                <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #E5E7EB" }}>
-                  <span style={{ fontSize: "12px", color: "#6B7280", display: "block", marginBottom: "8px" }}>
+                <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--border-color)" }}>
+                  <span style={{ fontSize: "12px", color: "var(--text-secondary)", display: "block", marginBottom: "8px" }}>
                     Your saved addresses
                   </span>
                   {addresses.map((address) => (
@@ -478,10 +520,12 @@ export default function CheckoutPage() {
                         borderRadius: "8px",
                         border:
                           selectedAddressId === address.id
-                            ? "2px solid #D97706"
-                            : "1px solid #E5E7EB",
+                            ? "2px solid var(--saffron)"
+                            : "1px solid var(--border-color)",
                         backgroundColor:
-                          selectedAddressId === address.id ? "#FEF3C7" : "#FFFFFF",
+                          selectedAddressId === address.id ? "var(--surface)" : "var(--bg-card)",
+                        color:
+                          selectedAddressId === address.id ? "var(--saffron-dark)" : "var(--text-primary)",
                         fontSize: "14px",
                         cursor: "pointer",
                       }}
@@ -491,7 +535,7 @@ export default function CheckoutPage() {
                         {address.isDefault ? " • Default" : ""}
                         {address.isDeliverable === false ? " ⚠ Outside area" : ""}
                       </strong>
-                      <span style={{ color: "#6B7280", fontSize: "12px" }}>
+                      <span style={{ color: "var(--text-secondary)", fontSize: "12px" }}>
                         {address.addressLine}
                       </span>
                     </button>
@@ -503,9 +547,9 @@ export default function CheckoutPage() {
                       padding: "8px 12px",
                       marginTop: "8px",
                       borderRadius: "8px",
-                      border: "1px dashed #D97706",
-                      backgroundColor: "#FFFBEB",
-                      color: "#D97706",
+                      border: "1px dashed var(--saffron)",
+                      backgroundColor: "var(--bg-card)",
+                      color: "var(--saffron-dark)",
                       cursor: "pointer",
                       fontSize: "14px",
                       fontWeight: 500,
@@ -518,14 +562,20 @@ export default function CheckoutPage() {
 
               {/* Rider note */}
               {selectedAddress && isEligible === true && (
-                <textarea
-                  className="fp-input"
-                  value={riderNote}
-                  onChange={(e) => setRiderNote(e.target.value)}
-                  placeholder="Additional note for rider (optional, max 500 chars)"
-                  maxLength={500}
-                  style={{ minHeight: "70px", marginTop: "12px" }}
-                />
+                <div style={{ marginTop: "12px" }}>
+                  <label htmlFor="checkout-rider-note" style={{ display: "block", fontSize: "12px", fontWeight: 650, color: "var(--text-secondary)", marginBottom: "6px" }}>Note for Rider (Optional)</label>
+                  <textarea
+                    id="checkout-rider-note"
+                    className="fp-input"
+                    value={riderNote}
+                    onChange={(e) => setRiderNote(e.target.value)}
+                    placeholder="e.g. Call on arrival, Leave at gate, Ring 3 times"
+                    maxLength={500}
+                    style={{ minHeight: "70px" }}
+                    aria-describedby="rider-note-hint"
+                  />
+                  <p id="rider-note-hint" style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>{riderNote.length}/500 characters</p>
+                </div>
               )}
             </div>
 
@@ -547,7 +597,7 @@ export default function CheckoutPage() {
                         />
                         <div>
                           <strong>Standard Delivery</strong>
-                          <span style={{ display: "block", fontSize: "13px", color: "#6B7280" }}>
+                          <span style={{ display: "block", fontSize: "13px", color: "var(--text-secondary)" }}>
                             {deliveryOptions.standard.eta ?? "5-20 Minutes"}
                           </span>
                         </div>
@@ -567,11 +617,11 @@ export default function CheckoutPage() {
                         />
                         <div>
                           <strong>Priority Delivery</strong>
-                          <span style={{ display: "block", fontSize: "13px", color: "#6B7280" }}>
+                          <span style={{ display: "block", fontSize: "13px", color: "var(--text-secondary)" }}>
                             {deliveryOptions.priority.eta ?? "5-20 Minutes"}
                           </span>
                         </div>
-                        <em style={{ marginLeft: "auto", color: "#D97706", fontWeight: 600 }}>
+                        <em style={{ marginLeft: "auto", color: "var(--saffron-dark)", fontWeight: 600 }}>
                           +Rs. {deliveryOptions.priority.fee ?? 125}
                         </em>
                       </label>
@@ -579,11 +629,11 @@ export default function CheckoutPage() {
                   </div>
                 ) : (
                   /* Only one option — display as info, no radio needed */
-                  <div style={{ padding: "14px 16px", backgroundColor: "#F0FDF4", borderRadius: "12px", borderLeft: "4px solid #22C55E" }}>
-                    <strong style={{ color: "#166534" }}>
+                  <div style={{ padding: "14px 16px", backgroundColor: "color-mix(in srgb, var(--success) 11%, var(--bg-card))", borderRadius: "12px", borderLeft: "4px solid var(--success)" }}>
+                    <strong style={{ color: "var(--success)" }}>
                       {deliveryType === "PRIORITY" ? "Priority Delivery" : "Standard Delivery"}
                     </strong>
-                    <span style={{ display: "block", color: "#166534", fontSize: "13px", marginTop: "2px" }}>
+                    <span style={{ display: "block", color: "var(--success)", fontSize: "13px", marginTop: "2px" }}>
                       {estimatedEta} · Rs. {deliveryFee}
                     </span>
                   </div>
@@ -593,40 +643,60 @@ export default function CheckoutPage() {
 
             {/* Recipient (optional) */}
             <div className="fp-card">
-              <h2>Recipient details <span style={{ color: "#9CA3AF", fontSize: "14px", fontWeight: 400 }}>(optional)</span></h2>
-              <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "12px" }}>
+              <h2>Recipient details <span style={{ color: "var(--text-muted)", fontSize: "14px", fontWeight: 400 }}>(optional)</span></h2>
+              <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "12px" }}>
                 Leave blank if you are ordering for yourself.
               </p>
               <div className="fp-two">
-                <input
-                  className="fp-input"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                  placeholder="Recipient name"
-                />
-                <input
-                  className="fp-input"
-                  value={recipientPhone}
-                  onChange={(e) => setRecipientPhone(e.target.value)}
-                  placeholder="Recipient phone"
-                />
+                <div>
+                  <label htmlFor="checkout-recipient-name" style={{ display: "block", fontSize: "12px", fontWeight: 650, color: "var(--text-secondary)", marginBottom: "6px" }}>Recipient Name</label>
+                  <input
+                    id="checkout-recipient-name"
+                    className="fp-input"
+                    value={recipientName}
+                    onChange={(e) => setRecipientName(e.target.value)}
+                    placeholder="Recipient name"
+                    autoComplete="name"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="checkout-recipient-phone" style={{ display: "block", fontSize: "12px", fontWeight: 650, color: "var(--text-secondary)", marginBottom: "6px" }}>Recipient Phone</label>
+                  <input
+                    id="checkout-recipient-phone"
+                    className="fp-input"
+                    value={recipientPhone}
+                    onChange={(e) => setRecipientPhone(e.target.value)}
+                    placeholder="Recipient phone"
+                    type="tel"
+                    autoComplete="tel"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Payment — only shows enabled methods (REQ-PAYMENT-003) */}
             <div className="fp-card">
-              <h2>Payment</h2>
-              {([
-                ["COD", "Cash on Delivery"],
-                ["CARD", "Credit or Debit Card"],
-                ["JAZZCASH", "JazzCash"],
-                ["EASYPAISA", "easypaisa"],
-              ] as [PaymentMethod, string][]).filter(([key]) => enabledPaymentMethods.includes(key)).map(([key, label]) => (
-                <label className={`fp-payment ${paymentMethod === key ? "selected" : ""}`} key={key}>
-                  <input type="radio" checked={paymentMethod === key} onChange={() => setPaymentMethod(key)} />
-                  <span>{label}</span>
-                </label>
-              ))}
+              <h2 id="payment-methods-heading">Payment</h2>
+              <div role="radiogroup" aria-labelledby="payment-methods-heading">
+                {([
+                  ["COD", "Cash on Delivery"],
+                  ["CARD", "Credit or Debit Card"],
+                  ["JAZZCASH", "JazzCash"],
+                  ["EASYPAISA", "easypaisa"],
+                ] as [PaymentMethod, string][]).filter(([key]) => enabledPaymentMethods.includes(key)).map(([key, payLabel]) => (
+                  <label className={`fp-payment ${paymentMethod === key ? "selected" : ""}`} key={key}>
+                    <input
+                      type="radio"
+                      name="payment-method"
+                      value={key}
+                      checked={paymentMethod === key}
+                      onChange={() => setPaymentMethod(key)}
+                      aria-label={payLabel}
+                    />
+                    <span>{payLabel}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </section>
 
@@ -665,7 +735,7 @@ export default function CheckoutPage() {
                   <b>{deliveryFee === 0 ? "Free" : `Rs. ${deliveryFee.toFixed(0)}`}</b>
                 </div>
                 {estimatedEta && (
-                  <div style={{ color: "#6B7280", fontSize: "13px" }}>
+                  <div style={{ color: "var(--text-secondary)", fontSize: "13px" }}>
                     <span>Estimated ETA</span><b>{estimatedEta}</b>
                   </div>
                 )}
@@ -673,7 +743,7 @@ export default function CheckoutPage() {
               </div>
 
               {!hasDeliveryLocation && (
-                <div style={{ padding: "10px", backgroundColor: "#FEF3C7", borderRadius: "8px", fontSize: "13px", color: "#92400E", marginBottom: "12px" }}>
+                <div style={{ padding: "10px", backgroundColor: "var(--surface)", borderRadius: "8px", fontSize: "13px", color: "var(--warning)", marginBottom: "12px" }}>
                   Please select a delivery address to place your order.
                 </div>
               )}

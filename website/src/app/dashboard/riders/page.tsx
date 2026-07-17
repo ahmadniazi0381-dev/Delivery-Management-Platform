@@ -1,11 +1,7 @@
-"use client";
-import React from "react";
+import AdminRiders from '@/features/admin/AdminRiders';
+
+export const metadata = { title: 'Riders — Naseeb Admin' };
 
 export default function AdminRidersPage() {
-  return (
-    <div className="fade-in">
-      <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "8px" }}>Riders</h1>
-      <p style={{ color: "var(--text-secondary)" }}>Rider management coming soon.</p>
-    </div>
-  );
+  return <AdminRiders />;
 }

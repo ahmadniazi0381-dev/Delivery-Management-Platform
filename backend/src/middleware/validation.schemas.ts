@@ -66,12 +66,20 @@ export const LoginSchema = z.object({
 }).refine((d) => d.phone || d.email, { message: 'Phone or email is required.' });
 
 
-export const GoogleLoginSchema = z.object({
-  token:  z.string().max(4096).optional(), // Google ID token, validated server-side
-  email:  z.string().email().max(255),
-  name:   name,
-  phone:  phone.optional(),
-});
+export const GoogleLoginSchema = z
+  .object({
+    /** Google Identity Services / OAuth ID token (JWT). Verified server-side. */
+    idToken: z.string().min(20).max(8192).optional(),
+    /** Alias for idToken (legacy clients). */
+    token: z.string().min(20).max(8192).optional(),
+    email: z.string().email().max(255).optional(),
+    name: name.optional(),
+    phone: phone.optional(),
+  })
+  .refine((d) => !!(d.idToken || d.token), {
+    message: 'Google ID token is required.',
+    path: ['idToken'],
+  });
 
 export const OtpVerifySchema = z.object({
   code: z.string().length(6, 'OTP must be 6 digits.').regex(/^\d{6}$/, 'OTP must be numeric.'),

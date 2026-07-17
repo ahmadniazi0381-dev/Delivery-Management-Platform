@@ -210,6 +210,13 @@ export async function sendOtp(req: AuthenticatedRequest, res: Response) {
       return res.status(404).json({ error: 'User not found.' });
     }
 
+    if (!user.phone) {
+      return res.status(400).json({
+        error: 'Add a phone number in your profile before verifying.',
+        requirePhone: true,
+      });
+    }
+
     const otpCode = generateSixDigitOtp();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
 
@@ -299,46 +306,89 @@ export async function verifyOtp(req: AuthenticatedRequest, res: Response) {
 }
 
 /**
- * Handle Google Login. Finds or creates the customer profile.
+ * Handle Google Login via verified ID token (Google Identity Services / OAuth).
+ * Creates the customer immediately without requiring a phone number.
+ * Phone is collected later in profile or before checkout.
  */
 export async function googleLogin(req: Request, res: Response) {
   try {
-    const { token: googleToken, email, name, phone } = req.body;
-
-    if (!email || !name) {
-      return res.status(400).json({ error: 'Email and name from Google are required.' });
+    const idToken: string | undefined = req.body.idToken || req.body.token;
+    if (!idToken) {
+      return res.status(400).json({ error: 'Google ID token is required.' });
     }
 
-    // Find user by Google Email first or phone if provided
+    const clientIdRaw = process.env.GOOGLE_CLIENT_ID?.trim() || '';
+    const extraIds = (process.env.GOOGLE_CLIENT_IDS || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const audiences = Array.from(
+      new Set([
+        ...clientIdRaw.split(',').map((s) => s.trim()).filter(Boolean),
+        ...extraIds,
+      ])
+    ).filter((id) => id && id !== 'your_google_client_id' && !id.includes('YOUR_GOOGLE'));
+
+    if (audiences.length === 0) {
+      console.error('[GOOGLE AUTH] GOOGLE_CLIENT_ID is not configured.');
+      return res.status(503).json({ error: 'Google sign-in is not configured on the server.' });
+    }
+
+    const { OAuth2Client } = await import('google-auth-library');
+    const client = new OAuth2Client(audiences[0]);
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({ idToken, audience: audiences });
+    } catch (verifyErr) {
+      console.error('[GOOGLE AUTH] ID token verification failed:', verifyErr);
+      return res.status(401).json({ error: 'Invalid Google credentials.' });
+    }
+
+    const payload = ticket.getPayload();
+    if (!payload?.sub || !payload.email) {
+      return res.status(401).json({ error: 'Google account email is required.' });
+    }
+
+    const googleId = payload.sub;
+    const email = payload.email.toLowerCase();
+    const name =
+      (payload.name && payload.name.trim()) ||
+      email.split('@')[0] ||
+      'Google User';
+    const profilePicture = payload.picture || null;
+
+    // Prefer googleId match, then email
     let user = await prisma.user.findFirst({
       where: {
-        OR: [{ email }, phone ? { phone } : {}],
+        OR: [{ googleId }, { email }],
       },
     });
 
     if (!user) {
-      // Create user
-      if (!phone) {
-        return res.status(422).json({
-          error: 'Phone number required to complete registration.',
-          requirePhone: true,
-          email,
-          name,
-        });
-      }
-
       user = await prisma.user.create({
         data: {
           name,
           email,
-          phone,
-          phoneVerified: false, // Must verify phone via OTP before placing orders
+          googleId,
+          profilePicture,
+          phone: null,
+          phoneVerified: false,
           role: 'CUSTOMER',
+        },
+      });
+    } else {
+      // Link googleId / refresh profile fields if missing
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          googleId: user.googleId || googleId,
+          email: user.email || email,
+          profilePicture: user.profilePicture || profilePicture,
+          name: user.name || name,
         },
       });
     }
 
-    // Generate login token
     const token = jwt.sign(
       {
         id: user.id,
@@ -377,6 +427,10 @@ export async function forgotPassword(req: Request, res: Response) {
     const user = await prisma.user.findUnique({ where: { phone } });
     if (!user) {
       // Return 200 even if user doesn't exist for security/privacy
+      return res.status(200).json({ message: 'If the phone number is registered, an OTP will be sent.' });
+    }
+
+    if (!user.phone) {
       return res.status(200).json({ message: 'If the phone number is registered, an OTP will be sent.' });
     }
 

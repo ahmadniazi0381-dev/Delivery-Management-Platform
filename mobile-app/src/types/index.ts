@@ -1,8 +1,8 @@
 export interface User {
   id: string;
   name: string;
-  email?: string;
-  phone: string;
+  email?: string | null;
+  phone?: string | null;
   role: string;
   phoneVerified: boolean;
   profilePicture?: string;

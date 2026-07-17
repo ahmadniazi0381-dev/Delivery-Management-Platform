@@ -3,7 +3,9 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/context/AuthContext";
+import { getGoogleClientId } from "@/lib/googleIdentity";
 
 type AuthMode = "login" | "register" | "otp";
 
@@ -18,13 +20,8 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError]         = useState("");
   const [success, setSuccess]     = useState("");
-  // Google sign-in state
-  const [googlePhonePrompt, setGooglePhonePrompt] = useState(false);
-  const [gEmail, setGEmail]       = useState("");
-  const [gName, setGName]         = useState("");
-  const [gPhone, setGPhone]       = useState("");
 
-  const { user, login } = useAuth();
+  const { user, login, applySession } = useAuth();
   const router         = useRouter();
   const searchParams   = useSearchParams();
   const redirectTo     = searchParams.get("redirect") || "/cart";
@@ -476,79 +473,49 @@ function LoginForm() {
         {mode === "login" && (
           <>
             <div className="divider" style={{ margin: "20px 0" }}>or continue with</div>
-            <button
-              className="btn btn-ghost"
-              style={{ width: "100%", justifyContent: "center", gap: "10px" }}
-              onClick={async () => {
-                setError(""); setIsLoading(true);
-                const simEmail = "customer@gmail.com";
-                const simName = "Google User";
-                try {
-                  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/google`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: simEmail, name: simName }),
-                  });
-                  const data = await res.json();
-                  if (data.requirePhone) {
-                    setGEmail(simEmail); setGName(simName);
-                    setGooglePhonePrompt(true);
-                  } else if (data.token) {
-                    localStorage.setItem("naseeb_token", data.token);
-                    localStorage.setItem("naseeb_user", JSON.stringify(data.user));
-                    router.push(redirectTo);
-                  } else {
-                    setError(data.error || "Google login failed.");
-                  }
-                } catch { setError("Network error."); }
-                setIsLoading(false);
-              }}
-            >
-              <span style={{ fontSize: "1.2rem" }}>🔵</span> Continue with Google
-            </button>
-
-            {/* Phone prompt overlay for Google sign-up */}
-            {googlePhonePrompt && (
-              <div style={{
-                marginTop: 16, padding: 16, borderRadius: 12,
-                border: "1.5px solid var(--border)", background: "var(--card-bg)"
-              }}>
-                <p style={{ fontWeight: 600, marginBottom: 8 }}>Enter your phone to complete sign-up</p>
-                <div className="input-group">
-                  <span className="input-icon">📱</span>
-                  <input
-                    className="input" placeholder="03001234567"
-                    value={gPhone} onChange={e => setGPhone(e.target.value)}
-                  />
-                </div>
-                <button
-                  className="btn btn-primary"
-                  style={{ width: "100%", marginTop: 10 }}
-                  disabled={isLoading}
-                  onClick={async () => {
-                    setError(""); setIsLoading(true);
+            {getGoogleClientId() ? (
+              <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                <GoogleLogin
+                  onSuccess={async (credentialResponse) => {
+                    const idToken = credentialResponse.credential;
+                    if (!idToken) {
+                      setError("Google did not return a credential.");
+                      return;
+                    }
+                    setError("");
+                    setIsLoading(true);
                     try {
                       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/google`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email: gEmail, name: gName, phone: normalizePhone(gPhone) }),
+                        body: JSON.stringify({ idToken }),
                       });
                       const data = await res.json();
-                      if (data.token) {
-                        localStorage.setItem("naseeb_token", data.token);
-                        localStorage.setItem("naseeb_user", JSON.stringify(data.user));
-                        setGooglePhonePrompt(false);
+                      if (res.ok && data.token) {
+                        applySession(data.token, data.user);
                         router.push(redirectTo);
                       } else {
-                        setError(data.error || "Failed.");
+                        setError(data.error || "Google login failed.");
                       }
-                    } catch { setError("Network error."); }
-                    setIsLoading(false);
+                    } catch {
+                      setError("Network error.");
+                    } finally {
+                      setIsLoading(false);
+                    }
                   }}
-                >
-                  {isLoading ? "Submitting…" : "Complete Sign Up"}
-                </button>
+                  onError={() => setError("Google sign-in was cancelled or failed.")}
+                  useOneTap={false}
+                  theme="outline"
+                  size="large"
+                  text="continue_with"
+                  shape="rectangular"
+                  width="100%"
+                />
               </div>
+            ) : (
+              <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                Google sign-in is not configured.
+              </p>
             )}
           </>
         )}
@@ -563,8 +530,8 @@ function LoginForm() {
           }}
         >
           By continuing, you agree to our{" "}
-          <Link href="#" style={{ color: "var(--saffron)" }}>Terms</Link> &amp;{" "}
-          <Link href="#" style={{ color: "var(--saffron)" }}>Privacy Policy</Link>.
+          <Link href="/terms" style={{ color: "var(--saffron)" }}>Terms</Link> &amp;{" "}
+          <Link href="/privacy-policy" style={{ color: "var(--saffron)" }}>Privacy Policy</Link>.
         </p>
       </div>
 
