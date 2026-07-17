@@ -29,7 +29,18 @@ function LoginForm() {
   // Auto-redirect if already logged in
   useEffect(() => {
     if (user) {
-      router.push(redirectTo);
+      const role = user.role?.toUpperCase();
+      let destination = redirectTo;
+      if (role === 'ADMIN') {
+        destination = redirectTo.startsWith("/dashboard") ? redirectTo : "/dashboard";
+      } else if (role === 'RIDER') {
+        destination = redirectTo.startsWith("/rider") ? redirectTo : "/rider";
+      } else {
+        if (redirectTo.startsWith("/dashboard") || redirectTo.startsWith("/rider")) {
+          destination = "/menu";
+        }
+      }
+      router.push(destination);
     }
   }, [user, redirectTo, router]);
 
@@ -51,7 +62,18 @@ function LoginForm() {
     const identifier = phone.includes("@") ? phone.trim() : normalizePhone(phone);
     const result = await login(identifier, password);
     if (result.success) {
-      router.push(redirectTo);
+      const role = result.user?.role?.toUpperCase();
+      let destination = redirectTo;
+      if (role === 'ADMIN') {
+        destination = redirectTo.startsWith("/dashboard") ? redirectTo : "/dashboard";
+      } else if (role === 'RIDER') {
+        destination = redirectTo.startsWith("/rider") ? redirectTo : "/rider";
+      } else {
+        if (redirectTo.startsWith("/dashboard") || redirectTo.startsWith("/rider")) {
+          destination = "/menu";
+        }
+      }
+      router.push(destination);
     } else {
       setError(result.message || "Login failed.");
     }
@@ -493,7 +515,18 @@ function LoginForm() {
                       const data = await res.json();
                       if (res.ok && data.token) {
                         applySession(data.token, data.user);
-                        router.push(redirectTo);
+                        const role = data.user?.role?.toUpperCase();
+                        let destination = redirectTo;
+                        if (role === 'ADMIN') {
+                          destination = redirectTo.startsWith("/dashboard") ? redirectTo : "/dashboard";
+                        } else if (role === 'RIDER') {
+                          destination = redirectTo.startsWith("/rider") ? redirectTo : "/rider";
+                        } else {
+                          if (redirectTo.startsWith("/dashboard") || redirectTo.startsWith("/rider")) {
+                            destination = "/menu";
+                          }
+                        }
+                        router.push(destination);
                       } else {
                         setError(data.error || "Google login failed.");
                       }

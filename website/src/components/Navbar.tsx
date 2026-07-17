@@ -193,7 +193,25 @@ export default function Navbar() {
 
             {/* Auth Button */}
             {user ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                {user.role?.toUpperCase() === "ADMIN" && (
+                  <Link
+                    href="/dashboard"
+                    className="btn btn-sm btn-ghost hide-mobile"
+                    style={{ textDecoration: "none", color: "var(--saffron)", fontWeight: 600 }}
+                  >
+                    ⚙️ Dashboard
+                  </Link>
+                )}
+                {user.role?.toUpperCase() === "RIDER" && (
+                  <Link
+                    href="/rider"
+                    className="btn btn-sm btn-ghost hide-mobile"
+                    style={{ textDecoration: "none", color: "var(--saffron)", fontWeight: 600 }}
+                  >
+                    🚴 Rider Panel
+                  </Link>
+                )}
                 <Link
                   href="/profile"
                   style={{
@@ -296,6 +314,42 @@ export default function Navbar() {
             )}
             {user && (
               <>
+                {user.role?.toUpperCase() === "ADMIN" && (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      display: 'block',
+                      padding: '12px 16px',
+                      borderRadius: 'var(--radius-md)',
+                      fontWeight: 600,
+                      color: 'var(--saffron)',
+                      background: 'rgba(217, 119, 6, 0.08)',
+                      marginBottom: '4px',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    ⚙️ Admin Dashboard
+                  </Link>
+                )}
+                {user.role?.toUpperCase() === "RIDER" && (
+                  <Link
+                    href="/rider"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      display: 'block',
+                      padding: '12px 16px',
+                      borderRadius: 'var(--radius-md)',
+                      fontWeight: 600,
+                      color: 'var(--saffron)',
+                      background: 'rgba(217, 119, 6, 0.08)',
+                      marginBottom: '4px',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    🚴 Rider Panel
+                  </Link>
+                )}
                 <Link
                   href="/profile"
                   onClick={() => setMenuOpen(false)}

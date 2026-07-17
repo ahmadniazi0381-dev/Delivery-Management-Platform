@@ -23,20 +23,20 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     if (isAdminRoute) {
       if (!token) {
         router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
-      } else if (user?.role !== "ADMIN") {
+      } else if (user?.role?.toUpperCase() !== "ADMIN") {
         router.push("/");
       }
     } else if (isRiderRoute) {
       if (!token) {
         router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
-      } else if (user?.role !== "RIDER") {
+      } else if (user?.role?.toUpperCase() !== "RIDER") {
         router.push("/");
       }
     } else if (isCheckoutRoute) {
       // Admins and Riders cannot access the checkout screen
-      if (user?.role === "ADMIN") {
+      if (user?.role?.toUpperCase() === "ADMIN") {
         router.push("/dashboard");
-      } else if (user?.role === "RIDER") {
+      } else if (user?.role?.toUpperCase() === "RIDER") {
         router.push("/rider");
       }
     }
@@ -58,7 +58,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   // Render Admin Layout
   if (isAdminRoute) {
-    if (user?.role !== "ADMIN") {
+    if (user?.role?.toUpperCase() !== "ADMIN") {
       return null; // Prevents flashing dashboard before redirect triggers
     }
     return <AdminLayout>{children}</AdminLayout>;
@@ -66,7 +66,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   // Render Rider Layout
   if (isRiderRoute) {
-    if (user?.role !== "RIDER") {
+    if (user?.role?.toUpperCase() !== "RIDER") {
       return null; // Prevents flashing rider dashboard before redirect triggers
     }
     return <RiderLayout>{children}</RiderLayout>;

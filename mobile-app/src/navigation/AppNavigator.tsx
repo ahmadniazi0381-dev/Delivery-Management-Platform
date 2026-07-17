@@ -43,8 +43,8 @@ export default function AppNavigator() {
     );
   }
 
-  const isAdmin = user?.role === "ADMIN";
-  const isRider = user?.role === "RIDER";
+  const isAdmin = user?.role?.toUpperCase() === "ADMIN";
+  const isRider = user?.role?.toUpperCase() === "RIDER";
 
   return (
     <NavigationContainer>
