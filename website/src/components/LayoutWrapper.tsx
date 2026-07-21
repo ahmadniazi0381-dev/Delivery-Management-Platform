@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import PWAInstallPrompt from "./PWAInstallPrompt";
 import AdminLayout from "@/features/admin/AdminLayout";
 import RiderLayout from "@/features/rider/RiderLayout";
 
@@ -79,6 +80,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       <Navbar />
       <main id="main-content" className="flex-1 page-offset">{children}</main>
       <Footer />
+      <PWAInstallPrompt />
     </>
   );
 }
