@@ -456,14 +456,14 @@ export default function AdminRiders() {
         }
       >
         <form id="create-rider-form" onSubmit={handleCreateRider} className="form-grid-2col">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Rider Name *</label>
             <input
               type="text" required
               value={newRider.name}
               onChange={(e) => setNewRider(n => ({ ...n, name: e.target.value }))}
               placeholder="Full name"
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

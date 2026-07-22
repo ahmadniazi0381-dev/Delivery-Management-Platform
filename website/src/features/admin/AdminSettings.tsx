@@ -42,13 +42,14 @@ function SoundRow({ label, description, priority, enabled, onToggle, onTest }: S
         transition: 'all 0.2s ease', gap: '16px', flexWrap: 'wrap',
       }}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+      <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{label}</span>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: '4px',
             fontSize: '0.7rem', fontWeight: 700, color: style.color,
             background: style.bg, padding: '2px 8px', borderRadius: '20px',
+            flexShrink: 0
           }}>
             {style.icon} {style.label}
           </span>
@@ -56,7 +57,7 @@ function SoundRow({ label, description, priority, enabled, onToggle, onTest }: S
         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{description}</p>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <button
           onClick={onTest}
           disabled={!enabled}
@@ -221,7 +222,7 @@ export default function AdminSettings() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '16px' }}>
+      <div className="admin-settings-tabs">
         <button onClick={() => setActiveTab('restaurant')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 8px', border: 'none', background: 'none', fontWeight: 700, fontSize: '0.9rem', color: activeTab === 'restaurant' ? 'var(--saffron)' : 'var(--text-secondary)', borderBottom: activeTab === 'restaurant' ? '3px solid var(--saffron)' : 'none', cursor: 'pointer' }}>
           <Store size={16} /> Restaurant info
         </button>
@@ -237,16 +238,16 @@ export default function AdminSettings() {
       </div>
 
       {/* Tab bodies */}
-      <div className="card" style={{ padding: '24px' }}>
+      <div className="card admin-settings-card">
         {activeTab === 'restaurant' && (
           <form onSubmit={handleSaveShop} className="form-grid-2col">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+            <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Restaurant Name</label>
               <input
                 type="text" required
                 value={shopForm.shopName}
                 onChange={(e) => setShopForm(prev => ({ ...prev, shopName: e.target.value }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -255,7 +256,7 @@ export default function AdminSettings() {
                 type="text" required
                 value={shopForm.contactNumber}
                 onChange={(e) => setShopForm(prev => ({ ...prev, contactNumber: e.target.value }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -265,7 +266,7 @@ export default function AdminSettings() {
                 value={shopForm.logoUrl}
                 onChange={(e) => setShopForm(prev => ({ ...prev, logoUrl: e.target.value }))}
                 placeholder="https://example.com/logo.png"
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -274,7 +275,7 @@ export default function AdminSettings() {
                 type="text" required placeholder="11:00"
                 value={shopForm.openingTime}
                 onChange={(e) => setShopForm(prev => ({ ...prev, openingTime: e.target.value }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -283,7 +284,7 @@ export default function AdminSettings() {
                 type="text" required placeholder="23:30"
                 value={shopForm.closingTime}
                 onChange={(e) => setShopForm(prev => ({ ...prev, closingTime: e.target.value }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -292,7 +293,7 @@ export default function AdminSettings() {
                 type="number" step="0.01" required
                 value={shopForm.taxRate}
                 onChange={(e) => setShopForm(prev => ({ ...prev, taxRate: e.target.value }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -301,20 +302,20 @@ export default function AdminSettings() {
                 type="number" required
                 value={shopForm.estimatedDeliveryMinutes}
                 onChange={(e) => setShopForm(prev => ({ ...prev, estimatedDeliveryMinutes: e.target.value }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+            <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Shop Location Address</label>
               <textarea
                 rows={3} required
                 value={shopForm.address}
                 onChange={(e) => setShopForm(prev => ({ ...prev, address: e.target.value }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontFamily: 'inherit' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontFamily: 'inherit' }}
               />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', gridColumn: 'span 2', background: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', marginTop: '8px' }}>
+            <div className="col-span-2" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', marginTop: '8px' }}>
               <input
                 type="checkbox" id="accept-orders-chk"
                 checked={shopForm.isAcceptingOrders}
@@ -326,8 +327,8 @@ export default function AdminSettings() {
               </label>
             </div>
 
-            <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-              <button type="submit" disabled={shopSaving} className="btn" style={{ background: 'var(--saffron)', color: '#fff', padding: '10px 24px', borderRadius: '8px' }}>
+            <div className="admin-save-btn-container">
+              <button type="submit" disabled={shopSaving} className="admin-save-btn">
                 {shopSaving ? 'Saving...' : 'Save Restaurant Settings'}
               </button>
             </div>
@@ -342,7 +343,7 @@ export default function AdminSettings() {
                 type="number" step="0.000001" required
                 value={deliveryForm.shopLatitude}
                 onChange={(e) => setDeliveryForm(prev => ({ ...prev, shopLatitude: parseFloat(e.target.value) }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -351,7 +352,7 @@ export default function AdminSettings() {
                 type="number" step="0.000001" required
                 value={deliveryForm.shopLongitude}
                 onChange={(e) => setDeliveryForm(prev => ({ ...prev, shopLongitude: parseFloat(e.target.value) }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -360,7 +361,7 @@ export default function AdminSettings() {
                 type="number" step="0.1" required
                 value={deliveryForm.maxDeliveryKm}
                 onChange={(e) => setDeliveryForm(prev => ({ ...prev, maxDeliveryKm: parseFloat(e.target.value) }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -369,13 +370,13 @@ export default function AdminSettings() {
                 type="number" required
                 value={deliveryForm.minOrderAmount}
                 onChange={(e) => setDeliveryForm(prev => ({ ...prev, minOrderAmount: parseFloat(e.target.value) }))}
-                style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
 
-            <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '8px' }}>
+            <div className="col-span-2" style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '8px' }}>
               <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '12px' }}>Standard Delivery Tier</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+              <div className="delivery-tier-grid">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox" id="std-del-chk"
@@ -391,7 +392,7 @@ export default function AdminSettings() {
                     type="number"
                     value={deliveryForm.standardFee}
                     onChange={(e) => setDeliveryForm(prev => ({ ...prev, standardFee: parseFloat(e.target.value) }))}
-                    style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -400,15 +401,15 @@ export default function AdminSettings() {
                     type="text"
                     value={deliveryForm.standardEta}
                     onChange={(e) => setDeliveryForm(prev => ({ ...prev, standardEta: e.target.value }))}
-                    style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                   />
                 </div>
               </div>
             </div>
 
-            <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '8px' }}>
+            <div className="col-span-2" style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '8px' }}>
               <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '12px' }}>Priority Delivery Tier (Fast Track)</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+              <div className="delivery-tier-grid">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox" id="prio-del-chk"
@@ -424,7 +425,7 @@ export default function AdminSettings() {
                     type="number"
                     value={deliveryForm.priorityFee}
                     onChange={(e) => setDeliveryForm(prev => ({ ...prev, priorityFee: parseFloat(e.target.value) }))}
-                    style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -433,14 +434,14 @@ export default function AdminSettings() {
                     type="text"
                     value={deliveryForm.priorityEta}
                     onChange={(e) => setDeliveryForm(prev => ({ ...prev, priorityEta: e.target.value }))}
-                    style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                   />
                 </div>
               </div>
             </div>
 
-            <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-              <button type="submit" disabled={deliverySaving} className="btn" style={{ background: 'var(--saffron)', color: '#fff', padding: '10px 24px', borderRadius: '8px' }}>
+            <div className="admin-save-btn-container">
+              <button type="submit" disabled={deliverySaving} className="admin-save-btn">
                 {deliverySaving ? 'Saving...' : 'Save Delivery Matrices'}
               </button>
             </div>
@@ -457,9 +458,10 @@ export default function AdminSettings() {
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '16px', border: '1px solid var(--border)', borderRadius: '10px',
                   background: gateway.enabled ? 'rgba(217,119,6,0.04)' : 'transparent',
+                  flexWrap: 'wrap', gap: '16px'
                 }}
               >
-                <div>
+                <div style={{ flex: '1 1 200px', minWidth: 0 }}>
                   <h5 style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                     {gateway.method === 'COD' ? 'Cash On Delivery (COD)' : gateway.method}
                   </h5>
@@ -473,7 +475,8 @@ export default function AdminSettings() {
                   style={{
                     background: gateway.enabled ? 'var(--saffron)' : 'rgba(107,114,128,0.1)',
                     color: gateway.enabled ? '#fff' : 'var(--text-secondary)',
-                    padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem'
+                    padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem',
+                    flexShrink: 0
                   }}
                 >
                   {gateway.enabled ? 'Enabled' : 'Disabled'}

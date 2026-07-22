@@ -434,13 +434,13 @@ export default function AdminMenu() {
         }
       >
         <form id="item-form" onSubmit={handleSaveItem} className="form-grid-2col">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Dish Name *</label>
             <input
               type="text" required
               value={itemModal.name}
               onChange={(e) => setItemModal(prev => ({ ...prev, name: e.target.value }))}
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -465,22 +465,22 @@ export default function AdminMenu() {
               style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Image URL</label>
             <input
               type="text"
               value={itemModal.imageUrl}
               onChange={(e) => setItemModal(prev => ({ ...prev, imageUrl: e.target.value }))}
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Description</label>
             <textarea
               rows={3}
               value={itemModal.description}
               onChange={(e) => setItemModal(prev => ({ ...prev, description: e.target.value }))}
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontFamily: 'inherit' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontFamily: 'inherit' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -503,7 +503,7 @@ export default function AdminMenu() {
             />
           </div>
           
-          <div style={{ display: 'flex', gap: '16px', gridColumn: 'span 2', background: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px' }}>
+          <div className="col-span-2" style={{ display: 'flex', gap: '16px', background: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px', flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>
               <input type="checkbox" checked={itemModal.inStock} onChange={(e) => setItemModal(prev => ({ ...prev, inStock: e.target.checked }))} style={{ accentColor: 'var(--saffron)' }} /> In Stock
             </label>
@@ -573,24 +573,24 @@ export default function AdminMenu() {
         }
       >
         <form id="disc-form" onSubmit={handleSaveDiscount} className="form-grid-2col">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Promo Code *</label>
             <input
               type="text" required
               value={discountModal.promoCode}
               onChange={(e) => setDiscountModal(prev => ({ ...prev, promoCode: e.target.value.toUpperCase() }))}
               placeholder="e.g. NASEEB20"
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Discount Title / Label *</label>
             <input
               type="text" required
               value={discountModal.title}
               onChange={(e) => setDiscountModal(prev => ({ ...prev, title: e.target.value }))}
               placeholder="e.g. 20% discount on entire first checkout order"
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -647,31 +647,31 @@ export default function AdminMenu() {
         }
       >
         <form id="banner-form" onSubmit={handleSaveBanner} className="form-grid-2col">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Banner Title *</label>
             <input
               type="text" required
               value={bannerModal.title}
               onChange={(e) => setBannerModal(prev => ({ ...prev, title: e.target.value }))}
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Subtitle</label>
             <input
               type="text"
               value={bannerModal.subtitle}
               onChange={(e) => setBannerModal(prev => ({ ...prev, subtitle: e.target.value }))}
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Image URL *</label>
             <input
               type="text" required
               value={bannerModal.imageUrl}
               onChange={(e) => setBannerModal(prev => ({ ...prev, imageUrl: e.target.value }))}
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
