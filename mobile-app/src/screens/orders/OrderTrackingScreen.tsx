@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useSocket } from '../../hooks/useSocket';
 import { useTheme } from '../../contexts/ThemeContext';
 import { OrderService, OrderDetail } from '../../services/order.service';

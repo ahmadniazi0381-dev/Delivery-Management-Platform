@@ -78,8 +78,8 @@ export function AdminTable<T extends Record<string, any>>({
   return (
     <div style={{ borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden', background: 'var(--bg-card)' }}>
       {/* Table */}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+        <table style={{ width: '100%', minWidth: `${Math.max(540, columns.length * 110)}px`, borderCollapse: 'collapse' }}>
           <thead style={{ background: 'var(--bg-secondary)', position: stickyHeader ? 'sticky' : undefined, top: stickyHeader ? 0 : undefined, zIndex: 5 }}>
             <tr>
               {selectable && (
@@ -147,7 +147,7 @@ export function AdminTable<T extends Record<string, any>>({
                       </td>
                     )}
                     {columns.map(col => (
-                      <td key={col.key} style={{ padding: '12px 16px', fontSize: '0.875rem', color: 'var(--text-primary)', maxWidth: col.width || '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+                      <td key={col.key} style={{ padding: '12px 16px', fontSize: '0.875rem', color: 'var(--text-primary)', verticalAlign: 'middle' }}>
                         {col.render ? col.render(row) : (row[col.key] ?? '—')}
                       </td>
                     ))}
@@ -161,9 +161,9 @@ export function AdminTable<T extends Record<string, any>>({
 
       {/* Pagination */}
       {totalPages > 1 && onPageChange && (
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', background: 'var(--bg-secondary)' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            Page {page} of {totalPages}{totalCount ? ` — {totalCount} total` : ''}
+            Page {page} of {totalPages}{totalCount ? ` — ${totalCount} total` : ''}
           </span>
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
             <button onClick={() => onPageChange(page - 1)} disabled={page <= 1} className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: '0.8rem' }}>

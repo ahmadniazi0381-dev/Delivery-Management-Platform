@@ -142,7 +142,7 @@ export default function AdminReports() {
       </div>
 
       {/* Main Charts Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+      <div className="admin-reports-grid-1">
         {/* Revenue Area Chart */}
         <div className="card" style={{ padding: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>Revenue Trend (Daily)</h3>
@@ -252,7 +252,7 @@ export default function AdminReports() {
       </div>
 
       {/* Top Dishes bar chart */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '24px', alignItems: 'start' }}>
+      <div className="admin-reports-grid-2">
         <div className="card" style={{ padding: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>Top Product Sales</h3>
           {mainLoading ? <SkeletonCard h="280px" /> : (

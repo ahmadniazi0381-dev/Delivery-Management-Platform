@@ -313,7 +313,7 @@ export default function AdminMenu() {
       </div>
 
       {/* Tabs Row */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '16px' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '16px' }} className="admin-menu-tabs">
         <button onClick={() => setActiveTab('items')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 8px', border: 'none', background: 'none', fontWeight: 700, fontSize: '0.9rem', color: activeTab === 'items' ? 'var(--saffron)' : 'var(--text-secondary)', borderBottom: activeTab === 'items' ? '3px solid var(--saffron)' : 'none', cursor: 'pointer' }}>
           <Utensils size={16} /> Dishes List
         </button>
@@ -433,7 +433,7 @@ export default function AdminMenu() {
           </>
         }
       >
-        <form id="item-form" onSubmit={handleSaveItem} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <form id="item-form" onSubmit={handleSaveItem} className="form-grid-2col">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Dish Name *</label>
             <input
@@ -572,7 +572,7 @@ export default function AdminMenu() {
           </>
         }
       >
-        <form id="disc-form" onSubmit={handleSaveDiscount} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <form id="disc-form" onSubmit={handleSaveDiscount} className="form-grid-2col">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Promo Code *</label>
             <input
@@ -646,7 +646,7 @@ export default function AdminMenu() {
           </>
         }
       >
-        <form id="banner-form" onSubmit={handleSaveBanner} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <form id="banner-form" onSubmit={handleSaveBanner} className="form-grid-2col">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Banner Title *</label>
             <input

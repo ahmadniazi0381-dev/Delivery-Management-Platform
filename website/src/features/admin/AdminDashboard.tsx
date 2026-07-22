@@ -209,7 +209,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts & Top Sellers */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px" }} className="profile-layout">
+      <div className="admin-dashboard-grid">
         <div className="card" style={{ padding: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>Revenue Trend</h3>

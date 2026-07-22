@@ -20,6 +20,8 @@ import {
   ChevronLeft,
   Bike,
   BarChart2,
+  Menu,
+  X,
 } from "lucide-react";
 
 // ─── Navigation links ─────────────────────────────────────────────────────────
@@ -40,12 +42,39 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const pathname = usePathname() || "";
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const { joinAsAdmin, isConnected } = useSocket();
   const { addToast } = useToast();
 
+  // ── Auto-close mobile drawer on route change ──────────────────────────────
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // ── Prevent body scrolling when mobile drawer is open ──────────────────────
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  // ── Close mobile drawer on Escape key ─────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // ── Order alerts (runs for the entire admin session) ──────────────────────
-  const { pendingCount, latestOrder } = useOrderAlerts({
+  const { pendingCount } = useOrderAlerts({
     onNewOrder: (order) => {
       addToast({
         type: "warning",
@@ -95,9 +124,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   const hasPending = pendingCount > 0;
 
+  const handleNavClick = () => {
+    setMobileOpen(false);
+  };
+
   return (
     <>
-      {/* CSS for alert animations */}
+      {/* CSS for alert animations & mobile responsive drawer */}
       <style>{`
         @keyframes pulse-pending {
           0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
@@ -125,22 +158,54 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           width: 8px; height: 8px; border-radius: 50%;
           transition: background 0.4s ease;
         }
+
+        /* Desktop vs Mobile sidebar styles */
+        .admin-sidebar-desktop {
+          display: flex;
+        }
+        .admin-hamburger-btn {
+          display: none;
+        }
+        .admin-mobile-drawer {
+          display: none;
+        }
+
+        @media (max-width: 1023px) {
+          .admin-sidebar-desktop {
+            display: none !important;
+          }
+          .admin-hamburger-btn {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 8px;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            cursor: pointer;
+          }
+          .admin-mobile-drawer {
+            display: block;
+          }
+        }
       `}</style>
 
       <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-secondary)" }}>
-        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+        {/* ── Desktop Sidebar ────────────────────────────────────────────────── */}
         <aside
+          className="admin-sidebar-desktop"
           style={{
             width: collapsed ? "70px" : "260px",
             background: "var(--bg-card)",
             borderRight: "1px solid var(--border)",
-            display: "flex",
             flexDirection: "column",
             transition: "width 0.2s ease",
             position: "sticky",
             top: 0,
             height: "100vh",
             zIndex: 100,
+            flexShrink: 0,
           }}
         >
           {/* Sidebar Header */}
@@ -171,6 +236,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 color: "var(--text-secondary)", padding: "4px",
                 borderRadius: "4px", display: "flex", alignItems: "center",
               }}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               <ChevronLeft
                 size={20}
@@ -180,7 +246,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Nav Links */}
-          <nav style={{ flex: 1, padding: "16px 12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+          <nav style={{ flex: 1, padding: "16px 12px", display: "flex", flexDirection: "column", gap: "6px", overflowY: "auto" }}>
             {ADMIN_LINKS.map((link) => {
               const Icon = link.icon;
               const active = isActive(link.href);
@@ -211,7 +277,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                     className={isOrders && hasPending ? "flash-alert" : ""}
                   >
                     <Icon size={20} />
-                    {/* Pending dot on icon */}
                     {isOrders && hasPending && (
                       <span
                         style={{
@@ -229,7 +294,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                     )}
                   </span>
                   {!collapsed && <span style={{ flex: 1 }}>{link.label}</span>}
-                  {/* Pending count badge in sidebar */}
                   {!collapsed && isOrders && hasPending && (
                     <span
                       className="badge-pop"
@@ -283,8 +347,152 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* ── Main Content ──────────────────────────────────────────────────── */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        {/* ── Mobile Off-Canvas Drawer (Overlay) ────────────────────────────── */}
+        <div className="admin-mobile-drawer">
+          {mobileOpen && (
+            <>
+              {/* Dark Backdrop Overlay */}
+              <div
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  background: "rgba(0, 0, 0, 0.6)",
+                  backdropFilter: "blur(4px)",
+                  zIndex: 999,
+                  animation: "fadeIn 0.2s ease-out",
+                }}
+              />
+              {/* Off-canvas Drawer Panel */}
+              <aside
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  bottom: 0,
+                  width: "min(280px, 85vw)",
+                  background: "var(--bg-card)",
+                  zIndex: 1000,
+                  display: "flex",
+                  flexDirection: "column",
+                  boxShadow: "4px 0 24px rgba(0,0,0,0.25)",
+                  animation: "slideRight 0.25s ease-out",
+                }}
+              >
+                {/* Mobile Drawer Header */}
+                <div
+                  style={{
+                    height: "72px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0 20px",
+                    borderBottom: "1px solid var(--border)",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontWeight: 800, color: "var(--maroon)", fontSize: "1.1rem" }}>
+                      Naseeb Admin
+                    </span>
+                    <span style={{ fontSize: "0.7rem", color: "var(--saffron)", textTransform: "uppercase", letterSpacing: "1px" }}>
+                      Control Center
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      color: "var(--text-secondary)", padding: "6px",
+                      borderRadius: "6px", display: "flex", alignItems: "center",
+                    }}
+                    aria-label="Close menu"
+                  >
+                    <X size={22} />
+                  </button>
+                </div>
+
+                {/* Mobile Drawer Nav Links */}
+                <nav style={{ flex: 1, padding: "16px 12px", display: "flex", flexDirection: "column", gap: "6px", overflowY: "auto" }}>
+                  {ADMIN_LINKS.map((link) => {
+                    const Icon = link.icon;
+                    const active = isActive(link.href);
+                    const isOrders = link.href === "/dashboard/orders";
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={handleNavClick}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          padding: "14px 16px",
+                          borderRadius: "8px",
+                          color: active ? "var(--saffron)" : "var(--text-secondary)",
+                          background: active ? "rgba(217,119,6,0.1)" : "transparent",
+                          fontWeight: active ? 700 : 500,
+                          textDecoration: "none",
+                          borderLeft: active ? "4px solid var(--saffron)" : "4px solid transparent",
+                        }}
+                      >
+                        <Icon size={20} style={{ flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>{link.label}</span>
+                        {isOrders && hasPending && (
+                          <span
+                            className="badge-pop"
+                            style={{
+                              background: "#ef4444",
+                              color: "#fff",
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                              padding: "2px 7px",
+                              borderRadius: "12px",
+                              minWidth: "20px",
+                              textAlign: "center",
+                            }}
+                          >
+                            {pendingCount}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                {/* Mobile Drawer Footer */}
+                <div style={{ padding: "16px 12px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <button
+                    onClick={toggleTheme}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "12px",
+                      padding: "12px", borderRadius: "8px", width: "100%",
+                      background: "none", border: "none", cursor: "pointer",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                    <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
+                  </button>
+                  <button
+                    onClick={() => { setMobileOpen(false); logout(); window.location.href = "/"; }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "12px",
+                      padding: "12px", borderRadius: "8px", width: "100%",
+                      background: "none", border: "none", cursor: "pointer",
+                      color: "var(--error)",
+                    }}
+                  >
+                    <LogOut size={20} />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              </aside>
+            </>
+          )}
+        </div>
+
+        {/* ── Main Content Container ────────────────────────────────────────── */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, width: "100%" }}>
           {/* Top Header */}
           <header
             style={{
@@ -294,17 +502,38 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "0 24px",
+              padding: "0 clamp(12px, 3vw, 24px)",
               position: "sticky",
               top: 0,
               zIndex: 90,
+              gap: "12px",
             }}
           >
-            <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)" }}>
-              Welcome, {user?.name || "Administrator"}
-            </h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+              {/* Hamburger Button for Mobile */}
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="admin-hamburger-btn"
+                aria-label="Open navigation menu"
+              >
+                <Menu size={22} />
+              </button>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <h2
+                style={{
+                  fontSize: "clamp(0.95rem, 2.5vw, 1.2rem)",
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                Welcome, {user?.name || "Administrator"}
+              </h2>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
               {/* Socket status dot */}
               <span
                 className="socket-dot"
@@ -353,13 +582,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
               </Link>
 
               {/* Admin avatar */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", borderLeft: "1px solid var(--border)", paddingLeft: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", borderLeft: "1px solid var(--border)", paddingLeft: "12px" }}>
                 <div
                   style={{
-                    width: "36px", height: "36px", borderRadius: "50%",
+                    width: "34px", height: "34px", borderRadius: "50%",
                     background: "var(--grad-saffron)", color: "#fff",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontWeight: 700, fontSize: "0.9rem",
+                    fontWeight: 700, fontSize: "0.9rem", flexShrink: 0,
                   }}
                 >
                   A
@@ -372,7 +601,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           </header>
 
           {/* Page Content */}
-          <main style={{ flex: 1, padding: "24px", overflowY: "auto" }}>
+          <main style={{ flex: 1, padding: "clamp(12px, 2.5vw, 24px)", overflowY: "auto", minWidth: 0, width: "100%" }}>
             {children}
           </main>
         </div>

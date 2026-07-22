@@ -52,4 +52,8 @@ Thumbs.db
 
 .agent/
 .agents/
-skills-lock.json
+skills-lock.json 
+# Serwist generated service worker
+/public/sw.js
+
+APK file/

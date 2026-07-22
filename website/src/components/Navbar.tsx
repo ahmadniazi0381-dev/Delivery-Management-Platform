@@ -28,6 +28,11 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Auto-close mobile menu on route change
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
   // Dark mode toggle
   useEffect(() => {
     const stored = localStorage.getItem("naseeb_theme");
@@ -60,7 +65,7 @@ export default function Navbar() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: "24px",
+            gap: "clamp(8px, 2vw, 24px)",
           }}
         >
           {/* Logo */}
@@ -69,20 +74,24 @@ export default function Navbar() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "10px",
+              gap: "clamp(6px, 1.5vw, 10px)",
               textDecoration: "none",
               flexShrink: 0,
+              minWidth: 0,
             }}
           >
             <LogoMark size={40} />
-            <div style={{ lineHeight: 1.1 }}>
+            <div style={{ lineHeight: 1.1, minWidth: 0 }} className="nav-logo-text">
               <div
                 style={{
                   fontFamily: "Poppins, sans-serif",
                   fontWeight: 800,
-                  fontSize: "1rem",
+                  fontSize: "clamp(0.8rem, 2.5vw, 1rem)",
                   color: "var(--maroon)",
                   letterSpacing: "-0.01em",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
                 Naseeb Baryani
@@ -91,13 +100,14 @@ export default function Navbar() {
                 style={{
                   fontFamily: "Inter, sans-serif",
                   fontWeight: 500,
-                  fontSize: "0.7rem",
+                  fontSize: "clamp(0.6rem, 1.5vw, 0.7rem)",
                   color: "var(--saffron)",
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.08em",
                   textTransform: "uppercase",
+                  whiteSpace: "nowrap",
                 }}
               >
-                & Pulao · UCP
+                &amp; Pulao · UCP
               </div>
             </div>
           </Link>

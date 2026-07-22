@@ -239,7 +239,7 @@ export default function AdminSettings() {
       {/* Tab bodies */}
       <div className="card" style={{ padding: '24px' }}>
         {activeTab === 'restaurant' && (
-          <form onSubmit={handleSaveShop} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <form onSubmit={handleSaveShop} className="form-grid-2col">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
               <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Restaurant Name</label>
               <input
@@ -335,7 +335,7 @@ export default function AdminSettings() {
         )}
 
         {activeTab === 'delivery' && (
-          <form onSubmit={handleSaveDelivery} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <form onSubmit={handleSaveDelivery} className="form-grid-2col">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Branch Latitude</label>
               <input

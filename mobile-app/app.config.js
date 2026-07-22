@@ -28,6 +28,7 @@ module.exports = {
     resizeMode: "contain",
     backgroundColor: "#FFF8F0",
   },
+  plugins: ["expo-font", "expo-status-bar"],
   ios: {
     supportsTablet: true,
     infoPlist: {
@@ -47,6 +48,8 @@ module.exports = {
       : {}),
   },
   android: {
+    package: "com.naseebbaryani.app",
+    versionCode: 1,
     adaptiveIcon: {
       foregroundImage: "./assets/android-icon-foreground.png",
       backgroundColor: "#FFF8F0",
@@ -64,5 +67,10 @@ module.exports = {
   },
   web: {
     favicon: "./assets/favicon.png",
+  },
+  extra: {
+    eas: {
+      projectId: "21044275-4558-436d-90f7-62ac53d4c59b",
+    },
   },
 };

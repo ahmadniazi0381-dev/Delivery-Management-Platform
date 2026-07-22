@@ -185,20 +185,13 @@ export default function CartPage() {
           {cart.totalItems} item{cart.totalItems !== 1 ? "s" : ""} in your cart
         </p>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 380px",
-            gap: "24px",
-            alignItems: "flex-start",
-          }}
-        >
+        <div className="cart-main-grid">
           {/* ── Left: Cart Items ──────────────────────────── */}
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {cart.items.map((ci) => (
               <div
                 key={ci.menuItem.id}
-                className="card animate-fade-up"
+                className="card animate-fade-up cart-item-row"
                 style={{ padding: "16px 20px", display: "flex", gap: "16px", alignItems: "center" }}
               >
                 {/* Emoji / Image */}
@@ -247,7 +240,7 @@ export default function CartPage() {
                 </div>
 
                 {/* Qty Controls */}
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div className="cart-item-controls" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <div className="qty-control">
                     <button onClick={() => decrement(ci.menuItem.id)} aria-label="Decrease">−</button>
                     <span>{ci.quantity}</span>

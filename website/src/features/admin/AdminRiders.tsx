@@ -293,13 +293,23 @@ export default function AdminRiders() {
 
       {/* Slide-over Profile Drawer */}
       {selectedRider && (
-        <div style={{
-          position: 'fixed', right: 0, top: 0, bottom: 0, width: '480px',
-          background: 'var(--bg-card)', borderLeft: '1px solid var(--border)',
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.15)', zIndex: 100,
-          display: 'flex', flexDirection: 'column', animation: 'slide-in 0.25s ease'
-        }}>
-          <style>{`@keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
+        <>
+          {/* Backdrop overlay */}
+          <div
+            onClick={() => setSelectedRiderId(null)}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(2px)', zIndex: 99,
+            }}
+          />
+          <div style={{
+            position: 'fixed', right: 0, top: 0, bottom: 0, width: 'min(480px, 100vw)',
+            background: 'var(--bg-card)', borderLeft: '1px solid var(--border)',
+            boxShadow: '-4px 0 24px rgba(0,0,0,0.15)', zIndex: 100,
+            display: 'flex', flexDirection: 'column', animation: 'slide-in 0.25s ease',
+            overflowY: 'auto',
+          }}>
+            <style>{`@keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
           
           {/* Drawer Header */}
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -412,7 +422,7 @@ export default function AdminRiders() {
               )}
 
               {activeTab === 'performance' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid-2col">
                   <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', textAlign: 'center' }}>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Deliveries Today</span>
                     <h5 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '4px 0 0' }}>0</h5>
@@ -428,6 +438,7 @@ export default function AdminRiders() {
             </div>
           </div>
         </div>
+        </>
       )}
 
       {/* Create Rider Modal */}
@@ -444,7 +455,7 @@ export default function AdminRiders() {
           </>
         }
       >
-        <form id="create-rider-form" onSubmit={handleCreateRider} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <form id="create-rider-form" onSubmit={handleCreateRider} className="form-grid-2col">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Rider Name *</label>
             <input

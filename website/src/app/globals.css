@@ -2072,7 +2072,13 @@ gmp-place-autocomplete::part(input):focus {
   .nav-links-desktop {
     display: none;
   }
+  /* Hide verbose labels in admin/rider header on mobile */
+  .hide-mobile {
+    display: none !important;
+  }
 }
+
+
 
 /* ============================================================
    BTN-DANGER — Alias for destructive actions (used in admin)
@@ -2204,3 +2210,224 @@ gmp-place-autocomplete::part(input):focus {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
+
+/* ============================================================
+   GLOBAL RESPONSIVE LAYOUT HELPERS
+   ============================================================ */
+
+/* Ensure images, SVG, inputs, textareas fit containers */
+img, video, canvas, svg {
+  max-width: 100%;
+}
+
+/* Responsive grid for admin dashboard, reports & orders pipeline */
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.admin-reports-grid-1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.admin-reports-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.cart-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.form-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-grid-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1023px) {
+  .admin-dashboard-grid,
+  .admin-reports-grid-1,
+  .admin-reports-grid-2,
+  .cart-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Admin Orders: force single column on tablet and below */
+  .orders-split-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-grid-2col,
+  .form-grid-3col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ============================================================
+   GLOBAL RESPONSIVE FIXES — 320px–1440px
+   ============================================================ */
+
+/* Admin/Rider top header: prevent wrapping or overflow on 320px */
+.admin-header-inner,
+.rider-header-inner {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Admin menu tab bar: horizontal scroll on mobile */
+.admin-menu-tabs {
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+  gap: 4px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.admin-menu-tabs::-webkit-scrollbar { display: none; }
+
+/* Slide-over drawers: max-width clamp for small screens */
+.admin-slide-drawer {
+  width: min(480px, 100vw);
+  max-width: 100vw;
+}
+
+/* Modal responsive: ensure modals never overflow 320px wide screen */
+.modal-box {
+  max-width: min(480px, calc(100vw - 24px));
+  padding: clamp(16px, 4vw, 28px);
+}
+
+/* Cart items on mobile: stack qty controls */
+@media (max-width: 480px) {
+  .cart-item-row {
+    flex-wrap: wrap;
+  }
+  .cart-item-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Profile header on very small screens */
+@media (max-width: 400px) {
+  .profile-header-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Navbar on 320px: prevent header overflow */
+@media (max-width: 390px) {
+  .nav-logo-text {
+    font-size: clamp(0.8rem, 3.5vw, 1rem);
+  }
+}
+
+/* Toast: full width on mobile */
+@media (max-width: 480px) {
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: 16px;
+  }
+  .toast {
+    min-width: unset;
+    width: 100%;
+  }
+}
+
+/* Admin slide-over panel on mobile */
+@media (max-width: 640px) {
+  .admin-slide-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+}
+
+/* Minimum touch targets: 44px for interactive elements */
+.btn,
+.qty-control button,
+.fp-qty button {
+  min-height: 44px;
+}
+.btn-sm { min-height: 36px; }
+
+/* Ensure full element width safety without global overflow-x hiding */
+*, *::before, *::after {
+  max-width: 100%;
+}
+
+/* Report charts: ensure recharts containers don't exceed viewport */
+.recharts-responsive-container {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Admin/rider sidebar drawer: ensure scrollable on small screens */
+.admin-sidebar-mobile,
+.rider-sidebar-mobile {
+  overflow-y: auto;
+  max-height: 100dvh;
+}
+
+/* sr-only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Dev login buttons: stack on very small screens */
+@media (max-width: 360px) {
+  .dev-logins-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Rider dashboard stats: 2 columns on smallest screens */
+@media (max-width: 400px) {
+  .rider-stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Admin orders: selected order panel scrollable on mobile */
+@media (max-width: 1023px) {
+  .order-detail-panel {
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}
+
+/* Ensure containers maintain responsive boundaries */
+.page-offset,
+main,
+[data-page-wrapper] {
+  width: 100%;
+  min-width: 0;
+}
+

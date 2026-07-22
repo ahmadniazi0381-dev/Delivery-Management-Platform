@@ -309,7 +309,7 @@ export default function AdminOrders() {
       </div>
 
       {/* Orders Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: selectedOrder ? "1fr 1.2fr" : "1fr", gap: "24px" }} className="profile-layout">
+      <div style={{ display: "grid", gridTemplateColumns: selectedOrder ? "min(45vw, 520px) 1fr" : "1fr", gap: "24px" }} className="orders-split-grid">
         {/* Orders List */}
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {filteredOrders.map((order) => (

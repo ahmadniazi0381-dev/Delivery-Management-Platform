@@ -295,13 +295,23 @@ export default function AdminCustomers() {
 
       {/* Drawer Details Slide-over */}
       {selectedCustomerId && (
-        <div style={{
-          position: 'fixed', right: 0, top: 0, bottom: 0, width: '480px',
-          background: 'var(--bg-card)', borderLeft: '1px solid var(--border)',
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.15)', zIndex: 100,
-          display: 'flex', flexDirection: 'column', animation: 'slide-in 0.25s ease'
-        }}>
-          <style>{`@keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
+        <>
+          {/* Backdrop overlay */}
+          <div
+            onClick={() => setSelectedCustomerId(null)}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(2px)', zIndex: 99,
+            }}
+          />
+          <div style={{
+            position: 'fixed', right: 0, top: 0, bottom: 0, width: 'min(480px, 100vw)',
+            background: 'var(--bg-card)', borderLeft: '1px solid var(--border)',
+            boxShadow: '-4px 0 24px rgba(0,0,0,0.15)', zIndex: 100,
+            display: 'flex', flexDirection: 'column', animation: 'slide-in 0.25s ease',
+            overflowY: 'auto',
+          }}>
+            <style>{`@keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
           
           {/* Drawer Header */}
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -389,7 +399,7 @@ export default function AdminCustomers() {
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Email Address</span>
                       <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{customerDetail.email || 'No email address registered'}</p>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+                    <div className="form-grid-2col" style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
                       <div>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Total Spend</span>
                         <p style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--success)', marginTop: '2px' }}>Rs. {customerDetail.stats?.totalSpend.toLocaleString()}</p>
@@ -471,9 +481,8 @@ export default function AdminCustomers() {
             </div>
           )}
         </div>
+        </>
       )}
-
-      {/* Notification Modal */}
       <AdminModal
         open={notifyModal.open}
         onClose={() => setNotifyModal(m => ({ ...m, open: false }))}
