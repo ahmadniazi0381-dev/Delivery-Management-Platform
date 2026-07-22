@@ -223,6 +223,9 @@ export default function ProfilePage() {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        if (data.token) {
+          applySession(data.token, { ...user, mustChangePassword: false } as any);
+        }
       } else {
         setError(data.error || "Failed to change password.");
       }
@@ -234,6 +237,73 @@ export default function ProfilePage() {
   };
 
   if (!user) return null;
+
+  if (user.mustChangePassword) {
+    return (
+      <div style={{ background: "var(--bg-secondary)", minHeight: "92vh", padding: "40px 20px" }}>
+        <div style={{ maxWidth: "500px", margin: "0 auto" }}>
+          <div style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", color: "var(--error)", padding: "16px", borderRadius: "var(--radius-md)", marginBottom: "24px", fontSize: "0.95rem", textAlign: "center" }}>
+            🔒 <strong>Security Update Required</strong>
+            <p style={{ marginTop: "8px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+              Your password has been reset by an administrator. You must update your password before you can use the platform.
+            </p>
+          </div>
+
+          {error && (
+            <div style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", color: "var(--error)", padding: "12px", borderRadius: "var(--radius-md)", marginBottom: "20px", fontSize: "0.9rem" }}>
+              ⚠️ {error}
+            </div>
+          )}
+          {success && (
+            <div style={{ background: "#DCFCE7", border: "1px solid #86EFAC", color: "var(--success)", padding: "12px", borderRadius: "var(--radius-md)", marginBottom: "20px", fontSize: "0.9rem" }}>
+              🎉 {success}
+            </div>
+          )}
+
+          <div className="card" style={{ padding: "28px" }}>
+            <h3 style={{ fontSize: "1.2rem", marginBottom: "20px", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px", textAlign: "center" }}>
+              Change Password
+            </h3>
+            <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div className="input-group">
+                <input
+                  type="password"
+                  className="input"
+                  placeholder="Current Password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="input-group">
+                <input
+                  type="password"
+                  className="input"
+                  placeholder="New Password (min. 8 chars)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="input-group">
+                <input
+                  type="password"
+                  className="input"
+                  placeholder="Confirm New Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: "100%", padding: "14px", fontSize: "0.95rem" }}>
+                {isLoading ? "Updating..." : "Update Password & Continue"}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Extract initials for placeholder avatar
   const initials = user.name

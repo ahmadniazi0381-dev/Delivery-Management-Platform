@@ -36,24 +36,34 @@ export async function register(req: Request, res: Response) {
     }
 
     // Check if user already exists with that phone
-    const existingUser = await prisma.user.findUnique({ where: { phone } });
-    if (existingUser) {
+    const existingPhoneUser = await prisma.user.findUnique({ where: { phone } });
+    if (existingPhoneUser) {
       return res.status(400).json({ error: 'Phone number is already registered.' });
+    }
+
+    // Check if email already exists
+    if (email) {
+      const existingEmailUser = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+      if (existingEmailUser) {
+        return res.status(400).json({ error: 'Email address is already registered.' });
+      }
     }
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    const isDev = process.env.NODE_ENV !== 'production';
+
     // Create user
     const user = await prisma.user.create({
       data: {
-        name,
-        email: email || null,
+        name: name.trim(),
+        email: email ? email.toLowerCase().trim() : null,
         phone,
         passwordHash,
         role: 'CUSTOMER', // Default role
-        phoneVerified: true, // Auto-verify phone in development to allow ordering
+        phoneVerified: isDev, // Auto-verify phone in development only
       },
     });
 
@@ -64,6 +74,7 @@ export async function register(req: Request, res: Response) {
         phone: user.phone,
         role: user.role,
         phoneVerified: user.phoneVerified,
+        mustChangePassword: !!user.mustChangePassword,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN as any }
@@ -135,7 +146,13 @@ export async function login(req: Request, res: Response) {
         });
 
         const token = jwt.sign(
-          { id: devUser.id, phone: devUser.phone, role: devUser.role, phoneVerified: true },
+          {
+            id: devUser.id,
+            phone: devUser.phone,
+            role: devUser.role,
+            phoneVerified: true,
+            mustChangePassword: !!devUser.mustChangePassword,
+          },
           JWT_SECRET,
           { expiresIn: JWT_EXPIRES_IN as any }
         );
@@ -177,7 +194,13 @@ export async function login(req: Request, res: Response) {
     }
 
     const token = jwt.sign(
-      { id: user.id, phone: user.phone, role: user.role, phoneVerified: user.phoneVerified },
+      {
+        id: user.id,
+        phone: user.phone,
+        role: user.role,
+        phoneVerified: user.phoneVerified,
+        mustChangePassword: !!user.mustChangePassword,
+      },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN as any }
     );
@@ -187,7 +210,15 @@ export async function login(req: Request, res: Response) {
     return res.status(200).json({
       message: 'Login successful.',
       token,
-      user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, phoneVerified: user.phoneVerified },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        phoneVerified: user.phoneVerified,
+        mustChangePassword: !!user.mustChangePassword,
+      },
     });
   } catch (error: any) {
     console.error('Login error:', error);
@@ -225,7 +256,7 @@ export async function sendOtp(req: AuthenticatedRequest, res: Response) {
       data: {
         userId: user.id,
         otpCode,
-        purpose: 'PHONE_VERIFICATION',
+        purpose: `PHONE_VERIFICATION:${user.phone}`,
         expiresAt,
       },
     });
@@ -254,12 +285,17 @@ export async function verifyOtp(req: AuthenticatedRequest, res: Response) {
       return res.status(401).json({ error: 'Unauthorized.' });
     }
 
-    // Find the latest active OTP for this user
+    const userObj = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!userObj || !userObj.phone) {
+      return res.status(400).json({ error: 'No phone number associated with user profile.' });
+    }
+
+    // Find the latest active OTP for this user and phone number
     const otpRecord = await prisma.otpVerification.findFirst({
       where: {
         userId: req.user.id,
         otpCode: code,
-        purpose: 'PHONE_VERIFICATION',
+        purpose: `PHONE_VERIFICATION:${userObj.phone}`,
         isVerified: false,
         expiresAt: { gt: new Date() },
       },
@@ -289,6 +325,7 @@ export async function verifyOtp(req: AuthenticatedRequest, res: Response) {
         phone: updatedUser.phone,
         role: updatedUser.role,
         phoneVerified: true,
+        mustChangePassword: !!updatedUser.mustChangePassword,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN as any }
@@ -395,6 +432,7 @@ export async function googleLogin(req: Request, res: Response) {
         phone: user.phone,
         role: user.role,
         phoneVerified: user.phoneVerified,
+        mustChangePassword: !!user.mustChangePassword,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN as any }
@@ -464,7 +502,7 @@ export async function resetPassword(req: Request, res: Response) {
 
     const user = await prisma.user.findUnique({ where: { phone } });
     if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
+      return res.status(400).json({ error: 'Invalid or expired reset code.' });
     }
 
     const otpRecord = await prisma.otpVerification.findFirst({
@@ -592,7 +630,7 @@ export async function requestPhoneChange(req: AuthenticatedRequest, res: Respons
       data: {
         userId: req.user.id,
         otpCode,
-        purpose: 'PHONE_VERIFICATION',
+        purpose: `PHONE_VERIFICATION:${phone}`,
         expiresAt,
       },
     });
@@ -624,7 +662,7 @@ export async function confirmPhoneChange(req: AuthenticatedRequest, res: Respons
       where: {
         userId: req.user.id,
         otpCode: code,
-        purpose: 'PHONE_VERIFICATION',
+        purpose: `PHONE_VERIFICATION:${phone}`,
         isVerified: false,
         expiresAt: { gt: new Date() },
       },
@@ -650,11 +688,17 @@ export async function confirmPhoneChange(req: AuthenticatedRequest, res: Respons
     // Issue new token with updated phone
     const updatedUser = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, name: true, email: true, phone: true, role: true, phoneVerified: true },
+      select: { id: true, name: true, email: true, phone: true, role: true, phoneVerified: true, mustChangePassword: true },
     });
 
     const newToken = jwt.sign(
-      { id: req.user.id, phone, role: req.user.role, phoneVerified: true },
+      {
+        id: req.user.id,
+        phone,
+        role: req.user.role,
+        phoneVerified: true,
+        mustChangePassword: !!updatedUser?.mustChangePassword,
+      },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN as any }
     );
@@ -697,7 +741,23 @@ export async function changePassword(req: AuthenticatedRequest, res: Response) {
       data: { passwordHash, mustChangePassword: false },
     });
 
-    return res.status(200).json({ success: true, message: 'Password changed successfully.' });
+    const token = jwt.sign(
+      {
+        id: user.id,
+        phone: user.phone,
+        role: user.role,
+        phoneVerified: user.phoneVerified,
+        mustChangePassword: false,
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN as any }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password changed successfully.',
+      token,
+    });
   } catch (error) {
     console.error('Change password error:', error);
     return res.status(500).json({ error: 'Failed to change password.' });

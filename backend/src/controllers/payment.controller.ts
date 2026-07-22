@@ -383,15 +383,27 @@ export async function getPaymentStatus(req: AuthenticatedRequest, res: Response)
     const payment = await prisma.payment.findFirst({
       where: { orderId },
       orderBy: { createdAt: 'desc' },
+      include: { order: true },
     });
 
     if (!payment) {
       return res.status(404).json({ success: false, error: 'No payment transaction found for this order.' });
     }
 
+    if (
+      payment.order.customerId !== req.user!.id &&
+      payment.order.riderId !== req.user!.id &&
+      req.user!.role !== 'ADMIN'
+    ) {
+      return res.status(403).json({ success: false, error: 'Access denied.' });
+    }
+
+    // Strip the order object to match the original shape
+    const { order, ...paymentData } = payment;
+
     return res.json({
       success: true,
-      data: payment,
+      data: paymentData,
     });
   } catch (error) {
     console.error('Get payment status error:', error);

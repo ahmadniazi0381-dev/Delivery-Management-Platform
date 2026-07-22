@@ -7,6 +7,7 @@ export interface User {
   phoneVerified: boolean;
   profilePicture?: string;
   loyaltyPoints?: number;
+  mustChangePassword?: boolean;
 }
 
 export interface MenuItem {

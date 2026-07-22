@@ -56,6 +56,7 @@ export interface User {
   addresses?: Address[];
   role?: "CUSTOMER" | "ADMIN" | "RIDER";
   permissions?: string[];
+  mustChangePassword?: boolean;
 }
 
 export interface Order {

@@ -64,7 +64,9 @@ function LoginForm() {
     if (result.success) {
       const role = result.user?.role?.toUpperCase();
       let destination = redirectTo;
-      if (role === 'ADMIN') {
+      if (result.user?.mustChangePassword) {
+        destination = "/profile";
+      } else if (role === 'ADMIN') {
         destination = redirectTo.startsWith("/dashboard") ? redirectTo : "/dashboard";
       } else if (role === 'RIDER') {
         destination = redirectTo.startsWith("/rider") ? redirectTo : "/rider";
@@ -90,6 +92,7 @@ function LoginForm() {
       setSuccess(`Logged in as dev ${email.split('@')[0]}!`);
       const role = result.user?.role;
       const destination =
+        result.user?.mustChangePassword ? '/profile' :
         role === 'ADMIN' ? '/dashboard' :
         role === 'RIDER' ? '/rider' :
         redirectTo || '/menu';

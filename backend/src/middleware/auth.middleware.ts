@@ -13,6 +13,7 @@ export interface AuthenticatedRequest extends Request {
     phone: string | null;
     role: 'CUSTOMER' | 'ADMIN' | 'RIDER';
     phoneVerified: boolean;
+    mustChangePassword?: boolean;
   };
 }
 
@@ -34,8 +35,23 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
       phone: string | null;
       role: 'CUSTOMER' | 'ADMIN' | 'RIDER';
       phoneVerified: boolean;
+      mustChangePassword?: boolean;
     };
     req.user = decoded;
+
+    // Enforce forced password change if flag is set (except for password change endpoints)
+    if (
+      decoded.mustChangePassword &&
+      req.path !== '/change-password' &&
+      req.path !== '/auth/change-password' &&
+      !req.path.includes('/change-password')
+    ) {
+      return res.status(403).json({
+        error: 'Password change required.',
+        mustChangePassword: true,
+      });
+    }
+
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired authentication token.' });
@@ -58,3 +74,4 @@ export function requireRole(...roles: Array<'CUSTOMER' | 'ADMIN' | 'RIDER'>) {
     next();
   };
 }
+

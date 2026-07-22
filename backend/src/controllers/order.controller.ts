@@ -26,7 +26,7 @@ export async function placeOrder(req: AuthenticatedRequest, res: Response) {
 }
 
 /**
- * Get active/past orders for the customer.
+ * Get active/past orders for the customer or rider.
  */
 export async function getOrders(req: AuthenticatedRequest, res: Response) {
   try {
@@ -34,16 +34,30 @@ export async function getOrders(req: AuthenticatedRequest, res: Response) {
       return res.status(401).json({ error: 'Unauthorized.' });
     }
 
+    const whereClause: any = {};
+    const includeClause: any = {
+      address: true,
+      orderItems: true,
+    };
+
+    if (req.user.role === 'RIDER') {
+      whereClause.riderId = req.user.id;
+      includeClause.customer = { select: { name: true, phone: true } };
+    } else if (req.user.role === 'CUSTOMER') {
+      whereClause.customerId = req.user.id;
+    } else if (req.user.role === 'ADMIN') {
+      const { customerId, riderId } = req.query;
+      if (customerId) whereClause.customerId = customerId;
+      if (riderId) whereClause.riderId = riderId;
+    }
+
     const orders = await prisma.order.findMany({
-      where: { customerId: req.user.id },
+      where: whereClause,
       orderBy: { placedAt: 'desc' },
-      include: {
-        address: true,
-        orderItems: true,
-      },
+      include: includeClause,
     });
 
-    return res.status(200).json(orders);
+    return res.status(200).json({ success: true, data: orders });
   } catch (error) {
     console.error('Get customer orders error:', error);
     return res.status(500).json({ error: 'Failed to retrieve orders.' });
@@ -73,12 +87,16 @@ export async function getOrderById(req: AuthenticatedRequest, res: Response) {
       return res.status(404).json({ error: 'Order not found.' });
     }
 
-    // Authorize: customer must own the order, or user must be Admin
-    if (req.user.role !== 'ADMIN' && order.customerId !== req.user.id) {
+    // Authorize: customer must own the order, rider must be assigned to it, or user must be Admin
+    if (
+      req.user.role !== 'ADMIN' &&
+      order.customerId !== req.user.id &&
+      order.riderId !== req.user.id
+    ) {
       return res.status(403).json({ error: 'Access denied.' });
     }
 
-    return res.status(200).json(order);
+    return res.status(200).json({ success: true, data: order });
   } catch (error) {
     console.error('Get order details error:', error);
     return res.status(500).json({ error: 'Failed to retrieve order details.' });
@@ -86,16 +104,32 @@ export async function getOrderById(req: AuthenticatedRequest, res: Response) {
 }
 
 /**
- * Cancel order (Customer can only cancel if status is PENDING).
+ * Cancel order.
+ * - Customers can cancel when status is PENDING, ACCEPTED, PREPARING, or READY
+ *   (before a rider has actually departed / picked up the order).
+ * - Cancellation is BLOCKED once the order is OUT_FOR_DELIVERY, DELIVERED, CANCELLED, or REJECTED.
+ * - Backend enforces this independently of any frontend button visibility.
+ * - If payment was completed (online-paid), the payment record enters REFUND_PENDING workflow.
  */
+export function canCustomerCancelOrder(orderStatus: string): boolean {
+  const cancellableStatuses = ['PENDING', 'ACCEPTED', 'PREPARING', 'READY'];
+  return cancellableStatuses.includes(orderStatus);
+}
+
 export async function cancelOrder(req: AuthenticatedRequest, res: Response) {
   try {
     const { id } = req.params;
+    const { reason } = req.body;
+
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized.' });
     }
 
-    const order = await prisma.order.findUnique({ where: { id } });
+    // Re-fetch latest order state with a transaction-style read to avoid race conditions
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { payment: true },
+    });
     if (!order) {
       return res.status(404).json({ error: 'Order not found.' });
     }
@@ -104,181 +138,89 @@ export async function cancelOrder(req: AuthenticatedRequest, res: Response) {
       return res.status(403).json({ error: 'Cannot cancel an order belonging to another customer.' });
     }
 
-    if (order.status !== 'PENDING') {
+    // Server-side eligibility check — never trust frontend button state
+    if (!canCustomerCancelOrder(order.status)) {
       return res.status(400).json({
-        error: `Order cannot be cancelled. Restaurant has already transition to "${order.status}" status.`,
+        error: `Order cannot be cancelled once it is in "${order.status}" status. The rider is already on the way — contact support if you need assistance.`,
+        cancellable: false,
       });
     }
 
-    const updated = await prisma.order.update({
-      where: { id },
-      data: {
-        status: 'CANCELLED',
-        cancelledAt: new Date(),
-      },
+    // Determine refund requirement for online-paid orders
+    const wasOnlinePaid = order.payment?.status === 'COMPLETED' && order.paymentMethod !== 'COD';
+
+    const updated = await prisma.$transaction(async (tx) => {
+      // Re-read order inside transaction to prevent TOCTOU race with rider pickup
+      const latestOrder = await tx.order.findUnique({ where: { id } });
+      if (!latestOrder || !canCustomerCancelOrder(latestOrder.status)) {
+        const err = new Error(`Order cannot be cancelled — status changed to "${latestOrder?.status}". The rider may have just picked up your order.`);
+        (err as any).status = 409;
+        (err as any).cancellable = false;
+        throw err;
+      }
+
+      const cancelledOrder = await tx.order.update({
+        where: { id },
+        data: {
+          status: 'CANCELLED',
+          cancelledAt: new Date(),
+          internalNotes: reason ? `Customer cancellation reason: ${reason}` : undefined,
+          // For online-paid: enter REFUND_PENDING state (not REFUNDED — actual refund needs provider confirmation)
+          paymentStatus: wasOnlinePaid ? 'PENDING' : order.paymentStatus,
+        },
+      });
+
+      // Flag payment for refund processing — admin will process via gateway
+      if (wasOnlinePaid && order.payment) {
+        await tx.payment.update({
+          where: { id: order.payment.id },
+          data: {
+            refundStatus: 'PENDING_ADMIN',
+            // Do NOT set status to REFUNDED here — only set after provider confirms
+          },
+        });
+      }
+
+      return cancelledOrder;
     });
 
-    // Notify dashboard of cancellation (stops alert on all admin devices)
+    // Emit socket events
     const io = req.app.get('io');
     if (io) {
-      io.to('admin').emit('order:cancelled', { orderId: order.id, status: 'CANCELLED' });
-      // Also notify the customer's personal room
+      io.to('admin').emit('order:cancelled', {
+        orderId: order.id,
+        status: 'CANCELLED',
+        requiresRefund: wasOnlinePaid,
+        cancelledBy: 'CUSTOMER',
+        reason: reason || null,
+      });
       io.to(`user:${order.customerId}`).emit('order:updated', { orderId: order.id, status: 'CANCELLED' });
+      // Notify rider if one was assigned (and not yet departed)
+      if (order.riderId) {
+        io.to(`user:${order.riderId}`).emit('delivery:cancelled', {
+          orderId: order.id,
+          message: 'This order has been cancelled by the customer.',
+        });
+      }
     }
 
-    return res.status(200).json({ message: 'Order has been cancelled.', order: updated });
-  } catch (error) {
+    const responseMsg = wasOnlinePaid
+      ? 'Order has been cancelled. Your refund is being processed — expect it within 3–5 business days after admin review.'
+      : 'Order has been cancelled successfully.';
+
+    return res.status(200).json({
+      message: responseMsg,
+      order: updated,
+      refundInitiated: wasOnlinePaid,
+      cancellable: false,
+    });
+  } catch (error: any) {
+    if (error.status === 409) {
+      return res.status(409).json({ error: error.message, cancellable: false });
+    }
     console.error('Cancel order error:', error);
     return res.status(500).json({ error: 'Failed to cancel order.' });
   }
 }
 
-// ==========================================
-// ADMIN/OWNER ENDPOINTS
-// ==========================================
-
-/**
- * Get all orders for the dashboard (with optional status filters).
- */
-export async function getOwnerOrders(req: Request, res: Response) {
-  try {
-    const { status } = req.query;
-
-    const whereClause: any = {};
-    if (status && typeof status === 'string') {
-      whereClause.status = status;
-    }
-
-    const orders = await prisma.order.findMany({
-      where: whereClause,
-      orderBy: { placedAt: 'desc' },
-      include: {
-        address: true,
-        customer: { select: { name: true, phone: true } },
-      },
-    });
-
-    return res.status(200).json(orders);
-  } catch (error) {
-    console.error('Get owner orders error:', error);
-    return res.status(500).json({ error: 'Failed to retrieve orders.' });
-  }
-}
-
-/**
- * Update order status (and track time marks).
- */
-export async function updateOrderStatus(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
-    const { status, paymentStatus } = req.body;
-
-    const order = await prisma.order.findUnique({ where: { id } });
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found.' });
-    }
-
-    const updateData: any = {};
-    if (status) {
-      updateData.status = status;
-      if (status === 'ACCEPTED') updateData.acceptedAt = new Date();
-      else if (status === 'PREPARING') { /* handled via status change */ }
-      else if (status === 'READY') updateData.readyAt = new Date();
-      else if (status === 'OUT_FOR_DELIVERY') updateData.outForDeliveryAt = new Date();
-      else if (status === 'DELIVERED') {
-        updateData.deliveredAt = new Date();
-        updateData.paymentStatus = 'COMPLETED'; // Assume completed on CoD/paid
-      } else if (status === 'REJECTED') {
-        updateData.rejectedAt = new Date();
-        updateData.paymentStatus = 'FAILED';
-      }
-    }
-
-    if (paymentStatus) {
-      updateData.paymentStatus = paymentStatus;
-    }
-
-    const updated = await prisma.order.update({
-      where: { id },
-      data: updateData,
-      include: { customer: { select: { name: true, phone: true } } },
-    });
-
-    // Notify all parties via socket
-    const io = req.app.get('io');
-    if (io) {
-      const statusEvent = updated.status === 'ACCEPTED' ? 'order:accepted'
-        : updated.status === 'REJECTED' ? 'order:rejected'
-        : updated.status === 'CANCELLED' ? 'order:cancelled'
-        : 'order:updated';
-
-      // Emit to admin room (stops alert loop on accepted/rejected/cancelled)
-      io.to('admin').emit(statusEvent, {
-        orderId: order.id,
-        status: updated.status,
-        updatedAt: new Date(),
-      });
-
-      // Emit to customer's personal room
-      io.to(`user:${order.customerId}`).emit('order:updated', {
-        orderId: order.id,
-        status: updated.status,
-        updatedAt: new Date(),
-      });
-    }
-
-    return res.status(200).json({ message: 'Order updated successfully.', order: updated });
-  } catch (error) {
-    console.error('Update order status error:', error);
-    return res.status(500).json({ error: 'Failed to update order status.' });
-  }
-}
-
-/**
- * Get basic sales analytics for the owner dashboard.
- */
-export async function getOwnerAnalytics(req: Request, res: Response) {
-  try {
-    // Total aggregate numbers
-    const totalSales = await prisma.order.aggregate({
-      where: { status: 'DELIVERED' },
-      _sum: { total: true },
-    });
-
-    const ordersCount = await prisma.order.groupBy({
-      by: ['status'],
-      _count: { id: true },
-    });
-
-    const totalCustomers = await prisma.user.count({
-      where: { role: 'CUSTOMER' },
-    });
-
-    // Get top 5 selling items
-    const topItemsRaw = await prisma.orderItem.groupBy({
-      by: ['menuItemId', 'itemName'],
-      _sum: { quantity: true },
-      orderBy: { _sum: { quantity: 'desc' } },
-      take: 5,
-    });
-
-    // Clean counts format
-    const counts = ordersCount.reduce((acc: any, curr) => {
-      acc[curr.status] = curr._count.id;
-      return acc;
-    }, {});
-
-    return res.status(200).json({
-      revenue: parseFloat(totalSales._sum.total?.toString() || '0.00'),
-      totalCustomers,
-      orderCounts: counts,
-      topSellingItems: topItemsRaw.map(item => ({
-        name: item.itemName,
-        quantity: item._sum.quantity || 0,
-      })),
-    });
-  } catch (error) {
-    console.error('Get analytics error:', error);
-    return res.status(500).json({ error: 'Failed to retrieve sales analytics.' });
-  }
-}
+// End of order controller

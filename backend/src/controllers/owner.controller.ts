@@ -199,6 +199,13 @@ export async function acceptOrder(req: AuthenticatedRequest, res: Response) {
       return res.status(404).json({ success: false, error: 'Order not found.' });
     }
 
+    if (order.status !== 'PENDING') {
+      return res.status(409).json({
+        success: false,
+        error: `Cannot accept order — current status is "${order.status}". Only PENDING orders can be accepted.`,
+      });
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: {
@@ -238,39 +245,73 @@ export async function rejectOrder(req: AuthenticatedRequest, res: Response) {
   try {
     const { id } = req.params;
     const { reason } = req.body;
-    const order = await prisma.order.findUnique({ where: { id } });
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { payment: true },
+    });
     if (!order) {
       return res.status(404).json({ success: false, error: 'Order not found.' });
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: { id },
-      data: {
-        status: 'REJECTED',
-        rejectedAt: new Date(),
-      },
-      include: {
-        customer: { select: { name: true, phone: true } },
-        address: true,
-        orderItems: true,
+    const nonRejectableStatuses = ['DELIVERED', 'CANCELLED', 'REJECTED'];
+    if (nonRejectableStatuses.includes(order.status)) {
+      return res.status(409).json({
+        success: false,
+        error: `Cannot reject order — current status is "${order.status}".`,
+      });
+    }
+
+    // If online-paid, flag for refund
+    const wasOnlinePaid = order.payment?.status === 'COMPLETED' && order.paymentMethod !== 'COD';
+
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id },
+        data: {
+          status: 'REJECTED',
+          rejectedAt: new Date(),
+          paymentStatus: wasOnlinePaid ? 'REFUNDED' : (order.paymentStatus !== 'COMPLETED' ? 'FAILED' : order.paymentStatus),
+        },
+        include: {
+          customer: { select: { name: true, phone: true } },
+          address: true,
+          orderItems: true,
+        }
+      });
+
+      if (wasOnlinePaid && order.payment) {
+        await tx.payment.update({
+          where: { id: order.payment.id },
+          data: { refundStatus: 'FULL', status: 'REFUNDED' },
+        });
       }
+
+      return updated;
     });
 
-    await logAdminAction(req, 'ADMIN_REJECT_ORDER', { orderId: id, reason: reason || null });
+    await logAdminAction(req, 'ADMIN_REJECT_ORDER', { orderId: id, reason: reason || null, refundInitiated: wasOnlinePaid });
 
     const io = req.app.get('io');
     if (io) {
       io.emit('order:status', { orderId: id, status: 'REJECTED', updatedAt: new Date() });
+      if (order.riderId) {
+        io.to(`user:${order.riderId}`).emit('delivery:cancelled', {
+          orderId: id,
+          message: 'This order has been rejected by the admin.',
+        });
+      }
     }
 
     // Send Push Notification
     await sendPushToUser(
       order.customerId,
       'Order Rejected ❌',
-      'We are sorry, your order could not be accepted by the restaurant.'
+      wasOnlinePaid
+        ? 'Your order could not be accepted. Your payment will be refunded within 3–5 business days.'
+        : 'We are sorry, your order could not be accepted by the restaurant.'
     );
 
-    return res.json({ success: true, data: updatedOrder });
+    return res.json({ success: true, data: updatedOrder, refundInitiated: wasOnlinePaid });
   } catch (error) {
     console.error('Reject order error:', error);
     return res.status(500).json({ success: false, error: 'Failed to reject order.' });
@@ -282,7 +323,19 @@ export async function updateOrderStatus(req: AuthenticatedRequest, res: Response
     const { id } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ['PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+    // Ordered state machine — forward-only transitions
+    const VALID_TRANSITIONS: Record<string, string[]> = {
+      PENDING:         ['ACCEPTED', 'REJECTED', 'CANCELLED'],
+      ACCEPTED:        ['PREPARING', 'REJECTED', 'CANCELLED'],
+      PREPARING:       ['READY'],
+      READY:           ['OUT_FOR_DELIVERY'],
+      OUT_FOR_DELIVERY: ['DELIVERED'],
+      DELIVERED:       [],
+      REJECTED:        [],
+      CANCELLED:       [],
+    };
+
+    const validStatuses = Object.keys(VALID_TRANSITIONS).filter(s => !['PENDING', 'ACCEPTED'].includes(s));
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, error: 'Invalid order status for this operation.' });
     }
@@ -292,13 +345,24 @@ export async function updateOrderStatus(req: AuthenticatedRequest, res: Response
       return res.status(404).json({ success: false, error: 'Order not found.' });
     }
 
+    const allowed = VALID_TRANSITIONS[order.status] || [];
+    if (!allowed.includes(status)) {
+      return res.status(409).json({
+        success: false,
+        error: `Cannot transition order from "${order.status}" to "${status}".`,
+      });
+    }
+
     const updateData: any = { status };
-    if (status === 'PREPARING') updateData.readyAt = null; // Reset if going backward (rare)
+    if (status === 'PREPARING') updateData.readyAt = null;
     if (status === 'READY') updateData.readyAt = new Date();
     if (status === 'OUT_FOR_DELIVERY') updateData.outForDeliveryAt = new Date();
     if (status === 'DELIVERED') {
       updateData.deliveredAt = new Date();
-      updateData.paymentStatus = 'COMPLETED'; // Assume completed on delivery for COD/Cash
+      // Only mark COD as completed here; online-paid orders already have COMPLETED payment
+      if (order.paymentMethod === 'COD' && order.paymentStatus !== 'COMPLETED') {
+        updateData.paymentStatus = 'COMPLETED';
+      }
     }
 
     const updatedOrder = await prisma.order.update({
@@ -366,14 +430,13 @@ export async function assignRider(req: AuthenticatedRequest, res: Response) {
       return res.status(404).json({ success: false, error: 'Rider not found.' });
     }
 
+    const newStatus = order.status === 'READY' ? 'OUT_FOR_DELIVERY' : order.status;
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: {
         riderId,
-        status: order.status === 'READY' || order.status === 'ACCEPTED' || order.status === 'PREPARING'
-          ? 'OUT_FOR_DELIVERY'
-          : order.status,
-        outForDeliveryAt: order.outForDeliveryAt || new Date(),
+        status: newStatus,
+        outForDeliveryAt: newStatus === 'OUT_FOR_DELIVERY' ? (order.outForDeliveryAt || new Date()) : order.outForDeliveryAt,
       },
       include: {
         customer: { select: { name: true, phone: true } },

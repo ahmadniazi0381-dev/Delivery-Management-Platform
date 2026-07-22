@@ -150,24 +150,28 @@ async function seedDefaultConfig() {
       console.log('Seeded default shop opening hours & details.');
     }
 
-    // 3. Seed Default Admin User if no users exist
+    // 3. Seed Default Admin User if no admin exists
     const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
     if (!adminUser) {
+      const defaultPassword = process.env.ADMIN_INITIAL_PASSWORD || 'Admin123@';
       const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash('admin123', salt);
+      const passwordHash = await bcrypt.hash(defaultPassword, salt);
       await prisma.user.create({
         data: {
           name: 'Naseeb Baryani Owner',
           phone: '+923000000000',
+          email: 'admin@naseeb.local',
           passwordHash,
           role: 'ADMIN',
           phoneVerified: true,
+          mustChangePassword: true,
         },
       });
       console.log('========================================================');
       console.log('[SEED] Created default admin login credentials:');
-      console.log('       Phone: +923000000000');
-      console.log('       Password: admin123');
+      console.log('       Phone: +923000000000 / Email: admin@naseeb.local');
+      console.log('       Password:', defaultPassword);
+      console.log('       Flag: mustChangePassword = true');
       console.log('========================================================');
     }
 
