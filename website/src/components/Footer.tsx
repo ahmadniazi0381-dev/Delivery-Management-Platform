@@ -162,8 +162,10 @@ export default function Footer() {
             Contact Us
           </h4>
           {[
+            { icon: "👤", text: "Owner: Muhammad Abdullah" },
+            { icon: "📞", text: "+92 305 4311118", href: "tel:+923054311118" },
+            { icon: "💬", text: "WhatsApp: +92 305 4311118", href: "https://wa.me/923054311118?text=Hello%20Muhammad%20Abdullah%2C%20I%20would%20like%20to%20place%20an%20order." },
             { icon: "📍", text: "Near UCP Campus, Lahore" },
-            { icon: "📞", text: "+92 XXX XXXXXXX" },
             { icon: "🕐", text: "Open 11:00 AM – 11:00 PM" },
             { icon: "🛵", text: "Delivery within 2.2km radius" },
           ].map((item, i) => (
@@ -181,7 +183,20 @@ export default function Footer() {
               <span style={{ flexShrink: 0, marginTop: "1px" }}>
                 {item.icon}
               </span>
-              <span>{item.text}</span>
+              {'href' in item && item.href ? (
+                <a
+                  href={item.href}
+                  target={item.href.startsWith('http') ? "_blank" : undefined}
+                  rel={item.href.startsWith('http') ? "noopener noreferrer" : undefined}
+                  style={{ color: "rgba(254, 243, 199, 0.9)", textDecoration: "none" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#F59E0B")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(254, 243, 199, 0.9)")}
+                >
+                  {item.text}
+                </a>
+              ) : (
+                <span>{item.text}</span>
+              )}
             </div>
           ))}
 

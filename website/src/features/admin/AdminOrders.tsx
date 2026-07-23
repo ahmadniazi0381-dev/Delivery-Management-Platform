@@ -377,7 +377,7 @@ export default function AdminOrders() {
                 <div className="invoice-header" style={{ textAlign: "center" }}>
                   <h2>Karachi Naseeb Baryani & Pulao</h2>
                   <p>UCP Branch, Lahore</p>
-                  <p>Phone: +92 300 1234567</p>
+                  <p>Owner: Muhammad Abdullah | Phone: +92 305 4311118</p>
                   <p><strong>Order ID: {selectedOrder.id}</strong></p>
                   <p>Date: {new Date(selectedOrder.placedAt).toLocaleString()}</p>
                 </div>

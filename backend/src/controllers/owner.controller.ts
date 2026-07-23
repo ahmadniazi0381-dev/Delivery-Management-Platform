@@ -5,6 +5,7 @@ import { sendPushToUser } from '../services/push.service';
 import { logAudit, AuditAction } from '../services/audit.service';
 import { PaymentMethod } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { deleteImage } from '../services/storage.service';
 
 async function logAdminAction(
   req: AuthenticatedRequest,
@@ -793,6 +794,13 @@ export async function updateMenuItem(req: AuthenticatedRequest, res: Response) {
       return res.status(404).json({ success: false, error: 'Menu item not found.' });
     }
 
+    // Clean up old storage image if image changed
+    if (imageUrl !== undefined && imageUrl !== exists.imageUrl && exists.imageUrl) {
+      deleteImage(exists.imageUrl).catch((err) => {
+        console.error('[OWNER CONTROLLER] Old image cleanup failed:', err);
+      });
+    }
+
     const updated = await prisma.menuItem.update({
       where: { id },
       data: {
@@ -823,14 +831,31 @@ export async function updateMenuItem(req: AuthenticatedRequest, res: Response) {
 export async function deleteMenuItem(req: AuthenticatedRequest, res: Response) {
   try {
     const { id } = req.params;
-    // We soft-delete or disable by setting availability to false
-    await prisma.menuItem.update({
-      where: { id },
-      data: { isAvailable: false, inStock: false },
+    const exists = await prisma.menuItem.findUnique({ where: { id } });
+    if (!exists) {
+      return res.status(404).json({ success: false, error: 'Menu item not found.' });
+    }
+
+    // Delete item from database
+    await prisma.menuItem.delete({ where: { id } }).catch(async () => {
+      // Fallback: soft-delete if foreign key constraint exists in order_items
+      return await prisma.menuItem.update({
+        where: { id },
+        data: { isAvailable: false, inStock: false },
+      });
     });
-    await logAdminAction(req, 'ADMIN_DELETE_MENU_ITEM', { menuItemId: id });
-    return res.json({ success: true, message: 'Menu item made unavailable and out of stock.' });
+
+    // Delete associated image from Supabase Storage (log on failure, do not fail DB response)
+    if (exists.imageUrl) {
+      deleteImage(exists.imageUrl).catch((err) => {
+        console.error('[OWNER CONTROLLER] Storage image deletion error on menu delete:', err);
+      });
+    }
+
+    await logAdminAction(req, 'ADMIN_DELETE_MENU_ITEM', { menuItemId: id, name: exists.name });
+    return res.json({ success: true, message: 'Menu item deleted successfully.' });
   } catch (error) {
+    console.error('Delete menu item error:', error);
     return res.status(500).json({ success: false, error: 'Failed to delete menu item.' });
   }
 }

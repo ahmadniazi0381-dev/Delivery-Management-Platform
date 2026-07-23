@@ -8,6 +8,7 @@ import Footer from "./Footer";
 import PWAInstallPrompt from "./PWAInstallPrompt";
 import AdminLayout from "@/features/admin/AdminLayout";
 import RiderLayout from "@/features/rider/RiderLayout";
+import FloatingWhatsApp from "./FloatingWhatsApp";
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "";
@@ -81,6 +82,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       <main id="main-content" className="flex-1 page-offset">{children}</main>
       <Footer />
       <PWAInstallPrompt />
+      <FloatingWhatsApp />
     </>
   );
 }

@@ -8,6 +8,8 @@ export interface MenuItem {
   categoryId: number | string;
   category?: MenuCategory;
   isAvailable: boolean;
+  inStock?: boolean;
+  stockQuantity?: number | null;
   isFeatured?: boolean;
   isSpicy?: boolean;
   preparationTime?: number; // minutes

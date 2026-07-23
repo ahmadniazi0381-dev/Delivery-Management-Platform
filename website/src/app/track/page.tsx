@@ -441,7 +441,7 @@ function TrackContent() {
                 ðŸ›’ Order Again
               </Link>
               <a
-                href="tel:+923001234567"
+                href="tel:+923054311118"
                 className="btn btn-ghost"
                 style={{
                   border: "1px solid var(--border-color)",
@@ -452,7 +452,24 @@ function TrackContent() {
                   fontSize: "0.9rem"
                 }}
               >
-                ðŸ“ž Call Restaurant
+                📞 Call Muhammad Abdullah
+              </a>
+              <a
+                href="https://wa.me/923054311118?text=Hello%20Muhammad%20Abdullah%2C%20I%20am%20inquiring%20about%20my%20order."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost"
+                style={{
+                  border: "1px solid #25D366",
+                  padding: "10px 20px",
+                  borderRadius: "var(--radius-md)",
+                  color: "#16A34A",
+                  textDecoration: "none",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                }}
+              >
+                💬 WhatsApp Support
               </a>
             </div>
           </div>

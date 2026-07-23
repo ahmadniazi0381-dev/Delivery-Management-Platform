@@ -6,6 +6,7 @@ import { useAdminQuery, useAdminMutation } from "./hooks/useAdminApi";
 import { AdminTable, Column } from "./components/AdminTable";
 import { AdminModal, ConfirmDialog } from "./components/AdminModal";
 import { useToast } from "@/components/AdminToast";
+import { FoodImageUpload } from "./components/FoodImageUpload";
 
 export default function AdminMenu() {
   const [activeTab, setActiveTab] = useState<'items' | 'categories' | 'discounts' | 'banners'>('items');
@@ -40,6 +41,7 @@ export default function AdminMenu() {
   const { mutate: deleteBan } = useAdminMutation('', 'DELETE');
 
   // Modals state
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [itemModal, setItemModal] = useState({
     open: false, id: '', categoryId: '', name: '', description: '', price: '',
     imageUrl: '', isAvailable: true, inStock: true, stockQuantity: '',
@@ -59,6 +61,14 @@ export default function AdminMenu() {
   // Handle Item Saving
   const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!itemModal.imageUrl || !itemModal.imageUrl.trim()) {
+      addToast({ type: 'error', title: 'Food Image Required', message: 'Food image is required. Product cannot be saved without an image.' });
+      return;
+    }
+    if (isUploadingImage) {
+      addToast({ type: 'error', title: 'Upload in Progress', message: 'Please wait for the image upload to finish before saving.' });
+      return;
+    }
     try {
       const payload = {
         ...itemModal,
@@ -429,11 +439,31 @@ export default function AdminMenu() {
         footer={
           <>
             <button onClick={() => setItemModal(prev => ({ ...prev, open: false }))} className="btn btn-secondary">Cancel</button>
-            <button type="submit" form="item-form" className="btn" style={{ background: 'var(--saffron)', color: '#fff' }}>Save Product</button>
+            <button
+              type="submit"
+              form="item-form"
+              disabled={!itemModal.imageUrl || isUploadingImage}
+              className="btn"
+              style={{
+                background: !itemModal.imageUrl || isUploadingImage ? 'var(--text-muted)' : 'var(--saffron)',
+                color: '#fff',
+                cursor: !itemModal.imageUrl || isUploadingImage ? 'not-allowed' : 'pointer',
+                opacity: !itemModal.imageUrl || isUploadingImage ? 0.6 : 1,
+              }}
+            >
+              Save Product
+            </button>
           </>
         }
       >
         <form id="item-form" onSubmit={handleSaveItem} className="form-grid-2col">
+          <div className="col-span-2">
+            <FoodImageUpload
+              imageUrl={itemModal.imageUrl}
+              onChange={(url) => setItemModal(prev => ({ ...prev, imageUrl: url }))}
+              onUploadingChange={setIsUploadingImage}
+            />
+          </div>
           <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Dish Name *</label>
             <input
@@ -463,15 +493,6 @@ export default function AdminMenu() {
               value={itemModal.price}
               onChange={(e) => setItemModal(prev => ({ ...prev, price: e.target.value }))}
               style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-            />
-          </div>
-          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Image URL</label>
-            <input
-              type="text"
-              value={itemModal.imageUrl}
-              onChange={(e) => setItemModal(prev => ({ ...prev, imageUrl: e.target.value }))}
-              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>
           <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

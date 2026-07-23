@@ -68,13 +68,78 @@ export default function ContactPage() {
             </div>
 
             <div className="card" style={{ padding: "24px" }}>
-              <h3 style={{ fontSize: "1.1rem", color: "var(--maroon)", marginBottom: "14px" }}>
-                📞 Contact Numbers
+              <h3 style={{ fontSize: "1.1rem", color: "var(--maroon)", marginBottom: "6px" }}>
+                📞 Restaurant Owner & Support
               </h3>
-              <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-                Shop Orders: <strong>+92 300 1234567</strong><br />
-                Catering/Support: <strong>+92 300 0000000</strong>
+              <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "4px" }}>
+                Muhammad Abdullah
               </p>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "16px" }}>
+                Phone & WhatsApp: <strong>+92 305 4311118</strong>
+              </p>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                <a
+                  href="tel:+923054311118"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    background: "var(--maroon)",
+                    color: "#FFFFFF",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  📞 Call
+                </a>
+
+                <a
+                  href="https://wa.me/923054311118?text=Hello%20Muhammad%20Abdullah%2C%20I%20would%20like%20to%20place%20an%20order."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    background: "#25D366",
+                    color: "#FFFFFF",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  💬 WhatsApp
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText("+923054311118");
+                    alert("Phone number copied: +92 305 4311118");
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border)",
+                    background: "var(--bg-primary)",
+                    color: "var(--text-primary)",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  📋 Copy Number
+                </button>
+              </div>
             </div>
 
             <div className="card" style={{ padding: "24px" }}>

@@ -139,17 +139,17 @@ export default function AdminSettings() {
   useEffect(() => {
     if (shopData) {
       setShopForm({
-        shopName: shopData.shopName || '',
-        contactNumber: shopData.contactNumber || '',
-        openingTime: shopData.openingTime || '',
-        closingTime: shopData.closingTime || '',
-        address: shopData.address || '',
+        shopName: shopData.shopName || 'Karachi Naseeb Baryani & Pulao UCP',
+        contactNumber: shopData.contactNumber || '+923054311118',
+        openingTime: shopData.openingTime || '11:00',
+        closingTime: shopData.closingTime || '23:00',
+        address: shopData.address || 'UCP Road, Block C, Johar Town, Lahore',
         taxRate: shopData.taxRate ? String(shopData.taxRate) : '0.00',
         estimatedDeliveryMinutes: shopData.estimatedDeliveryMinutes ? String(shopData.estimatedDeliveryMinutes) : '30',
         logoUrl: shopData.logoUrl || '',
         facebookUrl: shopData.facebookUrl || '',
         instagramUrl: shopData.instagramUrl || '',
-        whatsappNumber: shopData.whatsappNumber || '',
+        whatsappNumber: shopData.whatsappNumber || '+923054311118',
         isAcceptingOrders: shopData.isAcceptingOrders ?? true
       });
     }

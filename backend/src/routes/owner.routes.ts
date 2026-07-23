@@ -75,10 +75,16 @@ import {
 } from '../controllers/monitoring.controller';
 
 
+import { handleAdminUploadImage } from '../controllers/upload.controller';
+
 const router = Router();
 
 // All owner routes: auth + admin role + owner rate limiter
 router.use(authenticate, requireRole('ADMIN'), ownerLimiter);
+
+// Media Upload
+router.post('/admin/upload-image', handleAdminUploadImage);
+router.post('/owner/upload-image', handleAdminUploadImage);
 
 // Analytics
 router.get('/owner/analytics', getAnalytics);
