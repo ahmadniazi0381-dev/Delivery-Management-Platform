@@ -22,18 +22,28 @@ import {
   BarChart2,
   Menu,
   X,
+  UserCog,
+  Monitor,
+  Activity,
+  Package,
+  TrendingUp,
 } from "lucide-react";
 
 // ─── Navigation links ─────────────────────────────────────────────────────────
 
 const ADMIN_LINKS = [
-  { href: "/dashboard",           label: "Dashboard",          icon: LayoutDashboard },
-  { href: "/dashboard/orders",    label: "Orders",             icon: ShoppingBag },
-  { href: "/dashboard/menu",      label: "Menu & Categories",  icon: Utensils },
-  { href: "/dashboard/customers", label: "Customers",          icon: Users },
-  { href: "/dashboard/riders",    label: "Riders",             icon: Bike },
-  { href: "/dashboard/reports",   label: "Reports & Analytics",icon: BarChart2 },
-  { href: "/dashboard/settings",  label: "Settings",           icon: Settings },
+  { href: "/dashboard",             label: "Dashboard",           icon: LayoutDashboard },
+  { href: "/dashboard/orders",      label: "Orders",              icon: ShoppingBag },
+  { href: "/dashboard/kds",         label: "Kitchen Display",     icon: Monitor },
+  { href: "/dashboard/menu",        label: "Menu & Categories",   icon: Utensils },
+  { href: "/dashboard/inventory",   label: "Inventory",           icon: Package },
+  { href: "/dashboard/customers",   label: "Customers",           icon: Users },
+  { href: "/dashboard/riders",      label: "Riders",              icon: Bike },
+  { href: "/dashboard/staff",       label: "Staff",               icon: UserCog },
+  { href: "/dashboard/activity",    label: "Activity Center",     icon: Activity },
+  { href: "/dashboard/analytics",   label: "Advanced Analytics",  icon: TrendingUp },
+  { href: "/dashboard/reports",     label: "Reports",             icon: BarChart2 },
+  { href: "/dashboard/settings",    label: "Settings",            icon: Settings },
 ];
 
 // ─── Inner layout (needs toast context) ──────────────────────────────────────

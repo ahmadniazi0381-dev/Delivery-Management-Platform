@@ -5,6 +5,7 @@ import prisma from '../config/db';
 import { generateSixDigitOtp, sendOtpSms } from '../services/otp.service';
 import { logAudit } from '../services/audit.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { recordLoginHistory, notifyOwner } from '../services/management.service';
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
@@ -171,7 +172,10 @@ export async function login(req: Request, res: Response) {
     // Production path: find user by phone or email
     let user = null;
     if (identifier.includes('@')) {
-      user = await prisma.user.findUnique({ where: { email: identifier } });
+      user = await prisma.user.findUnique({
+        where: { email: identifier },
+        include: { staffProfile: true },
+      });
     } else {
       // Normalize phone
       let compact = identifier.replace(/[^\d+]/g, '');
@@ -179,7 +183,10 @@ export async function login(req: Request, res: Response) {
       if (compact.startsWith('92') && compact.length === 12) compact = '+' + compact;
       if (compact.startsWith('03') && compact.length === 11) compact = '+92' + compact.slice(1);
       if (compact.startsWith('3') && compact.length === 10) compact = '+92' + compact;
-      user = await prisma.user.findUnique({ where: { phone: compact } });
+      user = await prisma.user.findUnique({
+        where: { phone: compact },
+        include: { staffProfile: true },
+      });
     }
 
     if (!user || !user.passwordHash) {
@@ -193,6 +200,8 @@ export async function login(req: Request, res: Response) {
       return res.status(401).json({ error: 'Invalid credentials.' });
     }
 
+    const staffProfile = (user as any).staffProfile ?? null;
+
     const token = jwt.sign(
       {
         id: user.id,
@@ -200,12 +209,40 @@ export async function login(req: Request, res: Response) {
         role: user.role,
         phoneVerified: user.phoneVerified,
         mustChangePassword: !!user.mustChangePassword,
+        ...(staffProfile && {
+          staffRole: staffProfile.staffRole,
+          permissions: staffProfile.permissions,
+        }),
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN as any }
     );
 
     await auditLogin(req, user, true);
+
+    // Update lastLoginAt for staff & record LoginHistory + Notify Owner
+    if (staffProfile) {
+      prisma.staffProfile.update({
+        where: { id: staffProfile.id },
+        data: { lastLoginAt: new Date() },
+      }).catch(() => {});
+
+      recordLoginHistory({
+        userId: user.id,
+        ip: req.ip || (req.headers['x-forwarded-for'] as string) || undefined,
+        userAgent: req.headers['user-agent'],
+      }).catch(() => {});
+
+      if (staffProfile.staffRole !== 'OWNER') {
+        const io = req.app.get('io');
+        notifyOwner({
+          io,
+          staffName: user.name,
+          action: 'Staff Login',
+          details: `Role: ${staffProfile.staffRole}`,
+        }).catch(() => {});
+      }
+    }
 
     return res.status(200).json({
       message: 'Login successful.',
@@ -218,6 +255,10 @@ export async function login(req: Request, res: Response) {
         role: user.role,
         phoneVerified: user.phoneVerified,
         mustChangePassword: !!user.mustChangePassword,
+        ...(staffProfile && {
+          staffRole: staffProfile.staffRole,
+          permissions: staffProfile.permissions,
+        }),
       },
     });
   } catch (error: any) {

@@ -71,6 +71,15 @@ enum DiscountScope {
   ORDER
 }
 
+enum StaffRole {
+  OWNER
+  MANAGER
+  CASHIER
+  KDS
+  RIDER_MANAGER
+  BRANCH_MANAGER
+}
+
 enum LogSeverity {
   DEBUG
   INFO
@@ -188,6 +197,9 @@ model User {
   checkoutSessions    CheckoutSession[]
   auditLogs           AuditLog[]
   mustChangePassword  Boolean           @default(false)
+  staffProfile        StaffProfile?     @relation("UserStaffProfile")
+  createdStaff        StaffProfile[]    @relation("StaffCreatedBy")
+  loginHistories      LoginHistory[]
 
   @@map("users")
 }
@@ -336,6 +348,7 @@ model Order {
   orderItems               OrderItem[]
   payment                  Payment?
   review                   Review?
+  auditTrails              OrderAuditTrail[]
 
   @@map("orders")
 }
@@ -613,6 +626,24 @@ model RiderProfile {
   @@map("rider_profiles")
 }
 
+// Staff RBAC profile — linked 1:1 to a User with role = ADMIN
+model StaffProfile {
+  id          String     @id @default(uuid())
+  userId      String     @unique
+  user        User       @relation("UserStaffProfile", fields: [userId], references: [id], onDelete: Cascade)
+  staffRole   StaffRole  @default(MANAGER)
+  permissions String[]   // e.g. ["ORDERS_VIEW", "MENU_MANAGE"]
+  isActive    Boolean    @default(true)
+  invitedById String?
+  invitedBy   User?      @relation("StaffCreatedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  notes       String?    @db.Text
+  lastLoginAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("staff_profiles")
+}
+
 // Simple sequence table to help generate human-friendly order numbers
 model OrderSequence {
   id        Int      @id @default(autoincrement())
@@ -622,3 +653,39 @@ model OrderSequence {
 
   @@map("order_sequences")
 }
+
+model OrderAuditTrail {
+  id             String       @id @default(uuid())
+  orderId        String
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId         String?
+  userName       String?
+  userRole       String?
+  action         String
+  previousStatus OrderStatus?
+  newStatus      OrderStatus?
+  note           String?      @db.Text
+  isOverride     Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([orderId, createdAt])
+  @@map("order_audit_trails")
+}
+
+model LoginHistory {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginTime   DateTime  @default(now())
+  logoutTime  DateTime?
+  device      String?
+  browser     String?
+  os          String?
+  ip          String?
+  location    String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@map("login_histories")
+}
+

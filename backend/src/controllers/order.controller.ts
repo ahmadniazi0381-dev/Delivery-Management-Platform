@@ -86,7 +86,6 @@ export async function getOrderById(req: AuthenticatedRequest, res: Response) {
     if (!order) {
       return res.status(404).json({ error: 'Order not found.' });
     }
-
     // Authorize: customer must own the order, rider must be assigned to it, or user must be Admin
     if (
       req.user.role !== 'ADMIN' &&
@@ -96,7 +95,13 @@ export async function getOrderById(req: AuthenticatedRequest, res: Response) {
       return res.status(403).json({ error: 'Access denied.' });
     }
 
-    return res.status(200).json({ success: true, data: order });
+    const isAdmin = req.user.role === 'ADMIN';
+    const orderResponse = { ...order };
+    if (!isAdmin) {
+      delete (orderResponse as any).internalNotes;
+    }
+
+    return res.status(200).json({ success: true, data: orderResponse });
   } catch (error) {
     console.error('Get order details error:', error);
     return res.status(500).json({ error: 'Failed to retrieve order details.' });

@@ -14,6 +14,10 @@ export interface AuthenticatedRequest extends Request {
     role: 'CUSTOMER' | 'ADMIN' | 'RIDER';
     phoneVerified: boolean;
     mustChangePassword?: boolean;
+    /** RBAC staff role (only present for ADMIN users with a StaffProfile) */
+    staffRole?: 'OWNER' | 'MANAGER' | 'CASHIER' | 'KDS';
+    /** Granular permission list derived from the StaffProfile */
+    permissions?: string[];
   };
 }
 
@@ -36,6 +40,8 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
       role: 'CUSTOMER' | 'ADMIN' | 'RIDER';
       phoneVerified: boolean;
       mustChangePassword?: boolean;
+      staffRole?: 'OWNER' | 'MANAGER' | 'CASHIER' | 'KDS';
+      permissions?: string[];
     };
     req.user = decoded;
 
@@ -69,6 +75,38 @@ export function requireRole(...roles: Array<'CUSTOMER' | 'ADMIN' | 'RIDER'>) {
 
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Access denied. Insufficient permissions.' });
+    }
+
+    next();
+  };
+}
+
+/**
+ * Middleware generator to enforce granular RBAC permission checks.
+ * Owners automatically pass all permission checks.
+ * Falls back to allow if the user has no StaffProfile (legacy admin token).
+ */
+export function requirePermission(permission: string) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required.' });
+    }
+
+    // Owners bypass all permission checks
+    if (req.user.staffRole === 'OWNER') {
+      return next();
+    }
+
+    // Legacy ADMIN tokens (no staffProfile yet) — allow during migration period
+    if (!req.user.staffRole && !req.user.permissions) {
+      return next();
+    }
+
+    if (!req.user.permissions?.includes(permission)) {
+      return res.status(403).json({
+        error: `Access denied. Required permission: ${permission}`,
+        requiredPermission: permission,
+      });
     }
 
     next();

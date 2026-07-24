@@ -6,6 +6,7 @@ import { logAudit, AuditAction } from '../services/audit.service';
 import { PaymentMethod } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { deleteImage } from '../services/storage.service';
+import { recordOrderAuditTrail, notifyOwner, recordStaffActivity } from '../services/management.service';
 
 async function logAdminAction(
   req: AuthenticatedRequest,
@@ -222,10 +223,37 @@ export async function acceptOrder(req: AuthenticatedRequest, res: Response) {
 
     await logAdminAction(req, 'ADMIN_ACCEPT_ORDER', { orderId: id });
 
+    // Record Audit Trail & Staff Activity
+    const staffUser = req.user ? await prisma.user.findUnique({ where: { id: req.user.id } }) : null;
+    await recordOrderAuditTrail({
+      orderId: id,
+      userId: req.user?.id,
+      userName: staffUser?.name || 'Staff',
+      userRole: req.user?.staffRole || 'MANAGER',
+      action: 'ACCEPTED',
+      previousStatus: 'PENDING',
+      newStatus: 'ACCEPTED',
+    });
+
+    await recordStaffActivity({
+      userId: req.user!.id,
+      action: 'ACCEPT_ORDER',
+      details: `Accepted Order #${order.orderNumber}`,
+    });
+
     // Emit Socket.io status update
     const io = req.app.get('io');
     if (io) {
       io.emit('order:status', { orderId: id, status: 'ACCEPTED', updatedAt: new Date() });
+    }
+
+    if (req.user?.staffRole !== 'OWNER') {
+      notifyOwner({
+        io,
+        staffName: staffUser?.name || 'Manager',
+        action: 'Order Accepted',
+        orderNumber: order.orderNumber,
+      }).catch(() => {});
     }
 
     // Send Push Notification
@@ -292,6 +320,24 @@ export async function rejectOrder(req: AuthenticatedRequest, res: Response) {
 
     await logAdminAction(req, 'ADMIN_REJECT_ORDER', { orderId: id, reason: reason || null, refundInitiated: wasOnlinePaid });
 
+    const staffUser = req.user ? await prisma.user.findUnique({ where: { id: req.user.id } }) : null;
+    await recordOrderAuditTrail({
+      orderId: id,
+      userId: req.user?.id,
+      userName: staffUser?.name || 'Staff',
+      userRole: req.user?.staffRole || 'MANAGER',
+      action: 'REJECTED',
+      previousStatus: order.status,
+      newStatus: 'REJECTED',
+      note: reason || 'Order rejected by staff',
+    });
+
+    await recordStaffActivity({
+      userId: req.user!.id,
+      action: 'REJECT_ORDER',
+      details: `Rejected Order #${order.orderNumber}. Reason: ${reason || 'N/A'}`,
+    });
+
     const io = req.app.get('io');
     if (io) {
       io.emit('order:status', { orderId: id, status: 'REJECTED', updatedAt: new Date() });
@@ -301,6 +347,16 @@ export async function rejectOrder(req: AuthenticatedRequest, res: Response) {
           message: 'This order has been rejected by the admin.',
         });
       }
+    }
+
+    if (req.user?.staffRole !== 'OWNER') {
+      notifyOwner({
+        io,
+        staffName: staffUser?.name || 'Manager',
+        action: 'Order Rejected',
+        orderNumber: order.orderNumber,
+        details: reason ? `Reason: ${reason}` : undefined,
+      }).catch(() => {});
     }
 
     // Send Push Notification

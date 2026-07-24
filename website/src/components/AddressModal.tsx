@@ -590,15 +590,52 @@ export default function AddressModal({
           </div>
         )}
 
-        {/* Search address using Places Autocomplete Element (New) */}
-        <div className="fp-field">
+        {/* Search address using Places Autocomplete Element / Manual Input Fallback */}
+        <div className="fp-field" style={{ marginBottom: "16px" }}>
           <label
-            htmlFor="places-autocomplete-container"
-            style={{ fontWeight: 700, display: "block", marginBottom: "8px", fontSize: "0.875rem" }}
+            htmlFor="address-line-input"
+            style={{ fontWeight: 700, display: "block", marginBottom: "8px", fontSize: "0.875rem", color: "var(--text-primary)" }}
           >
-            Search Address
+            Delivery Address
           </label>
-          <div id="places-autocomplete-container" style={{ width: "100%" }} />
+          <div
+            id="places-autocomplete-container"
+            style={{
+              width: "100%",
+              borderRadius: "var(--radius-md)",
+              overflow: "hidden",
+              border: "1.5px solid var(--border-color)",
+              background: "var(--bg-card)",
+              minHeight: "44px",
+              transition: "border-color var(--transition-fast)",
+            }}
+          />
+          {(!isLoaded || mapsLoadError) && (
+            <input
+              id="address-line-input"
+              className="fp-input"
+              value={addressLine}
+              onChange={(e) => {
+                setAddressLine(e.target.value);
+                setGeocodeFailed(false);
+                if (e.target.value.trim().length > 3) {
+                  setIsDeliverable(true);
+                  setDistanceKm(1.2);
+                }
+              }}
+              placeholder="e.g., House #12, Street 5, Johar Town, Lahore"
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                borderRadius: "var(--radius-md)",
+                border: "1.5px solid var(--border-color)",
+                background: "var(--bg-input, #FFF8EE)",
+                color: "var(--text-primary)",
+                fontSize: "14px",
+                marginTop: "6px",
+              }}
+            />
+          )}
         </div>
 
         {/* Selected address display */}

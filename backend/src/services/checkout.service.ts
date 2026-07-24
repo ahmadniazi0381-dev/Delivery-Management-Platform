@@ -568,7 +568,7 @@ export async function createCheckout(body: CheckoutBody, userId: string, io: Soc
 
       if (!draft.usedInlineItems) await tx.cartItem.deleteMany({ where: { userId } });
       return created;
-    });
+    }, { timeout: 30000 });
 
     await logAudit('INVENTORY_CONFIRMED', 'SUCCESS', { flow: 'COD', orderId: order.id }, { req, userId });
     await logAudit('PAYMENT_CREATED', 'SUCCESS', { orderId: order.id, method: 'COD' }, { req, userId });
@@ -621,7 +621,7 @@ export async function createCheckout(body: CheckoutBody, userId: string, io: Soc
     );
 
     return created;
-  });
+  }, { timeout: 30000 });
 
   await logAudit(
     'CHECKOUT_STARTED',
@@ -790,7 +790,7 @@ export async function completeCheckoutSession(
 
     await tx.cartItem.deleteMany({ where: { userId: session.customerId } });
     return { order: created, invoiceNumber };
-  });
+  }, { timeout: 30000 });
 
   if (!result) {
     const refreshed = await prisma.checkoutSession.findUnique({ where: { id: session.id } });

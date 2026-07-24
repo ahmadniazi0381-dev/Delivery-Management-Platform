@@ -46,6 +46,8 @@ export interface Address {
   notes?: string;
 }
 
+export type StaffRole = 'OWNER' | 'MANAGER' | 'CASHIER' | 'KDS';
+
 export interface User {
   id: number | string;
   name: string;
@@ -57,9 +59,13 @@ export interface User {
   isPhoneVerified?: boolean;
   addresses?: Address[];
   role?: "CUSTOMER" | "ADMIN" | "RIDER";
+  /** RBAC staff role — only present for ADMIN users */
+  staffRole?: StaffRole;
+  /** Granular permission list derived from StaffProfile */
   permissions?: string[];
   mustChangePassword?: boolean;
 }
+
 
 export interface Order {
   id: number;

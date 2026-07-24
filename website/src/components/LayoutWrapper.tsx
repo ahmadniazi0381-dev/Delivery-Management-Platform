@@ -6,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import PWAInstallPrompt from "./PWAInstallPrompt";
-import AdminLayout from "@/features/admin/AdminLayout";
 import RiderLayout from "@/features/rider/RiderLayout";
 import FloatingWhatsApp from "./FloatingWhatsApp";
 
@@ -63,7 +62,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     if (user?.role?.toUpperCase() !== "ADMIN") {
       return null; // Prevents flashing dashboard before redirect triggers
     }
-    return <AdminLayout>{children}</AdminLayout>;
+    return <>{children}</>;
   }
 
   // Render Rider Layout

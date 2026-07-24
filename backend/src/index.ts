@@ -20,6 +20,8 @@ import ownerRoutes from './routes/owner.routes';
 import paymentRoutes from './routes/payment.routes';
 import notificationRoutes from './routes/notification.routes';
 import reviewRoutes from './routes/review.routes';
+import staffRoutes from './routes/staff.routes';
+import managementRoutes from './routes/management.routes';
 import { safeErrorHandler } from './middleware/security.middleware';
 import { registerAuthenticatedSocketHandlers } from './services/socket-auth.service';
 import { expireCheckoutSessions } from './services/checkout.service';
@@ -90,6 +92,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api', ownerRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api', staffRoutes);
+app.use('/api', managementRoutes);
 
 app.get('/api/health', healthCheck);
 app.get('/healthz', healthCheck);
@@ -156,7 +160,7 @@ async function seedDefaultConfig() {
       const defaultPassword = process.env.ADMIN_INITIAL_PASSWORD || 'Admin123@';
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(defaultPassword, salt);
-      await prisma.user.create({
+      const createdAdmin = await prisma.user.create({
         data: {
           name: 'Naseeb Baryani Owner',
           phone: '+923000000000',
@@ -173,6 +177,46 @@ async function seedDefaultConfig() {
       console.log('       Password:', defaultPassword);
       console.log('       Flag: mustChangePassword = true');
       console.log('========================================================');
+
+
+      // Automatically create an Owner StaffProfile for the seeded admin
+      await prisma.staffProfile.create({
+        data: {
+          userId: createdAdmin.id,
+          staffRole: 'OWNER',
+          permissions: [
+            'DASHBOARD_VIEW', 'ORDERS_VIEW', 'ORDERS_MANAGE',
+            'MENU_VIEW', 'MENU_MANAGE', 'CUSTOMERS_VIEW', 'CUSTOMERS_MANAGE',
+            'RIDERS_VIEW', 'RIDERS_MANAGE', 'REPORTS_VIEW', 'PAYMENTS_VIEW',
+            'PAYMENTS_MANAGE', 'SETTINGS_VIEW', 'SETTINGS_MANAGE', 'STAFF_MANAGE',
+            'KDS_VIEW', 'KDS_MANAGE',
+          ],
+          isActive: true,
+        },
+      });
+      console.log('[SEED] Created Owner StaffProfile for default admin.');
+    }
+
+    // Seed Owner StaffProfile for any existing ADMIN users that don't have one
+    const adminsWithoutProfile = await prisma.user.findMany({
+      where: { role: 'ADMIN', staffProfile: null },
+    });
+    for (const admin of adminsWithoutProfile) {
+      await prisma.staffProfile.create({
+        data: {
+          userId: admin.id,
+          staffRole: 'OWNER',
+          permissions: [
+            'DASHBOARD_VIEW', 'ORDERS_VIEW', 'ORDERS_MANAGE',
+            'MENU_VIEW', 'MENU_MANAGE', 'CUSTOMERS_VIEW', 'CUSTOMERS_MANAGE',
+            'RIDERS_VIEW', 'RIDERS_MANAGE', 'REPORTS_VIEW', 'PAYMENTS_VIEW',
+            'PAYMENTS_MANAGE', 'SETTINGS_VIEW', 'SETTINGS_MANAGE', 'STAFF_MANAGE',
+            'KDS_VIEW', 'KDS_MANAGE',
+          ],
+          isActive: true,
+        },
+      });
+      console.log(`[SEED] Assigned Owner StaffProfile to existing admin: ${admin.email || admin.phone}`);
     }
 
     // 4. Seed Default Banner if none exist

@@ -168,61 +168,51 @@ export default function PWAInstallPrompt() {
   return (
     <section
       aria-labelledby="pwa-install-title"
-      className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(16px+env(safe-area-inset-bottom))] pointer-events-none"
+      className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(12px+env(safe-area-inset-bottom))] pointer-events-none"
     >
-      <div className="mx-auto flex w-full max-w-[560px] items-start gap-3 rounded-[18px] border border-[var(--border-color)] bg-[var(--bg-card)] p-4 text-[var(--text-primary)] shadow-[var(--shadow-xl)] pointer-events-auto">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--cream)] text-[var(--maroon)]">
-          {showNativeInstall ? <Download size={22} aria-hidden="true" /> : <Share2 size={22} aria-hidden="true" />}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <h2 id="pwa-install-title" className="text-base font-extrabold leading-tight">
-            {showNativeInstall ? "Karachi Naseeb Baryani & Pulao" : "Install Naseeb Baryani"}
-          </h2>
-          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
-            {showNativeInstall
-              ? "Install our app for faster access and a better ordering experience."
-              : "Tap the Share button, then choose Add to Home Screen."}
-          </p>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            {showNativeInstall ? (
-              <button
-                type="button"
-                onClick={handleInstall}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--saffron)] px-4 text-sm font-bold text-white shadow-[var(--shadow-saffron)] transition hover:bg-[var(--saffron-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--saffron)]"
-                aria-label="Install Karachi Naseeb Baryani app"
-              >
-                Install App
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleDismiss}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--saffron)] px-4 text-sm font-bold text-white shadow-[var(--shadow-saffron)] transition hover:bg-[var(--saffron-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--saffron)]"
-              >
-                Got It
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleDismiss}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--border-color)] px-4 text-sm font-bold text-[var(--text-secondary)] transition hover:bg-[var(--bg-secondary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--saffron)]"
-            >
-              Not Now
-            </button>
+      <div className="mx-auto flex w-full max-w-[460px] items-center justify-between gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-3 text-[var(--text-primary)] shadow-lg pointer-events-auto backdrop-blur-md">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--cream)] text-[var(--maroon)] font-bold">
+            {showNativeInstall ? <Download size={18} aria-hidden="true" /> : <Share2 size={18} aria-hidden="true" />}
+          </div>
+          <div className="min-w-0">
+            <h2 id="pwa-install-title" className="text-xs font-bold truncate">
+              {showNativeInstall ? "Install Naseeb Baryani App" : "Add to Home Screen"}
+            </h2>
+            <p className="text-[11px] text-[var(--text-secondary)] truncate">
+              {showNativeInstall ? "Faster ordering & instant status updates" : "Tap Share -> Add to Home Screen"}
+            </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleDismiss}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--saffron)]"
-          aria-label="Dismiss install prompt"
-        >
-          <X size={18} aria-hidden="true" />
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {showNativeInstall ? (
+            <button
+              type="button"
+              onClick={handleInstall}
+              className="inline-flex h-8 items-center justify-center rounded-full bg-[var(--saffron)] px-3 text-xs font-bold text-white shadow-sm transition hover:bg-[var(--saffron-dark)]"
+            >
+              Install
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleDismiss}
+              className="inline-flex h-8 items-center justify-center rounded-full bg-[var(--saffron)] px-3 text-xs font-bold text-white shadow-sm"
+            >
+              Got It
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-[var(--bg-secondary)]"
+            aria-label="Dismiss install prompt"
+          >
+            <X size={16} aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </section>
   );

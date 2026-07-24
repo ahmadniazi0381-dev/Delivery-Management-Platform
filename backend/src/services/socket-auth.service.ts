@@ -9,6 +9,18 @@ export type SocketUser = {
   phoneVerified: boolean;
 };
 
+export interface StaffPresence {
+  userId: string;
+  name: string;
+  role: string;
+  isOnline: boolean;
+  lastSeen: string;
+  currentTask: string;
+  activeOrderCount: number;
+}
+
+const onlineStaffMap = new Map<string, { socketId: string; presence: StaffPresence }>();
+
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error('JWT_SECRET environment variable is required.');
@@ -44,6 +56,11 @@ export async function authorizeSocketJoin(
   }
 }
 
+export function broadcastStaffPresence(io: import('socket.io').Server) {
+  const list = Array.from(onlineStaffMap.values()).map((item) => item.presence);
+  io.to('admin').emit('staff:presence', list);
+}
+
 export function registerAuthenticatedSocketHandlers(io: import('socket.io').Server): void {
   io.on('connection', (socket: Socket) => {
     console.log(`Socket connected: ${socket.id}`);
@@ -60,8 +77,30 @@ export function registerAuthenticatedSocketHandlers(io: import('socket.io').Serv
       }
       socket.join('admin');
       socket.data.user = user;
-      console.log(`[SOCKET] Admin ${user.id} joined admin room: ${socket.id}`);
-      socket.emit('admin:joined', { status: 'ok' });
+
+      // Track presence
+      const userDetails = await prisma.user.findUnique({
+        where: { id: user.id },
+        include: { staffProfile: true },
+      });
+
+      const presence: StaffPresence = {
+        userId: user.id,
+        name: userDetails?.name || 'Staff Member',
+        role: userDetails?.staffProfile?.staffRole || 'MANAGER',
+        isOnline: true,
+        lastSeen: new Date().toISOString(),
+        currentTask: 'Managing Orders',
+        activeOrderCount: await prisma.order.count({
+          where: { status: { in: ['PENDING', 'ACCEPTED', 'PREPARING', 'READY'] } },
+        }),
+      };
+
+      onlineStaffMap.set(user.id, { socketId: socket.id, presence });
+      console.log(`[SOCKET] Admin ${user.id} (${presence.name}) joined admin room: ${socket.id}`);
+      socket.emit('admin:joined', { status: 'ok', presence });
+
+      broadcastStaffPresence(io);
     });
 
     socket.on('user:join', async (data: { token?: string; userId?: string }) => {
@@ -104,6 +143,15 @@ export function registerAuthenticatedSocketHandlers(io: import('socket.io').Serv
 
     socket.on('disconnect', () => {
       console.log(`Socket disconnected: ${socket.id}`);
+      if (socket.data.user?.id && onlineStaffMap.has(socket.data.user.id)) {
+        const item = onlineStaffMap.get(socket.data.user.id);
+        if (item) {
+          item.presence.isOnline = false;
+          item.presence.lastSeen = new Date().toISOString();
+        }
+        onlineStaffMap.delete(socket.data.user.id);
+        broadcastStaffPresence(io);
+      }
     });
   });
 }

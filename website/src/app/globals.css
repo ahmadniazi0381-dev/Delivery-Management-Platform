@@ -2012,27 +2012,42 @@ textarea.fp-input {
    ============================================================ */
 #places-autocomplete-container {
   width: 100%;
+  background: transparent !important;
 }
-gmp-place-autocomplete {
+#places-autocomplete-container *,
+gmp-place-autocomplete,
+gmp-internal-place-autocomplete {
   width: 100% !important;
-  display: block;
+  box-sizing: border-box !important;
+  background: var(--bg-input, #FFF8EE) !important;
+  color: var(--text-primary, #1C0A00) !important;
+  border-color: var(--border-color, #F5E6D0) !important;
 }
-gmp-place-autocomplete::part(input) {
+gmp-place-autocomplete,
+gmp-internal-place-autocomplete {
+  display: block;
+  border: 1px solid var(--border-color, #F5E6D0) !important;
+  border-radius: var(--radius-md, 12px) !important;
+  overflow: hidden !important;
+}
+gmp-place-autocomplete::part(input),
+gmp-internal-place-autocomplete::part(input) {
   width: 100%;
   height: 48px;
   padding: 10px 14px;
-  background-color: var(--bg-input, #FFF8EE);
-  color: var(--text-primary, #1C0A00);
-  border: 1px solid var(--border-color, #F5E6D0);
-  border-radius: var(--radius-md, 12px);
+  background-color: var(--bg-input, #FFF8EE) !important;
+  color: var(--text-primary, #1C0A00) !important;
+  border: 1px solid var(--border-color, #F5E6D0) !important;
+  border-radius: var(--radius-md, 12px) !important;
   font-family: inherit;
   font-size: 14px;
   outline: none;
   transition: border-color var(--transition-fast, 0.15s) ease, box-shadow var(--transition-fast, 0.15s) ease;
 }
-gmp-place-autocomplete::part(input):focus {
-  border-color: var(--saffron, #D97706);
-  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15);
+gmp-place-autocomplete::part(input):focus,
+gmp-internal-place-autocomplete::part(input):focus {
+  border-color: var(--saffron, #D97706) !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15) !important;
 }
 
 /* ============================================================

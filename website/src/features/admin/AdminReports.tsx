@@ -14,10 +14,10 @@ export default function AdminReports() {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('7d');
 
   // Queries
-  const { data: revenueData, loading: revenueLoading } = useAdminQuery(`/owner/analytics/revenue?period=${period}`, [period]);
-  const { data: paymentsData, loading: paymentsLoading } = useAdminQuery(`/owner/analytics/payments`, []);
-  const { data: peakHoursData, loading: peakHoursLoading } = useAdminQuery(`/owner/analytics/peak-hours`, []);
-  const { data: mainAnalytics, loading: mainLoading } = useAdminQuery(`/owner/analytics`, []);
+  const { data: revenueData, loading: revenueLoading } = useAdminQuery(`/api/owner/analytics/revenue?period=${period}`, [period]);
+  const { data: paymentsData, loading: paymentsLoading } = useAdminQuery(`/api/owner/analytics/payments`, []);
+  const { data: peakHoursData, loading: peakHoursLoading } = useAdminQuery(`/api/owner/analytics/peak-hours`, []);
+  const { data: mainAnalytics, loading: mainLoading } = useAdminQuery(`/api/owner/analytics`, []);
 
   // Stats extract
   const totalRevenue = revenueData?.totalRevenue ?? 0;
@@ -146,7 +146,13 @@ export default function AdminReports() {
         {/* Revenue Area Chart */}
         <div className="card" style={{ padding: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>Revenue Trend (Daily)</h3>
-          {revenueLoading ? <SkeletonCard h="300px" /> : (
+          {revenueLoading ? <SkeletonCard h="300px" /> : dailyData.length === 0 || dailyData.every((d: any) => !d.revenue) ? (
+            <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              <TrendingUp size={36} style={{ opacity: 0.5, marginBottom: 8 }} />
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0, color: 'var(--text-primary)' }}>No revenue data yet</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0' }}>Completed paid orders will appear here on the daily curve.</p>
+            </div>
+          ) : (
             <div style={{ width: '100%', height: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dailyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -164,7 +170,13 @@ export default function AdminReports() {
         {/* Payment Channels Pie Chart */}
         <div className="card" style={{ padding: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>Payment Gateways Breakdown</h3>
-          {paymentsLoading ? <SkeletonCard h="300px" /> : (
+          {paymentsLoading ? <SkeletonCard h="300px" /> : paymentAnalytics.length === 0 || paymentAnalytics.every((p: any) => !p.total) ? (
+            <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              <DollarSign size={36} style={{ opacity: 0.5, marginBottom: 8 }} />
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0, color: 'var(--text-primary)' }}>No payment data yet</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0' }}>Payment breakdown (COD, JazzCash, Easypaisa, Card) will appear here.</p>
+            </div>
+          ) : (
             <div style={{ width: '100%', height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -255,7 +267,13 @@ export default function AdminReports() {
       <div className="admin-reports-grid-2">
         <div className="card" style={{ padding: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>Top Product Sales</h3>
-          {mainLoading ? <SkeletonCard h="280px" /> : (
+          {mainLoading ? <SkeletonCard h="280px" /> : topDishes.length === 0 ? (
+            <div style={{ height: '280px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              <ShoppingBag size={36} style={{ opacity: 0.5, marginBottom: 8 }} />
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0, color: 'var(--text-primary)' }}>No product sales recorded yet</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0' }}>Top selling items will be listed here after customer orders.</p>
+            </div>
+          ) : (
             <div style={{ width: '100%', height: '280px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topDishes} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
@@ -272,19 +290,26 @@ export default function AdminReports() {
 
         <div className="card" style={{ padding: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>Best Sellers Performance</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {topDishes.slice(0, 5).map((item: any, i: number) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>
-                    {i + 1}
-                  </span>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{item.name}</span>
+          {topDishes.length === 0 ? (
+            <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0, color: 'var(--text-primary)' }}>No bestseller metrics yet</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0' }}>Product performance metrics update automatically.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {topDishes.slice(0, 5).map((item: any, i: number) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 700, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>
+                      {i + 1}
+                    </span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{item.name}</span>
+                  </div>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--saffron)' }}>{item.quantity} portions sold</span>
                 </div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--saffron)' }}>{item.quantity} portions sold</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

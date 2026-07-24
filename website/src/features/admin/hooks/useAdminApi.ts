@@ -1,8 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('naseeb_token');
@@ -14,6 +12,15 @@ function getHeaders(): HeadersInit {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
+}
+
+export function formatApiUrl(url: string): string {
+  const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+  let path = url.startsWith('/') ? url : `/${url}`;
+  if (base.endsWith('/api') && path.startsWith('/api/')) {
+    path = path.substring(4);
+  }
+  return `${base}${path}`;
 }
 
 export function useAdminQuery<T = any>(url: string, deps: any[] = []) {
@@ -30,7 +37,7 @@ export function useAdminQuery<T = any>(url: string, deps: any[] = []) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}${url}`, {
+      const res = await fetch(formatApiUrl(url), {
         headers: getHeaders(),
         signal: controller.signal,
       });
@@ -56,7 +63,7 @@ export function useAdminMutation<T = any>(url: string, method: 'POST' | 'PUT' | 
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}${overrideUrl || url}`, {
+      const res = await fetch(formatApiUrl(overrideUrl || url), {
         method,
         headers: getHeaders(),
         body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -76,7 +83,7 @@ export function useAdminMutation<T = any>(url: string, method: 'POST' | 'PUT' | 
 }
 
 export async function adminFetch(url: string, options?: RequestInit) {
-  const res = await fetch(`${API_URL}${url}`, {
+  const res = await fetch(formatApiUrl(url), {
     ...options,
     headers: { ...getHeaders(), ...(options?.headers || {}) },
   });
@@ -84,3 +91,4 @@ export async function adminFetch(url: string, options?: RequestInit) {
   if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`);
   return json;
 }
+
