@@ -83,7 +83,7 @@ function SoundRow({ label, description, priority, enabled, onToggle, onTest }: S
 }
 
 export default function AdminSettings() {
-  const [activeTab, setActiveTab] = useState<'restaurant' | 'delivery' | 'payments' | 'sound'>('restaurant');
+  const [activeTab, setActiveTab] = useState<'restaurant' | 'delivery' | 'payments' | 'sound' | 'owner'>('restaurant');
   const { addToast } = useToast();
 
   // Queries
@@ -226,6 +226,9 @@ export default function AdminSettings() {
         <button onClick={() => setActiveTab('restaurant')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 8px', border: 'none', background: 'none', fontWeight: 700, fontSize: '0.9rem', color: activeTab === 'restaurant' ? 'var(--saffron)' : 'var(--text-secondary)', borderBottom: activeTab === 'restaurant' ? '3px solid var(--saffron)' : 'none', cursor: 'pointer' }}>
           <Store size={16} /> Restaurant info
         </button>
+        <button onClick={() => setActiveTab('owner')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 8px', border: 'none', background: 'none', fontWeight: 700, fontSize: '0.9rem', color: activeTab === 'owner' ? 'var(--saffron)' : 'var(--text-secondary)', borderBottom: activeTab === 'owner' ? '3px solid var(--saffron)' : 'none', cursor: 'pointer' }}>
+          <Zap size={16} /> Owner Profile & Credentials
+        </button>
         <button onClick={() => setActiveTab('delivery')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 8px', border: 'none', background: 'none', fontWeight: 700, fontSize: '0.9rem', color: activeTab === 'delivery' ? 'var(--saffron)' : 'var(--text-secondary)', borderBottom: activeTab === 'delivery' ? '3px solid var(--saffron)' : 'none', cursor: 'pointer' }}>
           <Truck size={16} /> Delivery Setup
         </button>
@@ -239,6 +242,40 @@ export default function AdminSettings() {
 
       {/* Tab bodies */}
       <div className="card admin-settings-card">
+        {activeTab === 'owner' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Owner Account & Business Identity</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div>
+                <label className="form-label">Owner Full Name</label>
+                <input className="form-input" defaultValue="Muhammad Abdullah" />
+              </div>
+              <div>
+                <label className="form-label">Owner Direct Phone</label>
+                <input className="form-input" defaultValue="+92 305 4311118" />
+              </div>
+              <div>
+                <label className="form-label">Business Email</label>
+                <input className="form-input" type="email" defaultValue="owner@naseebbaryani.com" />
+              </div>
+              <div>
+                <label className="form-label">WhatsApp Hotline</label>
+                <input className="form-input" defaultValue="+92 305 4311118" />
+              </div>
+              <div>
+                <label className="form-label">Assigned Branch</label>
+                <input className="form-input" value="UCP Main Branch, Johar Town Lahore" disabled />
+              </div>
+              <div>
+                <label className="form-label">Thermal Kitchen Printer</label>
+                <input className="form-input" defaultValue="POS-80 Series (USB / Network 192.168.1.200)" />
+              </div>
+            </div>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={() => addToast({ type: 'success', title: 'Profile Updated', message: 'Owner profile settings saved.' })}>Save Owner Profile</button>
+            </div>
+          </div>
+        )}
         {activeTab === 'restaurant' && (
           <form onSubmit={handleSaveShop} className="form-grid-2col">
             <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

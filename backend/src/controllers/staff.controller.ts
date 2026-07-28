@@ -80,6 +80,12 @@ const STAFF_SELECT = {
   permissions: true,
   isActive: true,
   notes: true,
+  salary: true,
+  cnic: true,
+  shift: true,
+  department: true,
+  joiningDate: true,
+  assignedBranch: true,
   lastLoginAt: true,
   createdAt: true,
   updatedAt: true,
@@ -134,7 +140,7 @@ export async function getStaffRoles(_req: AuthenticatedRequest, res: Response) {
  */
 export async function createStaff(req: AuthenticatedRequest, res: Response) {
   try {
-    const { name, email, phone, password, staffRole, permissions, notes } = req.body;
+    const { name, email, phone, password, staffRole, permissions, notes, salary, cnic, shift, department, joiningDate, assignedBranch } = req.body;
 
     if (!name || !phone || !password || !staffRole) {
       return res.status(400).json({ success: false, message: 'name, phone, password, and staffRole are required.' });
@@ -198,6 +204,12 @@ export async function createStaff(req: AuthenticatedRequest, res: Response) {
           isActive: true,
           invitedById: req.user!.id,
           notes: notes || null,
+          salary: salary ? parseFloat(salary) : null,
+          cnic: cnic || null,
+          shift: shift || null,
+          department: department || null,
+          joiningDate: joiningDate ? new Date(joiningDate) : null,
+          assignedBranch: assignedBranch || null,
         },
         select: STAFF_SELECT,
       });
@@ -227,7 +239,7 @@ export async function createStaff(req: AuthenticatedRequest, res: Response) {
 export async function updateStaff(req: AuthenticatedRequest, res: Response) {
   try {
     const { id } = req.params;
-    const { staffRole, permissions, isActive, notes, name, email } = req.body;
+    const { staffRole, permissions, isActive, notes, name, email, salary, cnic, shift, department, joiningDate, assignedBranch } = req.body;
 
     const existing = await prisma.staffProfile.findUnique({ where: { id } });
     if (!existing) {
@@ -241,16 +253,33 @@ export async function updateStaff(req: AuthenticatedRequest, res: Response) {
     if (existing.staffRole === 'OWNER' && callerProfile?.userId !== existing.userId) {
       return res.status(403).json({ success: false, message: 'Cannot modify another Owner account.' });
     }
-    if (staffRole === 'OWNER' && callerProfile?.staffRole !== 'OWNER') {
-      return res.status(403).json({ success: false, message: 'Only an Owner can promote to Owner.' });
+    if (existing.staffRole === 'OWNER') {
+      if (isActive === false) {
+        return res.status(400).json({ success: false, message: 'Owner accounts cannot be deactivated.' });
+      }
     }
 
     // Build update payload
     const profileUpdate: Record<string, unknown> = {};
-    if (staffRole) profileUpdate.staffRole = staffRole;
-    if (Array.isArray(permissions)) profileUpdate.permissions = permissions;
-    if (typeof isActive === 'boolean') profileUpdate.isActive = isActive;
+    if (staffRole) {
+      profileUpdate.staffRole = staffRole;
+      if (staffRole === 'OWNER') {
+        profileUpdate.permissions = ALL_PERMISSIONS as unknown as string[];
+      }
+    }
+    if (Array.isArray(permissions) && existing.staffRole !== 'OWNER' && staffRole !== 'OWNER') {
+      profileUpdate.permissions = permissions;
+    }
+    if (typeof isActive === 'boolean' && existing.staffRole !== 'OWNER') {
+      profileUpdate.isActive = isActive;
+    }
     if (notes !== undefined) profileUpdate.notes = notes;
+    if (salary !== undefined) profileUpdate.salary = salary ? parseFloat(salary) : null;
+    if (cnic !== undefined) profileUpdate.cnic = cnic || null;
+    if (shift !== undefined) profileUpdate.shift = shift || null;
+    if (department !== undefined) profileUpdate.department = department || null;
+    if (joiningDate !== undefined) profileUpdate.joiningDate = joiningDate ? new Date(joiningDate) : null;
+    if (assignedBranch !== undefined) profileUpdate.assignedBranch = assignedBranch || null;
 
     const updatedProfile = await prisma.$transaction(async (tx) => {
       // Optionally update the linked user's name / email

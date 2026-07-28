@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import { useOrderAlerts } from "./hooks/useOrderAlerts";
 import { ToastProvider, useToast } from "@/components/AdminToast";
+import { GlobalSearch, GlobalSearchTrigger } from "@/components/GlobalSearch";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -27,6 +28,7 @@ import {
   Activity,
   Package,
   TrendingUp,
+  DollarSign,
 } from "lucide-react";
 
 // ─── Navigation links ─────────────────────────────────────────────────────────
@@ -40,6 +42,7 @@ const ADMIN_LINKS = [
   { href: "/dashboard/customers",   label: "Customers",           icon: Users },
   { href: "/dashboard/riders",      label: "Riders",              icon: Bike },
   { href: "/dashboard/staff",       label: "Staff",               icon: UserCog },
+  { href: "/dashboard/salary",      label: "Salary & Payroll",    icon: DollarSign },
   { href: "/dashboard/activity",    label: "Activity Center",     icon: Activity },
   { href: "/dashboard/analytics",   label: "Advanced Analytics",  icon: TrendingUp },
   { href: "/dashboard/reports",     label: "Reports",             icon: BarChart2 },
@@ -544,6 +547,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+              {/* Global Search Ctrl+K trigger */}
+              <GlobalSearchTrigger onClick={() => { const evt = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }); window.dispatchEvent(evt); }} />
               {/* Socket status dot */}
               <span
                 className="socket-dot"
@@ -609,6 +614,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </header>
+
+          {/* Global Search Modal (Ctrl+K) */}
+          <GlobalSearch />
 
           {/* Page Content */}
           <main style={{ flex: 1, padding: "clamp(12px, 2.5vw, 24px)", overflowY: "auto", minWidth: 0, width: "100%" }}>

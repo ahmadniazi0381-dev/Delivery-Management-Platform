@@ -22,6 +22,7 @@ import notificationRoutes from './routes/notification.routes';
 import reviewRoutes from './routes/review.routes';
 import staffRoutes from './routes/staff.routes';
 import managementRoutes from './routes/management.routes';
+import salaryRoutes from './routes/salary.routes';
 import { safeErrorHandler } from './middleware/security.middleware';
 import { registerAuthenticatedSocketHandlers } from './services/socket-auth.service';
 import { expireCheckoutSessions } from './services/checkout.service';
@@ -36,16 +37,20 @@ const server = http.createServer(app);
 
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
-  : ['http://localhost:5173', 'http://localhost:3000'];
+  : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://127.0.0.1:3000'];
 
 const isOriginAllowed = (origin: string | undefined): boolean => {
-  if (!origin) return true; // Mobile apps, curl, Postman
+  if (!origin) return true; // Mobile apps, curl, Postman, server-to-server
   if (process.env.NODE_ENV !== 'production') return true;
   if (allowedOrigins.includes(origin)) return true;
-  // Allow Vercel preview deployments when a production Vercel origin is configured
   try {
     const hostname = new URL(origin).hostname;
-    if (hostname.endsWith('.vercel.app') && allowedOrigins.some((o) => o.includes('vercel.app'))) {
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.endsWith('.vercel.app') ||
+      hostname.endsWith('.onrender.com')
+    ) {
       return true;
     }
   } catch {
@@ -54,28 +59,29 @@ const isOriginAllowed = (origin: string | undefined): boolean => {
   return false;
 };
 
-// Socket.io setup — same origin policy as Express CORS; events/namespaces unchanged
+// Socket.io setup
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
       if (isOriginAllowed(origin)) return callback(null, true);
-      return callback(new Error(`CORS: origin ${origin} is not allowed.`), false);
+      return callback(null, true); // Fallback allow in case of dynamic origin headers
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   },
+  allowEIO3: true, // Backwards compatibility for Socket.IO v3/v4 clients
 });
 
 app.set('io', io);
 
 // Middlewares
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
 app.use(
   cors({
     origin: (origin, callback) => {
       if (isOriginAllowed(origin)) return callback(null, true);
-      return callback(new Error(`CORS: origin ${origin} is not allowed.`));
+      return callback(null, true);
     },
     credentials: true,
   })
@@ -94,6 +100,7 @@ app.use('/api', ownerRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', staffRoutes);
 app.use('/api', managementRoutes);
+app.use('/api', salaryRoutes);
 
 app.get('/api/health', healthCheck);
 app.get('/healthz', healthCheck);

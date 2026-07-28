@@ -33,9 +33,20 @@ const SocketContext = createContext<SocketContextValue>({
   joinAsUser: () => {},
 });
 
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, "") ||
-  "http://localhost:5000";
+function getSocketUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (envUrl) {
+    return envUrl.replace(/\/api\/?$/, "");
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "http://localhost:5000";
+    }
+    return window.location.origin;
+  }
+  return "http://localhost:5000";
+}
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
@@ -44,11 +55,15 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const joinedRoomsRef = useRef<{ type: "admin" | "user"; userId?: string; token?: string } | null>(null);
 
   useEffect(() => {
-    const socket = io(SOCKET_URL, {
-      transports: ["websocket", "polling"],
+    const socketUrl = getSocketUrl();
+    const socket = io(socketUrl, {
+      transports: ["polling", "websocket"],
+      reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 10000,
+      reconnectionDelayMax: 5000,
+      autoConnect: true,
+      timeout: 10000,
     });
 
     socketRef.current = socket;

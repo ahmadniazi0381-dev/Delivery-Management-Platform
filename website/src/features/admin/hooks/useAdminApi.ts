@@ -14,8 +14,22 @@ function getHeaders(): HeadersInit {
   };
 }
 
+export function getApiBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:5000/api';
+    }
+  }
+  return '/api';
+}
+
 export function formatApiUrl(url: string): string {
-  const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+  const base = getApiBaseUrl();
   let path = url.startsWith('/') ? url : `/${url}`;
   if (base.endsWith('/api') && path.startsWith('/api/')) {
     path = path.substring(4);

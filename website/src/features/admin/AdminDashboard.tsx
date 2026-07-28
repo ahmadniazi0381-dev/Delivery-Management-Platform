@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   TrendingUp,
   ShoppingBag,
@@ -83,6 +83,21 @@ export default function AdminDashboard() {
     CANCELLED: 0,
     REJECTED: 0,
   };
+
+  const displayDailyData = useMemo(() => {
+    if (dailyData.length > 0) return dailyData;
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return {
+        date: d.toISOString().slice(0, 10),
+        revenue: 0,
+        orders: 0,
+      };
+    });
+  }, [dailyData]);
+
+  const isRevenueEmpty = dailyData.length === 0 || dailyData.every((d: any) => !d.revenue);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }} className="fade-in">
@@ -212,7 +227,14 @@ export default function AdminDashboard() {
       <div className="admin-dashboard-grid">
         <div className="card" style={{ padding: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>Revenue Trend</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0, color: "var(--text-primary)" }}>Revenue Trend</h3>
+              {isRevenueEmpty && (
+                <span style={{ fontSize: "0.72rem", background: "var(--bg-secondary)", padding: "2px 8px", borderRadius: "10px", color: "var(--text-secondary)" }}>
+                  Zero data curve
+                </span>
+              )}
+            </div>
             <div style={{ display: "flex", background: "var(--bg-secondary)", borderRadius: "8px", padding: "2px", border: "1px solid var(--border)" }}>
               {(['7d', '30d'] as const).map(p => (
                 <button
@@ -233,7 +255,7 @@ export default function AdminDashboard() {
           {revenueLoading ? <SkeletonCard h="300px" /> : (
             <div style={{ width: "100%", height: "300px" }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dailyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <AreaChart data={displayDailyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <defs>
                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="var(--saffron)" stopOpacity={0.3}/>
@@ -242,7 +264,7 @@ export default function AdminDashboard() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={11} tickFormatter={(t) => t.substring(5)} />
-                  <YAxis stroke="var(--text-secondary)" fontSize={11} />
+                  <YAxis stroke="var(--text-secondary)" fontSize={11} domain={[0, 'auto']} />
                   <Tooltip contentStyle={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-primary)" }} />
                   <Area type="monotone" dataKey="revenue" name="Sales (Rs.)" stroke="var(--saffron)" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                 </AreaChart>
@@ -253,7 +275,13 @@ export default function AdminDashboard() {
 
         <div className="card" style={{ padding: "24px" }}>
           <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "16px", color: "var(--text-primary)" }}>Top Selling Dishes</h3>
-          {analyticsLoading ? <SkeletonCard h="300px" /> : (
+          {analyticsLoading ? <SkeletonCard h="300px" /> : topSellingItems.length === 0 ? (
+            <div style={{ height: "200px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, color: "var(--text-secondary)" }}>
+              <ShoppingBag size={40} style={{ opacity: 0.2 }} />
+              <p style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>No Sales Data Yet</p>
+              <p style={{ fontSize: "0.8rem", textAlign: "center" }}>Top-selling items appear here once orders are delivered.</p>
+            </div>
+          ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {topSellingItems.slice(0, 5).map((item: any, i: number) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

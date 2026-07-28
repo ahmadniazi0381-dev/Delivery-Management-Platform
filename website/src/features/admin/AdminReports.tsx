@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAdminQuery } from './hooks/useAdminApi';
 import { SkeletonCard } from './components/SkeletonLoader';
 import {
@@ -9,6 +9,16 @@ import {
 import { Calendar, Download, TrendingUp, DollarSign, ShoppingBag, Users, Clock } from 'lucide-react';
 
 const COLORS = ['#D97706', '#7C2D12', '#15803D', '#2563EB', '#7C3AED'];
+
+const HOURS_LABEL = Array.from({ length: 24 }, (_, h) => h.toString().padStart(2, '0'));
+
+function getHeatmapColor(count: number) {
+  if (count === 0) return 'var(--bg-secondary)';
+  if (count <= 2) return 'rgba(217, 119, 6, 0.15)';
+  if (count <= 6) return 'rgba(217, 119, 6, 0.4)';
+  if (count <= 14) return 'rgba(217, 119, 6, 0.75)';
+  return 'var(--saffron)';
+}
 
 export default function AdminReports() {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('7d');
@@ -24,36 +34,56 @@ export default function AdminReports() {
   const totalOrders = revenueData?.totalOrders ?? 0;
   const avgOrderValue = revenueData?.avgOrderValue ?? 0;
   const totalCustomers = mainAnalytics?.totalCustomers ?? 0;
+  const rawDailyData = revenueData?.dailyData ?? [];
+  const rawPaymentData = paymentsData?.breakdown ?? paymentsData ?? [];
+  const rawTopDishes = mainAnalytics?.topSellingItems ?? [];
+  const rawPeakHours = peakHoursData?.heatmap ?? peakHoursData ?? [];
 
-  const dailyData = revenueData?.dailyData ?? [];
-  const paymentAnalytics = paymentsData?.data || paymentsData || [];
-  const topDishes = mainAnalytics?.topSellingItems ?? [];
-  
-  // Build Heatmap grid
-  const peakHoursHeatmap = peakHoursData?.heatmap ?? [];
-  const hoursLabel = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+  // Prepare robust chart data with fallback zero-series if DB has 0 records
+  const dailyData = useMemo(() => {
+    if (rawDailyData.length > 0) return rawDailyData;
+    // Generate days of 0 values so axes and zero curve render beautifully
+    const count = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (count - 1 - i));
+      return {
+        date: d.toISOString().slice(0, 10),
+        revenue: 0,
+        orders: 0,
+      };
+    });
+  }, [rawDailyData, period]);
+
+  const paymentAnalytics = useMemo(() => {
+    if (rawPaymentData.length > 0) return rawPaymentData;
+    return [
+      { method: "COD", total: 0, count: 0 },
+      { method: "JAZZCASH", total: 0, count: 0 },
+      { method: "EASYPAISA", total: 0, count: 0 },
+      { method: "CARD", total: 0, count: 0 },
+    ];
+  }, [rawPaymentData]);
+
+  const topDishes = useMemo(() => rawTopDishes, [rawTopDishes]);
+
+  // Build peak hours heatmap — expects [{day, hours:[{hour, count}]}]
+  const peakHoursHeatmap = useMemo(() => {
+    if (Array.isArray(rawPeakHours) && rawPeakHours.length > 0) return rawPeakHours;
+    return [];
+  }, [rawPeakHours]);
+
+  const isDailyEmpty = dailyData.length === 0 || dailyData.every((d: any) => !d.revenue);
+  const isPaymentEmpty = paymentAnalytics.every((p: any) => !p.total);
 
   const handleExportCSV = () => {
-    if (dailyData.length === 0) return;
-    const headers = ['Date', 'Revenue (Rs.)', 'Orders Count'];
-    const rows = dailyData.map((d: any) => [d.date, d.revenue, d.orders]);
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map((e: any) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `naseeb_revenue_daily_${period}_export.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const getHeatmapColor = (count: number) => {
-    if (count === 0) return 'var(--bg-secondary)';
-    if (count < 3) return 'rgba(217, 119, 6, 0.15)'; // light saffron
-    if (count < 7) return 'rgba(217, 119, 6, 0.4)';  // medium saffron
-    if (count < 15) return 'rgba(217, 119, 6, 0.75)'; // strong saffron
-    return 'var(--saffron)'; // peak saffron
+    const headers = 'Date,Revenue,Orders';
+    const rows = dailyData.map((d: any) => `"${d.date}",${d.revenue || 0},${d.orders || 0}`);
+    const csv = [headers, ...rows].join('\n');
+    const a = document.createElement('a');
+    a.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
+    a.download = `report_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
   };
 
   return (
@@ -61,7 +91,7 @@ export default function AdminReports() {
       {/* Header bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>Reports & Analytics</h1>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>Reports &amp; Analytics</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Business intelligence, payment channels and store peak operational trends.</p>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -142,41 +172,43 @@ export default function AdminReports() {
       </div>
 
       {/* Main Charts Row */}
-      <div className="admin-reports-grid-1">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
         {/* Revenue Area Chart */}
-        <div className="card" style={{ padding: '24px' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>Revenue Trend (Daily)</h3>
-          {revenueLoading ? <SkeletonCard h="300px" /> : dailyData.length === 0 || dailyData.every((d: any) => !d.revenue) ? (
-            <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', textAlign: 'center' }}>
-              <TrendingUp size={36} style={{ opacity: 0.5, marginBottom: 8 }} />
-              <p style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0, color: 'var(--text-primary)' }}>No revenue data yet</p>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0' }}>Completed paid orders will appear here on the daily curve.</p>
-            </div>
-          ) : (
+        <div className="card" style={{ padding: '24px', position: "relative" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Revenue Trend (Daily)</h3>
+            {isDailyEmpty && (
+              <span style={{ fontSize: "0.75rem", background: "var(--bg-secondary)", padding: "4px 10px", borderRadius: "12px", color: "var(--text-secondary)", fontWeight: 600 }}>
+                ℹ Zero records logged for selected period
+              </span>
+            )}
+          </div>
+          {revenueLoading ? <SkeletonCard h="300px" /> : (
             <div style={{ width: '100%', height: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dailyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={11} tickFormatter={(tick) => tick.substring(5)} />
-                  <YAxis stroke="var(--text-secondary)" fontSize={11} />
-                  <Tooltip contentStyle={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
-                  <Line type="monotone" dataKey="revenue" name="Revenue (Rs.)" stroke="var(--saffron)" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                  <YAxis stroke="var(--text-secondary)" fontSize={11} domain={[0, 'auto']} />
+                  <Tooltip contentStyle={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} formatter={(v: any) => [`Rs. ${Number(v).toLocaleString()}`, 'Revenue']} />
+                  <Line type="monotone" dataKey="revenue" name="Revenue (Rs.)" stroke="var(--saffron)" strokeWidth={3} dot={true} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           )}
         </div>
 
-        {/* Payment Channels Pie Chart */}
-        <div className="card" style={{ padding: '24px' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>Payment Gateways Breakdown</h3>
-          {paymentsLoading ? <SkeletonCard h="300px" /> : paymentAnalytics.length === 0 || paymentAnalytics.every((p: any) => !p.total) ? (
-            <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', textAlign: 'center' }}>
-              <DollarSign size={36} style={{ opacity: 0.5, marginBottom: 8 }} />
-              <p style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0, color: 'var(--text-primary)' }}>No payment data yet</p>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0' }}>Payment breakdown (COD, JazzCash, Easypaisa, Card) will appear here.</p>
-            </div>
-          ) : (
+        {/* Payment Channels Breakdown */}
+        <div className="card" style={{ padding: '24px', position: "relative" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Payment Gateways Breakdown</h3>
+            {isPaymentEmpty && (
+              <span style={{ fontSize: "0.75rem", background: "var(--bg-secondary)", padding: "4px 10px", borderRadius: "12px", color: "var(--text-secondary)", fontWeight: 600 }}>
+                ℹ Zero completed payments
+              </span>
+            )}
+          </div>
+          {paymentsLoading ? <SkeletonCard h="300px" /> : (
             <div style={{ width: '100%', height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -215,14 +247,20 @@ export default function AdminReports() {
         <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Clock size={20} /> Peak Delivery Hours Heatmap (Last 30 Days)
         </h3>
-        {peakHoursLoading ? <SkeletonCard h="200px" /> : (
+        {peakHoursLoading ? <SkeletonCard h="200px" /> : peakHoursHeatmap.length === 0 ? (
+          <div style={{ padding: '48px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', textAlign: 'center', gap: 10 }}>
+            <Clock size={40} style={{ opacity: 0.2 }} />
+            <p style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0, color: 'var(--text-primary)' }}>No peak hours data yet</p>
+            <p style={{ fontSize: '0.8rem', margin: 0 }}>Order heatmap will appear here once daily orders are placed and delivered.</p>
+          </div>
+        ) : (
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: '780px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {/* Heatmap header: Hours */}
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Day</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', flex: 1, gap: '2px', textAlign: 'center' }}>
-                  {hoursLabel.map(h => (
+                  {HOURS_LABEL.map(h => (
                     <span key={h} style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)' }}>{h}</span>
                   ))}
                 </div>
@@ -264,7 +302,7 @@ export default function AdminReports() {
       </div>
 
       {/* Top Dishes bar chart */}
-      <div className="admin-reports-grid-2">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
         <div className="card" style={{ padding: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-primary)' }}>Top Product Sales</h3>
           {mainLoading ? <SkeletonCard h="280px" /> : topDishes.length === 0 ? (

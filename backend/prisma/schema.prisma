@@ -628,18 +628,25 @@ model RiderProfile {
 
 // Staff RBAC profile — linked 1:1 to a User with role = ADMIN
 model StaffProfile {
-  id          String     @id @default(uuid())
-  userId      String     @unique
-  user        User       @relation("UserStaffProfile", fields: [userId], references: [id], onDelete: Cascade)
-  staffRole   StaffRole  @default(MANAGER)
-  permissions String[]   // e.g. ["ORDERS_VIEW", "MENU_MANAGE"]
-  isActive    Boolean    @default(true)
-  invitedById String?
-  invitedBy   User?      @relation("StaffCreatedBy", fields: [invitedById], references: [id], onDelete: SetNull)
-  notes       String?    @db.Text
-  lastLoginAt DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id              String     @id @default(uuid())
+  userId          String     @unique
+  user            User       @relation("UserStaffProfile", fields: [userId], references: [id], onDelete: Cascade)
+  staffRole       StaffRole  @default(MANAGER)
+  permissions     String[]   // e.g. ["ORDERS_VIEW", "MENU_MANAGE"]
+  isActive        Boolean    @default(true)
+  invitedById     String?
+  invitedBy       User?      @relation("StaffCreatedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  notes           String?    @db.Text
+  lastLoginAt     DateTime?
+  // Employment & Compensation fields
+  salary          Decimal?   @db.Decimal(12, 2)
+  cnic            String?
+  shift           String?    // MORNING, EVENING, NIGHT
+  department      String?
+  joiningDate     DateTime?
+  assignedBranch  String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   @@map("staff_profiles")
 }

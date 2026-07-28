@@ -166,13 +166,35 @@ export default function AdminOrders() {
 
     const token = localStorage.getItem("naseeb_token");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/owner/orders/${orderId}/status`, {
-        method: 'PUT',
+      // Route to the correct endpoint based on the target status
+      let url: string;
+      let method = 'PUT';
+      let body: object = {};
+
+      if (newStatus === "ACCEPTED") {
+        url = `${process.env.NEXT_PUBLIC_API_URL}/owner/orders/${orderId}/accept`;
+        body = {};
+      } else if (newStatus === "REJECTED") {
+        url = `${process.env.NEXT_PUBLIC_API_URL}/owner/orders/${orderId}/reject`;
+        body = { reason: "Rejected by manager" };
+      } else if (newStatus === "CANCELLED") {
+        url = `${process.env.NEXT_PUBLIC_API_URL}/owner/orders/${orderId}/status`;
+        body = { status: newStatus };
+      } else {
+        // PREPARING, READY, OUT_FOR_DELIVERY, DELIVERED
+        url = `${process.env.NEXT_PUBLIC_API_URL}/owner/orders/${orderId}/status`;
+        body = { status: newStatus, ...(riderId ? { riderId } : {}) };
+      }
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status: newStatus, riderId })
+        body: JSON.stringify(body),
       });
+
       if (!res.ok) {
-        addToast({ type: "error", title: "Update Failed", message: "Could not update order status." });
+        const errJson = await res.json().catch(() => ({}));
+        addToast({ type: "error", title: "Update Failed", message: errJson.error || errJson.message || `HTTP ${res.status}` });
         fetchOrders(); // Revert optimistic update
       }
     } catch {
@@ -180,6 +202,7 @@ export default function AdminOrders() {
       fetchOrders();
     }
   };
+
 
   const handleAssignRider = () => {
     if (!assigningRiderId || !selectedOrder) return;

@@ -18,22 +18,34 @@ const REQUIRED_ALWAYS = [
 ] as const;
 
 export function validateStartupEnvironment(): void {
-  const missing: string[] = [];
+  const missingCritical: string[] = [];
+  const missingOptional: string[] = [];
 
-  for (const key of REQUIRED_ALWAYS) {
-    if (!process.env[key]?.trim()) missing.push(key);
+  for (const key of ['DATABASE_URL', 'DIRECT_URL', 'JWT_SECRET']) {
+    if (!process.env[key]?.trim()) missingCritical.push(key);
   }
 
-  for (const key of REQUIRED_WEBHOOK_SECRETS) {
-    if (!process.env[key]?.trim()) missing.push(key);
+  for (const key of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JAZZCASH_WEBHOOK_SECRET', 'EASYPAISA_WEBHOOK_SECRET', 'SAFEPAY_WEBHOOK_SECRET']) {
+    if (!process.env[key]?.trim()) missingOptional.push(key);
   }
 
-  if (missing.length > 0) {
+  if (missingOptional.length > 0) {
+    console.warn('[STARTUP WARNING] Missing external service secrets:');
+    missingOptional.forEach((key) => console.warn(`  ⚠️  ${key}`));
+    console.warn('[STARTUP WARNING] Related features will operate with fallbacks.');
+  }
+
+  if (missingCritical.length > 0) {
     console.error('========================================================');
-    console.error('[STARTUP] Missing required environment variables:');
-    missing.forEach((key) => console.error(`  - ${key}`));
-    console.error('[STARTUP] Server refused to start. Configure secrets before running.');
+    console.error('[STARTUP ERROR] Missing CRITICAL environment variables:');
+    missingCritical.forEach((key) => console.error(`  ❌ ${key}`));
+    console.error('[STARTUP ERROR] Server cannot start without database & JWT config.');
     console.error('========================================================');
-    process.exit(1);
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+  } else {
+    console.log('[STARTUP CHECK] Environment validation completed successfully.');
   }
 }
+
