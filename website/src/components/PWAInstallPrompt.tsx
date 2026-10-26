@@ -177,7 +177,7 @@ export default function PWAInstallPrompt() {
           </div>
           <div className="min-w-0">
             <h2 id="pwa-install-title" className="text-xs font-bold truncate">
-              {showNativeInstall ? "Install Naseeb Baryani App" : "Add to Home Screen"}
+              {showNativeInstall ? "Install Delivery Platform App" : "Add to Home Screen"}
             </h2>
             <p className="text-[11px] text-[var(--text-secondary)] truncate">
               {showNativeInstall ? "Faster ordering & instant status updates" : "Tap Share -> Add to Home Screen"}

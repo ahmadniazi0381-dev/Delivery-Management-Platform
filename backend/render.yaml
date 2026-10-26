@@ -1,11 +1,11 @@
-# Render Blueprint for Karachi Naseeb Baryani backend
+# Render Blueprint for Delivery Management Platform backend
 # Docs: https://render.com/docs/blueprint-spec
 #
 # After creating the service, set secret env vars in the Render dashboard
 # (DATABASE_URL, DIRECT_URL, JWT_SECRET, CORS_ORIGINS, webhook secrets, etc.)
 services:
   - type: web
-    name: naseeb-baryani-api
+    name: delivery-platform-backend
     runtime: node
     rootDir: backend
     plan: free

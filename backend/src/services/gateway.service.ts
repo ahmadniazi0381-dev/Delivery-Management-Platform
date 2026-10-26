@@ -137,7 +137,7 @@ export function buildGatewayRedirect(session: {
       merchantHashedReq: '',
       autoRedirect: '1',
       paymentMethod: 'MA',
-      emailAddr: session.customer?.email || 'customer@naseeb.local',
+      emailAddr: session.customer?.email || 'noreply@deliveryplatform.local',
       mobileNum: (session.customer?.phone || '').replace(/\D/g, '').slice(-11) || '03000000000',
       checkoutSessionId: session.id,
     };

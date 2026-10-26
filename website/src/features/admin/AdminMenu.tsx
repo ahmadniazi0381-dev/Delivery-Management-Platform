@@ -600,7 +600,7 @@ export default function AdminMenu() {
               type="text" required
               value={discountModal.promoCode}
               onChange={(e) => setDiscountModal(prev => ({ ...prev, promoCode: e.target.value.toUpperCase() }))}
-              placeholder="e.g. NASEEB20"
+              placeholder="e.g. SAVE20"
               style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
             />
           </div>

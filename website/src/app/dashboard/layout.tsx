@@ -1,7 +1,7 @@
 import AdminLayout from "@/features/admin/AdminLayout";
 
 export const metadata = {
-  title: "Dashboard — Karachi Naseeb Baryani",
+  title: "Admin Console — Delivery Platform",
 };
 
 export default function DashboardLayout({

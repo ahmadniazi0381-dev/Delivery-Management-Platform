@@ -8,7 +8,8 @@ import {
   SafeAreaView,
   Platform,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking
 } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -305,17 +306,31 @@ export default function CheckoutScreen({ navigation, route }: any) {
       });
 
       if (res?.success) {
-        let orderId = res.data?.order?.id;
-
         if (res.data?.flow === "ONLINE") {
-          const verifyRes: any = await apiGet(res.data.redirectUrl);
-          if (!verifyRes?.success) {
-            Alert.alert("Payment Failed", verifyRes?.error || "Try again or choose another payment method.");
-            return;
+          const redirectUrl = res.data.gatewayRedirect?.url;
+          clearCart();
+          if (redirectUrl) {
+            try {
+              const canOpen = await Linking.canOpenURL(redirectUrl);
+              if (canOpen) {
+                await Linking.openURL(redirectUrl);
+              }
+            } catch {
+              // Non-blocking redirect attempt
+            }
           }
-          orderId = verifyRes.data?.orderId || verifyRes.data?.order?.id;
+          Alert.alert(
+            "Payment Initiated",
+            "Your online payment session has been created. Once payment is confirmed, your order will be processed.",
+            [
+              { text: "View Orders", onPress: () => navigation.navigate("Main") },
+              { text: "OK", onPress: () => navigation.navigate("Main") }
+            ]
+          );
+          return;
         }
 
+        const orderId = res.data?.order?.id;
         if (!orderId) {
           Alert.alert("Error", "Order id was not returned.");
           return;

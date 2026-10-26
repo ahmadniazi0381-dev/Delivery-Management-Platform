@@ -30,7 +30,8 @@ export async function restoreCartFromSession(userId: string, itemsPayload: Recov
  * REQ-ORDER-RECOVERY-001 — recover checkout after disconnect/expiry.
  */
 export async function getCheckoutRecovery(userId: string) {
-  await expireCheckoutSessions();
+  try {
+    await expireCheckoutSessions();
 
   const recentWindow = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -125,8 +126,15 @@ export async function getCheckoutRecovery(userId: string) {
     };
   }
 
-  return {
-    state: 'NONE' as const,
-    message: 'No recoverable checkout session found.',
-  };
+    return {
+      state: 'NONE' as const,
+      message: 'No recoverable checkout session found.',
+    };
+  } catch (err: any) {
+    console.warn('[ORDER RECOVERY] Database unavailable or query error:', err?.message || err);
+    return {
+      state: 'NONE' as const,
+      message: 'No recoverable checkout session found.',
+    };
+  }
 }

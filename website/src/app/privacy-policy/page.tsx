@@ -1,4 +1,10 @@
 import React from "react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "Privacy policy for Delivery Platform. Learn how we collect, use, and protect your personal data, location coordinates, and order history.",
+};
 
 export default function PrivacyPolicyPage() {
   return (

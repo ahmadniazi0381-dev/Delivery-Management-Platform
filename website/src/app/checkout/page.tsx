@@ -419,13 +419,13 @@ export default function CheckoutPage() {
 
         <h1>Review and place your order</h1>
 
-        {error && <div className="fp-alert error">{error}</div>}
-        {success && <div className="fp-alert success">{success}</div>}
+        {error && <div className="fp-alert error" style={{ background: "rgba(185,28,28,0.06)", border: "1px solid rgba(185,28,28,0.2)", borderRadius: "var(--radius-md)", padding: "12px 16px", color: "#991B1B", minHeight: "44px", marginBottom: "16px" }}>{error}</div>}
+        {success && <div className="fp-alert success" style={{ background: "#ECFDF5", border: "1px solid #15803D20", borderRadius: "var(--radius-md)", padding: "12px 16px", color: "#15803D", marginBottom: "16px" }}>{success}</div>}
 
         {(!user?.phone || !(user.phoneVerified || user.isPhoneVerified)) && (
-          <div className="fp-alert error" role="alert">
+          <div className="fp-alert error" role="alert" style={{ background: "rgba(185,28,28,0.06)", border: "1px solid rgba(185,28,28,0.2)", borderRadius: "var(--radius-md)", padding: "12px 16px", color: "#991B1B", minHeight: "44px", marginBottom: "16px" }}>
             Add and verify your phone number before placing an order.{" "}
-            <Link href="/profile" style={{ textDecoration: "underline", fontWeight: 700 }}>
+            <Link href="/profile" style={{ textDecoration: "underline", fontWeight: 700, color: "#991B1B" }}>
               Go to Profile
             </Link>
           </div>
@@ -435,9 +435,9 @@ export default function CheckoutPage() {
           <section className="fp-main">
             {/* Delivery Address */}
             <div className="fp-card">
-              <div className="fp-card-title">
-                <h2>Delivery address</h2>
-                <button onClick={() => setAddressModalOpen(true)}>
+              <div className="fp-card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                <h2 style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--text-primary)", margin: 0 }}>Delivery address</h2>
+                <button onClick={() => setAddressModalOpen(true)} style={{ background: "transparent", color: "#EA580C", border: "1px solid #EA580C", borderRadius: "var(--radius-md)", padding: "4px 12px", fontWeight: 600, cursor: "pointer", transition: "all var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1)" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#EA580C"; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#EA580C"; }}>
                   {selectedAddress ? "Change" : "Add"}
                 </button>
               </div>
@@ -520,12 +520,13 @@ export default function CheckoutPage() {
                         borderRadius: "8px",
                         border:
                           selectedAddressId === address.id
-                            ? "2px solid var(--saffron)"
+                            ? "2px solid #EA580C"
                             : "1px solid var(--border-color)",
                         backgroundColor:
-                          selectedAddressId === address.id ? "var(--surface)" : "var(--bg-card)",
+                          selectedAddressId === address.id ? "rgba(234,88,12,0.04)" : "var(--bg-card)",
                         color:
-                          selectedAddressId === address.id ? "var(--saffron-dark)" : "var(--text-primary)",
+                          selectedAddressId === address.id ? "#C2410C" : "var(--text-primary)",
+                        transition: "all var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1)",
                         fontSize: "14px",
                         cursor: "pointer",
                       }}
@@ -547,13 +548,16 @@ export default function CheckoutPage() {
                       padding: "8px 12px",
                       marginTop: "8px",
                       borderRadius: "8px",
-                      border: "1px dashed var(--saffron)",
-                      backgroundColor: "var(--bg-card)",
-                      color: "var(--saffron-dark)",
+                      border: "1px dashed #EA580C",
+                      backgroundColor: "transparent",
+                      color: "#EA580C",
                       cursor: "pointer",
                       fontSize: "14px",
-                      fontWeight: 500,
+                      fontWeight: 600,
+                      transition: "all var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1)"
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(234,88,12,0.04)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                   >
                     + Add new address
                   </button>
@@ -581,47 +585,49 @@ export default function CheckoutPage() {
 
             {/* Delivery Type — REQ-DELIVERY-001 / REQ-DELIVERY-002 */}
             {isEligible === true && (
-              <div className="fp-card">
-                <h2>Delivery type</h2>
+              <div className="fp-card" style={{ marginTop: "24px" }}>
+                <h2 style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--text-primary)", marginBottom: "16px" }}>Delivery type</h2>
 
                 {showDeliveryRadios ? (
-                  <div role="radiogroup" aria-label="Delivery type">
+                  <div role="radiogroup" aria-label="Delivery type" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                     {deliveryOptions.standard.enabled && (
-                      <label className={`fp-option${deliveryType === "STANDARD" ? " selected" : ""}`}>
+                      <label className={`fp-option${deliveryType === "STANDARD" ? " selected" : ""}`} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px", borderRadius: "var(--radius-md)", border: deliveryType === "STANDARD" ? "2px solid #EA580C" : "1px solid var(--border-color)", backgroundColor: deliveryType === "STANDARD" ? "rgba(234,88,12,0.04)" : "var(--bg-card)", cursor: "pointer", transition: "all var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: deliveryType === "STANDARD" ? "0 0 0 4px rgba(234,88,12,0.1)" : "none" }}>
                         <input
                           type="radio"
                           name="delivery-type"
                           value="STANDARD"
                           checked={deliveryType === "STANDARD"}
                           onChange={() => setDeliveryType("STANDARD")}
+                          style={{ accentColor: "#EA580C", width: "18px", height: "18px" }}
                         />
-                        <div>
-                          <strong>Standard Delivery</strong>
-                          <span style={{ display: "block", fontSize: "13px", color: "var(--text-secondary)" }}>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ color: "var(--text-primary)" }}>Standard Delivery</strong>
+                          <span style={{ display: "block", fontSize: "13px", color: "var(--text-secondary)", marginTop: "2px" }}>
                             {deliveryOptions.standard.eta ?? "5-20 Minutes"}
                           </span>
                         </div>
-                        <em style={{ marginLeft: "auto", color: "#059669", fontWeight: 600 }}>
+                        <em style={{ marginLeft: "auto", color: "#15803D", fontWeight: 700, fontStyle: "normal" }}>
                           {deliveryOptions.standard.fee === 0 ? "Free" : `+Rs. ${deliveryOptions.standard.fee}`}
                         </em>
                       </label>
                     )}
                     {deliveryOptions.priority.enabled && (
-                      <label className={`fp-option${deliveryType === "PRIORITY" ? " selected" : ""}`}>
+                      <label className={`fp-option${deliveryType === "PRIORITY" ? " selected" : ""}`} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px", borderRadius: "var(--radius-md)", border: deliveryType === "PRIORITY" ? "2px solid #EA580C" : "1px solid var(--border-color)", backgroundColor: deliveryType === "PRIORITY" ? "rgba(234,88,12,0.04)" : "var(--bg-card)", cursor: "pointer", transition: "all var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: deliveryType === "PRIORITY" ? "0 0 0 4px rgba(234,88,12,0.1)" : "none" }}>
                         <input
                           type="radio"
                           name="delivery-type"
                           value="PRIORITY"
                           checked={deliveryType === "PRIORITY"}
                           onChange={() => setDeliveryType("PRIORITY")}
+                          style={{ accentColor: "#EA580C", width: "18px", height: "18px" }}
                         />
-                        <div>
-                          <strong>Priority Delivery</strong>
-                          <span style={{ display: "block", fontSize: "13px", color: "var(--text-secondary)" }}>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ color: "var(--text-primary)" }}>Priority Delivery</strong>
+                          <span style={{ display: "block", fontSize: "13px", color: "var(--text-secondary)", marginTop: "2px" }}>
                             {deliveryOptions.priority.eta ?? "5-20 Minutes"}
                           </span>
                         </div>
-                        <em style={{ marginLeft: "auto", color: "var(--saffron-dark)", fontWeight: 600 }}>
+                        <em style={{ marginLeft: "auto", color: "#C2410C", fontWeight: 700, fontStyle: "normal" }}>
                           +Rs. {deliveryOptions.priority.fee ?? 125}
                         </em>
                       </label>
@@ -642,8 +648,8 @@ export default function CheckoutPage() {
             )}
 
             {/* Recipient (optional) */}
-            <div className="fp-card">
-              <h2>Recipient details <span style={{ color: "var(--text-muted)", fontSize: "14px", fontWeight: 400 }}>(optional)</span></h2>
+            <div className="fp-card" style={{ marginTop: "24px" }}>
+              <h2 style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--text-primary)", marginBottom: "4px" }}>Recipient details <span style={{ color: "var(--text-muted)", fontSize: "14px", fontWeight: 400 }}>(optional)</span></h2>
               <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "12px" }}>
                 Leave blank if you are ordering for yourself.
               </p>
@@ -675,16 +681,16 @@ export default function CheckoutPage() {
             </div>
 
             {/* Payment — only shows enabled methods (REQ-PAYMENT-003) */}
-            <div className="fp-card">
-              <h2 id="payment-methods-heading">Payment</h2>
-              <div role="radiogroup" aria-labelledby="payment-methods-heading">
+            <div className="fp-card" style={{ marginTop: "24px" }}>
+              <h2 id="payment-methods-heading" style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--text-primary)", marginBottom: "16px" }}>Payment Method</h2>
+              <div role="radiogroup" aria-labelledby="payment-methods-heading" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {([
-                  ["COD", "Cash on Delivery"],
-                  ["CARD", "Credit or Debit Card"],
-                  ["JAZZCASH", "JazzCash"],
-                  ["EASYPAISA", "easypaisa"],
-                ] as [PaymentMethod, string][]).filter(([key]) => enabledPaymentMethods.includes(key)).map(([key, payLabel]) => (
-                  <label className={`fp-payment ${paymentMethod === key ? "selected" : ""}`} key={key}>
+                  ["COD", "Cash on Delivery", "💵"],
+                  ["CARD", "Credit or Debit Card", "💳"],
+                  ["JAZZCASH", "JazzCash", "📱"],
+                  ["EASYPAISA", "easypaisa", "📱"],
+                ] as [PaymentMethod, string, string][]).filter(([key]) => enabledPaymentMethods.includes(key)).map(([key, payLabel, icon]) => (
+                  <label className={`fp-payment ${paymentMethod === key ? "selected" : ""}`} key={key} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px", borderRadius: "var(--radius-md)", border: paymentMethod === key ? "2px solid #EA580C" : "1px solid var(--border-color)", backgroundColor: paymentMethod === key ? "rgba(234,88,12,0.04)" : "var(--bg-card)", cursor: "pointer", transition: "all var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: paymentMethod === key ? "0 0 0 4px rgba(234,88,12,0.1)" : "none" }}>
                     <input
                       type="radio"
                       name="payment-method"
@@ -692,18 +698,20 @@ export default function CheckoutPage() {
                       checked={paymentMethod === key}
                       onChange={() => setPaymentMethod(key)}
                       aria-label={payLabel}
+                      style={{ accentColor: "#EA580C", width: "18px", height: "18px" }}
                     />
-                    <span>{payLabel}</span>
+                    <span className="text-2xl" style={{ fontSize: "1.5rem" }}>{icon}</span>
+                    <span style={{ fontWeight: paymentMethod === key ? 700 : 500, color: paymentMethod === key ? "#C2410C" : "var(--text-primary)" }}>{payLabel}</span>
                   </label>
                 ))}
               </div>
             </div>
           </section>
 
-          <aside className="fp-summary">
-            <div className="fp-card">
-              <h2>Your order from</h2>
-              <p>Karachi Naseeb Biryani &amp; Murgh Pulao - UCP Branch</p>
+          <aside className="fp-summary" style={{ position: "sticky", top: "24px" }}>
+            <div className="fp-card" style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-md)", padding: "24px" }}>
+              <h2 style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--text-primary)", marginBottom: "4px" }}>Your order from</h2>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "20px" }}>Delivery Platform</p>
               <div className="fp-items">
                 {cart.items.map((item) => (
                   <div className="fp-item" key={String(item.menuItem.id)}>
@@ -752,7 +760,28 @@ export default function CheckoutPage() {
                 className="fp-place"
                 disabled={!canPlaceOrder || isSubmitting}
                 onClick={handlePlaceOrder}
+                style={{
+                  width: "100%",
+                  marginTop: "24px",
+                  padding: "16px",
+                  background: !canPlaceOrder ? "var(--bg-secondary)" : "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+                  color: !canPlaceOrder ? "var(--text-muted)" : "#fff",
+                  border: "none",
+                  borderRadius: "var(--radius-md)",
+                  fontWeight: 700,
+                  fontSize: "1.1rem",
+                  cursor: !canPlaceOrder || isSubmitting ? "not-allowed" : "pointer",
+                  boxShadow: !canPlaceOrder ? "none" : "0 4px 20px rgba(194,65,12,0.35)",
+                  transition: "all var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: "8px"
+                }}
+                onMouseEnter={(e) => { if (canPlaceOrder && !isSubmitting) e.currentTarget.style.transform = "scale(1.02)"; }}
+                onMouseLeave={(e) => { if (canPlaceOrder && !isSubmitting) e.currentTarget.style.transform = "scale(1)"; }}
               >
+                {isSubmitting ? <span style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }} /> : null}
                 {isSubmitting ? "Placing order…" : `Place order · Rs. ${total.toFixed(0)}`}
               </button>
             </div>

@@ -17,8 +17,9 @@ function readEnvValue(key) {
 const googleMapsApiKey = readEnvValue("EXPO_PUBLIC_GOOGLE_MAPS_KEY");
 
 module.exports = {
-  name: "Karachi Naseeb Baryani",
-  slug: "karachi-naseeb-baryani",
+  name: "Food Delivery Platform",
+  slug: "food-delivery",
+  shortName: "Food Delivery",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/icon.png",
@@ -33,9 +34,9 @@ module.exports = {
     supportsTablet: true,
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
-        "We need your location to calculate delivery distance from our UCP branch.",
+        "We need your location to calculate delivery distance.",
       NSLocationAlwaysAndWhenInUseUsageDescription:
-        "Allow Naseeb Baryani to use your location for delivery distance calculation.",
+        "Allow Food Delivery Platform to use your location for delivery distance calculation.",
     },
     ...(googleMapsApiKey
       ? {
@@ -48,7 +49,7 @@ module.exports = {
       : {}),
   },
   android: {
-    package: "com.naseebbaryani.app",
+    package: "com.fooddelivery.app",
     versionCode: 1,
     adaptiveIcon: {
       foregroundImage: "./assets/android-icon-foreground.png",

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
@@ -7,12 +7,12 @@ import { Order, OrderStatus } from "@/types";
 import { io } from "socket.io-client";
 
 const STATUS_STEPS: { key: OrderStatus; label: string; icon: string; description: string }[] = [
-  { key: "pending",          label: "Order Placed",     icon: "âœ…", description: "Your order has been received." },
-  { key: "confirmed",        label: "Confirmed",         icon: "ðŸ‘", description: "The restaurant confirmed your order." },
-  { key: "preparing",        label: "Being Prepared",   icon: "ðŸ‘¨â€ðŸ³", description: "Our chefs are cooking your biryani fresh." },
-  { key: "ready",            label: "Ready",             icon: "ðŸ“¦", description: "Order packed and ready for delivery." },
-  { key: "out_for_delivery", label: "On the Way",        icon: "ðŸš´", description: "Rider is heading to your doorstep." },
-  { key: "delivered",        label: "Delivered",         icon: "ðŸŽ‰", description: "Enjoy your meal! ðŸ˜Š" },
+  { key: "pending",          label: "Order Placed",     icon: "✅", description: "Your order has been received." },
+  { key: "confirmed",        label: "Confirmed",        icon: "👍", description: "The restaurant confirmed your order." },
+  { key: "preparing",        label: "Being Prepared",   icon: "👨‍🍳", description: "Our chefs are cooking your biryani fresh." },
+  { key: "ready",            label: "Ready",            icon: "📦", description: "Order packed and ready for delivery." },
+  { key: "out_for_delivery", label: "On the Way",       icon: "🚴", description: "Rider is heading to your doorstep." },
+  { key: "delivered",        label: "Delivered",        icon: "🎉", description: "Enjoy your meal! 😊" },
 ];
 
 const MOCK_ORDER: Order = {
@@ -31,8 +31,8 @@ const MOCK_ORDER: Order = {
     longitude: 74.2690,
   },
   items: [
-    { menuItem: { id: 1, name: "Karachi Special Biryani", description: "", price: 380, categoryId: 1, isAvailable: true }, quantity: 1 },
-    { menuItem: { id: 3, name: "Mutton Pulao",            description: "", price: 420, categoryId: 2, isAvailable: true }, quantity: 1 },
+    { menuItem: { id: 1, name: "Special Meal 1", description: "", price: 380, categoryId: 1, isAvailable: true }, quantity: 1 },
+    { menuItem: { id: 3, name: "Special Meal 2",            description: "", price: 420, categoryId: 2, isAvailable: true }, quantity: 1 },
   ],
 };
 
@@ -193,7 +193,7 @@ function TrackContent() {
         >
           <div style={{ display: "flex", gap: "12px" }}>
             <div className="input-group" style={{ flex: 1 }}>
-              <span className="input-icon">ðŸ”¢</span>
+              <span className="input-icon">🔢</span>
               <input
                 type="text"
                 className="input"
@@ -285,54 +285,75 @@ function TrackContent() {
             </div>
 
             {/* Progress Tracker */}
-            <div className="card" style={{ padding: "28px 24px" }}>
-              <h3
-                style={{
-                  fontFamily: "Poppins, sans-serif",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  color: "var(--text-primary)",
-                  marginBottom: "28px",
-                }}
-              >
-                Order Progress
-              </h3>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <style dangerouslySetInnerHTML={{__html: `
+              @keyframes pulseRing {
+                0% { box-shadow: 0 0 0 0 rgba(194,65,12,0.4); }
+                100% { box-shadow: 0 0 0 8px rgba(194,65,12,0); }
+              }
+            `}} />
+            <div className="card" style={{ padding: "28px 24px", position: "relative" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
+                <h3
+                  style={{
+                    fontFamily: "Poppins, sans-serif",
+                    fontWeight: 700,
+                    fontSize: "1rem",
+                    color: "var(--text-primary)",
+                    margin: 0,
+                  }}
+                >
+                  Order Progress
+                </h3>
+                {loading && <span style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>↻ Refreshing...</span>}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", position: "relative" }}>
+                {/* Connecting Lines */}
+                <div style={{ position: "absolute", top: "18px", left: "10%", right: "10%", height: "2px", background: "var(--border-color)", zIndex: 0 }}></div>
+                <div style={{ position: "absolute", top: "18px", left: "10%", width: `${Math.max(0, (activeStepIndex / (STATUS_STEPS.length - 2)) * 80)}%`, height: "2px", background: "#EA580C", zIndex: 0, transition: "width var(--transition-slow)" }}></div>
+
                 {STATUS_STEPS.filter(s => s.key !== "cancelled").map((step, i) => {
-                  const isDone   = i <= activeStepIndex;
+                  const isDone   = i < activeStepIndex;
                   const isActive = i === activeStepIndex;
                   return (
                     <div
                       key={step.key}
+                      className="progress-step"
                       style={{
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
-                        gap: "6px",
+                        gap: "8px",
                         position: "relative",
+                        zIndex: 1,
                         flex: 1
                       }}
                     >
-                      <div style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "50%",
-                        background: isActive ? "var(--saffron)" : isDone ? "var(--saffron)" : "var(--border-color)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "1.1rem",
-                        boxShadow: isActive ? "var(--shadow-saffron)" : "none",
-                        transition: "all var(--transition-base)"
-                      }}>
-                        {isDone ? step.icon : "â—‹"}
+                      <div
+                        className="progress-dot"
+                        style={{
+                          width: "36px",
+                          height: "36px",
+                          borderRadius: "50%",
+                          background: isDone ? "#EA580C" : "var(--bg-card)",
+                          border: `2px solid ${isDone || isActive ? "#C2410C" : "var(--border-color)"}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "1.1rem",
+                          color: isDone ? "#FFF9F3" : "inherit",
+                          boxShadow: isActive ? "0 0 0 4px rgba(194,65,12,0.2)" : "none",
+                          animation: isActive ? "pulseRing 2s cubic-bezier(0.22, 1, 0.36, 1) infinite" : "none",
+                          transition: "all var(--transition-base)"
+                        }}
+                      >
+                        {isDone ? "✓" : isActive ? step.icon : "○"}
                       </div>
                       <div
                         style={{
                           fontSize: "0.72rem",
                           textAlign: "center",
                           color: isActive
-                            ? "var(--saffron)"
+                            ? "#C2410C"
                             : isDone
                             ? "var(--text-secondary)"
                             : "var(--text-muted)",
@@ -349,7 +370,7 @@ function TrackContent() {
             </div>
 
             {/* Order Items */}
-            <div className="card" style={{ padding: "24px" }}>
+            <div className="card" style={{ padding: "24px", border: "1px solid rgba(194,65,12,0.15)" }}>
               <h3
                 style={{
                   fontFamily: "Poppins, sans-serif",
@@ -368,12 +389,15 @@ function TrackContent() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    padding: "10px 0",
-                    borderBottom: i < order.items.length - 1 ? "1px solid var(--border-subtle)" : "none",
+                    padding: "12px 16px",
+                    border: "1px solid rgba(194,65,12,0.1)",
+                    borderRadius: "var(--radius-md)",
+                    marginBottom: i < order.items.length - 1 ? "12px" : "0",
+                    background: "rgba(255,249,243,0.3)"
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ fontSize: "1.5rem" }}>ðŸ›</span>
+                    <span style={{ fontSize: "1.5rem" }}>🍛</span>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary)" }}>
                         {ci.menuItem.name}
@@ -387,7 +411,7 @@ function TrackContent() {
                     style={{
                       fontFamily: "Poppins, sans-serif",
                       fontWeight: 700,
-                      color: "var(--maroon)",
+                      color: "#C2410C",
                     }}
                   >
                     Rs. {ci.menuItem.price * ci.quantity}
@@ -400,13 +424,13 @@ function TrackContent() {
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  marginTop: "14px",
-                  paddingTop: "14px",
-                  borderTop: "1px solid var(--border-color)",
+                  marginTop: "16px",
+                  paddingTop: "16px",
+                  borderTop: "1px solid rgba(194,65,12,0.15)",
                   fontFamily: "Poppins, sans-serif",
                   fontWeight: 800,
                   fontSize: "1.1rem",
-                  color: "var(--maroon)",
+                  color: "#9A3412",
                 }}
               >
                 <span>Total Amount</span>
@@ -438,7 +462,7 @@ function TrackContent() {
             {/* Actions */}
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               <Link href="/menu" className="btn btn-primary" style={{ textDecoration: "none" }}>
-                ðŸ›’ Order Again
+                🛒 Order Again
               </Link>
               <a
                 href="tel:+923054311118"
@@ -452,10 +476,10 @@ function TrackContent() {
                   fontSize: "0.9rem"
                 }}
               >
-                📞 Call Muhammad Abdullah
+                📞 Call Support
               </a>
               <a
-                href="https://wa.me/923054311118?text=Hello%20Muhammad%20Abdullah%2C%20I%20am%20inquiring%20about%20my%20order."
+                href="https://wa.me/923054311118?text=Hello%20Support%2C%20I%20am%20inquiring%20about%20my%20order."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-ghost"
@@ -478,7 +502,7 @@ function TrackContent() {
         {/* Empty State */}
         {!order && !loading && (
           <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-muted)" }}>
-            <div style={{ fontSize: "4rem", marginBottom: "16px" }}>ðŸš´</div>
+            <div style={{ fontSize: "4rem", marginBottom: "16px" }}>🚴</div>
             <p>Enter your order ID above to track your delivery.</p>
           </div>
         )}
@@ -493,7 +517,7 @@ export default function TrackPage() {
       fallback={
         <div style={{ background: "var(--bg-secondary)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "3rem", marginBottom: "16px" }}>ðŸš´</div>
+            <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🚴</div>
             <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Loading tracker...</p>
           </div>
         </div>

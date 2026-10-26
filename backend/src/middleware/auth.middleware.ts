@@ -82,6 +82,27 @@ export function requireRole(...roles: Array<'CUSTOMER' | 'ADMIN' | 'RIDER'>) {
 }
 
 /**
+ * Authenticate using Bearer header OR a `?token=` query parameter.
+ * Only for browser-navigated pages (e.g. payment redirect) where the
+ * browser cannot send an Authorization header on a GET navigation.
+ */
+export function authenticateWithQueryToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  // Prefer Bearer header, fall back to query param for browser navigation
+  if (req.headers.authorization?.startsWith('Bearer ')) {
+    return authenticate(req, res, next);
+  }
+
+  const queryToken = typeof req.query.token === 'string' ? req.query.token.trim() : '';
+  if (!queryToken) {
+    return res.status(401).json({ error: 'Authentication token required.' });
+  }
+
+  // Temporarily set the header so the standard authenticate() path can verify it
+  req.headers.authorization = `Bearer ${queryToken}`;
+  return authenticate(req, res, next);
+}
+
+/**
  * Middleware generator to enforce granular RBAC permission checks.
  * Owners automatically pass all permission checks.
  * Falls back to allow if the user has no StaffProfile (legacy admin token).
@@ -111,5 +132,26 @@ export function requirePermission(permission: string) {
 
     next();
   };
+}
+
+/**
+ * Authenticate using Bearer header OR a `?token=` query parameter.
+ * Only for browser-navigated pages (e.g. payment redirect) where the
+ * browser cannot send an Authorization header on a GET navigation.
+ */
+export function authenticateWithQueryToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  // Prefer Bearer header, fall back to query param for browser navigation
+  if (req.headers.authorization?.startsWith('Bearer ')) {
+    return authenticate(req, res, next);
+  }
+
+  const queryToken = typeof req.query.token === 'string' ? req.query.token.trim() : '';
+  if (!queryToken) {
+    return res.status(401).json({ error: 'Authentication token required.' });
+  }
+
+  // Temporarily set the header so the standard authenticate() path can verify it
+  req.headers.authorization = `Bearer ${queryToken}`;
+  return authenticate(req, res, next);
 }
 

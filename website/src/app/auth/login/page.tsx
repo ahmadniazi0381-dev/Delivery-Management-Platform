@@ -189,7 +189,7 @@ function LoginForm() {
               autoFocus
             />
           </div>
-          <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: "100%" }}>
+          <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: "100%", background: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)", border: "none", color: "white" }}>
             {isLoading ? "Verifying…" : "Verify & Continue"}
           </button>
           <button
@@ -237,7 +237,7 @@ function LoginForm() {
               {showPass ? "🙈" : "👁️"}
             </button>
           </div>
-          <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: "100%", marginTop: "4px" }}>
+          <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: "100%", marginTop: "4px", background: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)", border: "none", color: "white" }}>
             {isLoading ? "Creating Account…" : "Create Account →"}
           </button>
         </form>
@@ -281,7 +281,7 @@ function LoginForm() {
               {showPass ? "🙈" : "👁️"}
             </button>
           </div>
-          <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: "100%", marginTop: "4px" }} id="login-submit">
+          <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: "100%", marginTop: "4px", background: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)", border: "none", color: "white" }} id="login-submit">
             {isLoading ? "Logging in…" : "Login →"}
           </button>
         </form>
@@ -356,7 +356,7 @@ function LoginForm() {
         style={{
           flex: 1,
           maxWidth: "480px",
-          background: "var(--grad-hero)",
+          background: "linear-gradient(135deg, #0C0705 0%, #1A0E08 100%)",
           borderRadius: "var(--radius-xl)",
           display: "flex",
           flexDirection: "column",
@@ -381,13 +381,12 @@ function LoginForm() {
             marginBottom: "12px",
           }}
         >
-          Karachi&apos;s Taste,
+          Good Food.
           <br />
-          Lahore&apos;s Heart
+          Delivered Fast.
         </h2>
-        <p style={{ color: "rgba(254,243,199,0.75)", fontSize: "0.95rem", lineHeight: 1.7 }}>
-          Join thousands of satisfied customers and enjoy authentic Karachi
-          biryani delivered fresh to your door.
+        <p style={{ color: "rgba(245, 158, 11, 0.9)", fontSize: "0.95rem", lineHeight: 1.7 }}>
+          Join thousands of satisfied customers and enjoy fresh, hot meals delivered directly to your door.
         </p>
 
         {/* Feature list */}
@@ -480,16 +479,18 @@ function LoginForm() {
         )}
 
         {/* Alerts */}
-        {error && (
-          <div className="toast toast-error" style={{ marginBottom: "16px", position: "static", minWidth: "unset", width: "100%" }}>
-            ⚠️ {error}
-          </div>
-        )}
-        {success && (
-          <div className="toast toast-success" style={{ marginBottom: "16px", position: "static", minWidth: "unset", width: "100%" }}>
-            ✅ {success}
-          </div>
-        )}
+        <div style={{ minHeight: "50px", marginBottom: "16px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          {error && (
+            <div className="toast toast-error animate-fade-in" style={{ position: "static", minWidth: "unset", width: "100%", margin: 0 }}>
+              ⚠️ {error}
+            </div>
+          )}
+          {success && (
+            <div className="toast toast-success animate-fade-in" style={{ position: "static", minWidth: "unset", width: "100%", margin: 0 }}>
+              ✅ {success}
+            </div>
+          )}
+        </div>
 
         {/* Form */}
         {renderForm()}
@@ -575,6 +576,22 @@ function LoginForm() {
         @media (max-width: 768px) {
           .auth-panel-left { display: none !important; }
         }
+        .input {
+          background-color: var(--bg-input, var(--bg-secondary));
+        }
+        .input:focus {
+          outline: 2px solid var(--saffron);
+          outline-offset: -1px;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.95) translateY(10px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-scale-in {
+          animation: scaleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
       `}</style>
     </div>
   );
@@ -586,7 +603,7 @@ export default function LoginPage() {
       <div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", backgroundColor: "var(--bg-secondary)" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
           <div style={{ fontSize: "3rem" }} className="animate-pulse">🍛</div>
-          <div style={{ color: "var(--text-muted)", fontSize: "0.9rem", fontWeight: 500 }}>Loading Naseeb Baryani…</div>
+          <div style={{ color: "var(--text-muted)", fontSize: "0.9rem", fontWeight: 500 }}>Loading Delivery Platform…</div>
         </div>
       </div>
     }>

@@ -111,8 +111,8 @@ export default function HomeScreen({ navigation }: any) {
         <View style={[styles.deliveryInfo, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
           <Ionicons name="location-outline" size={20} color={colors.primary} />
           <View style={{ marginLeft: 8, flex: 1 }}>
-            <Text style={[styles.deliveryTitle, { color: colors.textPrimary }]}>UCP Branch Delivery Zone</Text>
-            <Text style={[styles.deliverySubtitle, { color: colors.textSecondary }]}>We deliver within 2.2 km Opp. UCP Campus</Text>
+            <Text style={[styles.deliveryTitle, { color: colors.textPrimary }]}>Delivery Zone</Text>
+            <Text style={[styles.deliverySubtitle, { color: colors.textSecondary }]}>We deliver within 2.2 km</Text>
           </View>
         </View>
 
@@ -243,7 +243,7 @@ export default function HomeScreen({ navigation }: any) {
         <View style={[styles.statusCard, { backgroundColor: colors.cardBg, shadowColor: colors.shadow }]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <View>
-              <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>Karachi Naseeb Baryani UCP</Text>
+              <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>Food Delivery Platform</Text>
               <Text style={[styles.statusTime, { color: colors.textSecondary }]}>Opening hours: 11:00 AM - 11:00 PM</Text>
             </View>
             <View style={styles.statusIndicator}>

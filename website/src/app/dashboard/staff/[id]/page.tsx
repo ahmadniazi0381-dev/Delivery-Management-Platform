@@ -246,6 +246,14 @@ export default function StaffProfilePage() {
   const pendingOrders = orders.filter((o: any) => ['PENDING', 'ACCEPTED', 'PREPARING'].includes(o.status)).length;
   const completedOrders = orders.filter((o: any) => o.status === 'DELIVERED').length;
 
+  const now = Date.now();
+  const monthsServed = member.joiningDate
+    ? Math.max(0, Math.floor((now - new Date(member.joiningDate).getTime()) / (1000 * 60 * 60 * 24 * 30)))
+    : "—";
+  const loginCount30d = loginRecords.filter(
+    (l: any) => new Date(l.loginTime).getTime() > now - 30 * 24 * 60 * 60 * 1000
+  ).length;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <style>{`
@@ -750,8 +758,8 @@ export default function StaffProfilePage() {
               <MetricCard label="Completed" value={completedOrders} color="#10b981" icon={<CheckCircle size={20} />} />
               <MetricCard label="Pending" value={pendingOrders} color="#d97706" icon={<Clock size={20} />} />
               <MetricCard label="Attendance Rate" value={`${attendanceRate}%`} color={attendanceRate >= 90 ? "#10b981" : attendanceRate >= 70 ? "#d97706" : "#ef4444"} icon={<Target size={20} />} />
-              <MetricCard label="Months Served" value={member.joiningDate ? Math.max(0, Math.floor((Date.now() - new Date(member.joiningDate).getTime()) / (1000 * 60 * 60 * 24 * 30))) : "—"} color="#3b82f6" icon={<Calendar size={20} />} />
-              <MetricCard label="Login Count (30d)" value={loginRecords.filter((l: any) => new Date(l.loginTime) > new Date(Date.now() - 30*24*60*60*1000)).length} color="#8b5cf6" icon={<LogIn size={20} />} />
+              <MetricCard label="Months Served" value={monthsServed} color="#3b82f6" icon={<Calendar size={20} />} />
+              <MetricCard label="Login Count (30d)" value={loginCount30d} color="#8b5cf6" icon={<LogIn size={20} />} />
             </div>
           </SectionCard>
 

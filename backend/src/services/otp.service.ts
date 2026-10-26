@@ -1,21 +1,50 @@
 import twilio from 'twilio';
+import crypto from 'crypto';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+const hasPlaceholderValue = (value?: string): boolean => {
+  if (!value) return true;
+  const trimmed = value.trim();
+  return [
+    /REPLACE_WITH_/i,
+    /YOUR_TWILIO_/i,
+    /YOUR_[A-Z_]+/i,
+    /CHANGE_ME/i,
+    /PLACEHOLDER/i,
+    /example/i,
+    /^\s*$/,
+  ].some((pattern) => pattern.test(trimmed));
+};
 
-// Initialize Twilio client only if credentials are set and not placeholders
-const isTwilioConfigured =
-  accountSid &&
-  accountSid !== 'AC_YOUR_TWILIO_ACCOUNT_SID' &&
-  authToken &&
-  authToken !== 'YOUR_TWILIO_AUTH_TOKEN' &&
-  twilioPhone;
+export function isDevelopmentOtpModeEnabled(): boolean {
+  const value = process.env.OTP_DEV_MODE?.trim().toLowerCase();
+  return value === 'true' || value === '1' || value === 'yes';
+}
+
+export function getTwilioConfig(): { accountSid?: string; authToken?: string; phoneNumber?: string; isConfigured: boolean } {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
+  const authToken = process.env.TWILIO_AUTH_TOKEN?.trim();
+  const twilioPhone = process.env.TWILIO_PHONE_NUMBER?.trim();
+
+  const isConfigured =
+    !!accountSid &&
+    !!authToken &&
+    !!twilioPhone &&
+    !hasPlaceholderValue(accountSid) &&
+    !hasPlaceholderValue(authToken) &&
+    !hasPlaceholderValue(twilioPhone) &&
+    accountSid.startsWith('AC') &&
+    accountSid.length > 10 &&
+    authToken.length > 8;
+
+  return { accountSid, authToken, phoneNumber: twilioPhone, isConfigured };
+}
+
+const { accountSid, authToken, phoneNumber, isConfigured } = getTwilioConfig();
 
 let client: twilio.Twilio | null = null;
-if (isTwilioConfigured) {
+if (isConfigured) {
   try {
-    client = twilio(accountSid, authToken);
+    client = twilio(accountSid!, authToken!);
   } catch (err) {
     console.error('Failed to initialize Twilio client:', err);
   }
@@ -29,36 +58,38 @@ if (isTwilioConfigured) {
  * @param otpCode 6-digit verification code
  */
 export async function sendOtpSms(phone: string, otpCode: string): Promise<boolean> {
-  const messageText = `Your Naseeb Baryani UCP verification code is: ${otpCode}. Valid for 5 minutes.`;
+  const messageText = `Your verification code is: ${otpCode}. Valid for 5 minutes.`;
 
-  if (client && twilioPhone) {
+  if (isDevelopmentOtpModeEnabled()) {
+    console.log('=====================================================');
+    console.log(`[DEV OTP MODE] To: ${phone}`);
+    console.log(`[DEV OTP MODE] Message: ${messageText}`);
+    console.log('=====================================================');
+    return true;
+  }
+
+  if (client && phoneNumber) {
     try {
       const message = await client.messages.create({
         body: messageText,
-        from: twilioPhone,
+        from: phoneNumber,
         to: phone,
       });
       console.log(`Twilio OTP sent to ${phone}. Message SID: ${message.sid}`);
       return true;
     } catch (error) {
       console.error(`Twilio failed to send OTP to ${phone}:`, error);
-      // Fallback logging for ease of testing during failure
-      console.log(`[SMS FALLBACK MOCK] To: ${phone} | Body: ${messageText}`);
-      return true; // Return true to prevent blocking devs during sandbox configuration
+      throw new Error('Twilio SMS delivery failed while OTP delivery was required.');
     }
-  } else {
-    // Development fallback
-    console.log('=====================================================');
-    console.log(`[SMS MOCK] To: ${phone}`);
-    console.log(`[SMS MOCK] Message: ${messageText}`);
-    console.log('=====================================================');
-    return true;
   }
+
+  throw new Error('OTP delivery is not configured. Set valid Twilio credentials or enable OTP_DEV_MODE=true for local development.');
 }
 
 /**
- * Generates a random 6-digit numeric OTP code.
+ * Generates a cryptographically secure random 6-digit numeric OTP code.
  */
 export function generateSixDigitOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // crypto.randomInt is CSPRNG-backed — safe for security tokens
+  return crypto.randomInt(100000, 999999).toString();
 }

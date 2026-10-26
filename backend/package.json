@@ -1,7 +1,7 @@
 {
-  "name": "naseeb-baryani-backend",
+  "name": "delivery-platform-backend",
   "version": "1.0.0",
-  "description": "Backend API for Karachi Naseeb Baryani and Pulao UCP online ordering platform",
+  "description": "Backend API for Delivery Platform online ordering system",
   "main": "dist/index.js",
   "engines": {
     "node": ">=18"
@@ -10,6 +10,7 @@
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
     "dev": "nodemon --watch \"src/**/*.ts\" --exec \"ts-node\" src/index.ts",
+    "test": "node dist/run-tests.js && node dist/launch-readiness.tests.js",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",

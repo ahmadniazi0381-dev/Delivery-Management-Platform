@@ -87,7 +87,7 @@ function ForcedPasswordChangeScreen() {
           Security Update required 🔒
         </Text>
         <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 24, textAlign: "center", lineHeight: 18 }}>
-          As requested by our system administrator, you must update your password before accessing the Naseeb Biryani platform.
+          As requested by our system administrator, you must update your password before accessing the Food Delivery Platform.
         </Text>
 
         {error ? (

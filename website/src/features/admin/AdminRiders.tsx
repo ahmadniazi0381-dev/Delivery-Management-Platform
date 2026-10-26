@@ -3,9 +3,36 @@ import React, { useState } from 'react';
 import { useAdminQuery, useAdminMutation } from './hooks/useAdminApi';
 import { AdminTable, Column } from './components/AdminTable';
 import { AdminModal, ConfirmDialog } from './components/AdminModal';
-import { StatusBadge } from './components/StatusBadge';
-import { Search, Plus, Bike, FileText, TrendingUp, Key, Trash2, X, Star } from 'lucide-react';
+import { Search, Plus, Bike, FileText, TrendingUp, Key, Trash2, X, Star, Users } from 'lucide-react';
 import { useToast } from '@/components/AdminToast';
+
+const STATUS_COLORS: Record<string, string> = {
+  ACTIVE: "#10B981", // green
+  ON_DELIVERY: "#EA580C", // orange
+  INACTIVE: "#6B7280", // gray
+  SUSPENDED: "#EF4444" // red
+};
+
+const RiderStatusBadge = ({ status, dot }: { status: string, dot?: boolean }) => {
+  const color = STATUS_COLORS[status] || STATUS_COLORS.INACTIVE;
+  return (
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "6px",
+      background: `${color}15`,
+      color: color,
+      padding: "4px 10px",
+      borderRadius: "16px",
+      fontSize: "0.75rem",
+      fontWeight: 700,
+      border: `1px solid ${color}30`
+    }}>
+      {dot && <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: color }} />}
+      {status.replace(/_/g, ' ')}
+    </span>
+  );
+};
 
 export default function AdminRiders() {
   const [search, setSearch] = useState('');
@@ -32,7 +59,7 @@ export default function AdminRiders() {
   });
 
   const activeRidersCount = riders.filter((r: any) => r.riderProfile?.status === 'ACTIVE').length;
-  const suspendedRidersCount = riders.filter((r: any) => r.riderProfile?.status === 'SUSPENDED').length;
+  const onDeliveryRidersCount = riders.filter((r: any) => r.riderProfile?.status === 'ON_DELIVERY').length;
   const inactiveRidersCount = riders.filter((r: any) => r.riderProfile?.status === 'INACTIVE').length;
 
   // Selected rider profile
@@ -140,15 +167,16 @@ export default function AdminRiders() {
       render: (row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
-            width: '32px', height: '32px', borderRadius: '50%',
-            background: 'var(--grad-maroon)', color: '#fff',
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #EA580C, #9A3412)', color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 700, fontSize: '0.8rem'
+            fontWeight: 700, fontSize: '0.85rem',
+            boxShadow: 'var(--shadow-sm)'
           }}>
             {row.name.substring(0, 2).toUpperCase()}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.name}</span>
+            <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{row.name}</span>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {row.id.substring(0, 8)}</span>
           </div>
         </div>
@@ -159,7 +187,7 @@ export default function AdminRiders() {
       label: 'Contact No',
       render: (row) => (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span>{row.phone}</span>
+          <span style={{ fontWeight: 500 }}>{row.phone}</span>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{row.email || 'No Email'}</span>
         </div>
       )
@@ -169,7 +197,7 @@ export default function AdminRiders() {
       label: 'Status',
       render: (row) => {
         const s = row.riderProfile?.status || 'INACTIVE';
-        return <StatusBadge status={s} dot />;
+        return <RiderStatusBadge status={s} dot />;
       }
     },
     {
@@ -193,8 +221,8 @@ export default function AdminRiders() {
       render: (row) => (
         <button
           onClick={() => setSelectedRiderId(row.id)}
-          className="btn btn-secondary"
-          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+          className="btn-warm-outline"
+          style={{ padding: '6px 12px', fontSize: '0.75rem' }}
         >
           Manage Profile
         </button>
@@ -204,6 +232,49 @@ export default function AdminRiders() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <style>{`
+        .warm-input:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.3);
+          border-color: #EA580C !important;
+        }
+        .btn-warm-outline {
+          background: transparent;
+          border: 1px solid #EA580C;
+          color: #EA580C;
+          border-radius: var(--radius-md);
+          font-weight: 600;
+          cursor: pointer;
+          transition: all var(--transition-fast) cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .btn-warm-outline:hover {
+          background: rgba(234, 88, 12, 0.1);
+        }
+        .btn-warm-solid {
+          background: linear-gradient(135deg, #EA580C, #9A3412);
+          color: white;
+          border: none;
+          border-radius: var(--radius-md);
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform var(--transition-fast) cubic-bezier(0.22, 1, 0.36, 1);
+          box-shadow: var(--shadow-sm);
+        }
+        .btn-warm-solid:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-md);
+        }
+        .btn-warm-solid:active {
+          transform: translateY(0);
+        }
+        .rider-profile-card {
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-xl);
+          background: var(--bg-card);
+          box-shadow: var(--shadow-md);
+        }
+      `}</style>
+      
       {/* Top Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
@@ -212,8 +283,8 @@ export default function AdminRiders() {
         </div>
         <button
           onClick={() => setCreateModalOpen(true)}
-          className="btn"
-          style={{ background: 'var(--saffron)', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '10px 16px', borderRadius: '8px' }}
+          className="btn-warm-solid"
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '10px 16px' }}
         >
           <Plus size={16} /> Create Rider
         </button>
@@ -221,37 +292,46 @@ export default function AdminRiders() {
 
       {/* KPI Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-        <div className="card" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)' }}>
           <div>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Total Fleet</span>
             <h3 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '6px 0 0', color: 'var(--text-primary)' }}>{riders.length}</h3>
           </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(124,45,18,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--maroon)' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(234, 88, 12, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EA580C' }}>
             <Bike size={22} />
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)' }}>
           <div>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Active Fleet</span>
-            <h3 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '6px 0 0', color: 'var(--success)' }}>{activeRidersCount}</h3>
+            <h3 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '6px 0 0', color: '#10B981' }}>{activeRidersCount}</h3>
           </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981' }}>
             <Bike size={22} />
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)' }}>
           <div>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Suspended/Offline</span>
-            <h3 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '6px 0 0', color: 'var(--error)' }}>{suspendedRidersCount} / {inactiveRidersCount}</h3>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Inactive/Offline</span>
+            <h3 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '6px 0 0', color: '#6B7280' }}>{inactiveRidersCount}</h3>
           </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--error)' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(107,114,128,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
+            <Bike size={22} />
+          </div>
+        </div>
+        <div className="card" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)' }}>
+          <div>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>On Delivery</span>
+            <h3 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '6px 0 0', color: '#EA580C' }}>{onDeliveryRidersCount}</h3>
+          </div>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(234, 88, 12, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EA580C' }}>
             <Bike size={22} />
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="card" style={{ padding: '16px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="card" style={{ padding: '16px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--border-color)' }}>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, minWidth: '280px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -260,36 +340,58 @@ export default function AdminRiders() {
               placeholder="Search rider fleet..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              className="warm-input"
               style={{
                 width: '100%', padding: '10px 12px 10px 40px',
-                borderRadius: '8px', border: '1px solid var(--border)',
-                background: 'var(--bg-secondary)', color: 'var(--text-primary)'
+                borderRadius: '8px', border: '1px solid var(--border-color)',
+                background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+                transition: 'all var(--transition-fast)'
               }}
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
+            className="warm-input"
             style={{
               padding: '10px 16px', borderRadius: '8px',
-              border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-              color: 'var(--text-primary)', cursor: 'pointer'
+              border: '1px solid var(--border-color)', background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)', cursor: 'pointer',
+              transition: 'all var(--transition-fast)'
             }}
           >
             <option value="">All Statuses</option>
             <option value="ACTIVE">Active Fleet</option>
-            <option value="INACTIVE">Offline Fleet</option>
-            <option value="SUSPENDED">Suspended</option>
+            <option value="ON_DELIVERY">On Delivery</option>
+            <option value="INACTIVE">Inactive / Offline</option>
           </select>
         </div>
       </div>
 
-      {/* Main Table */}
-      <AdminTable
-        columns={columns}
-        data={filteredRiders}
-        loading={loading}
-      />
+      {/* Main Table or Loading/Empty State */}
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: '64px', borderRadius: 'var(--radius-lg)' }} />
+          ))}
+        </div>
+      ) : filteredRiders.length === 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", textAlign: "center", background: "var(--bg-secondary)", borderRadius: "var(--radius-xl)", border: "1px dashed var(--border-color)" }}>
+          <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "rgba(234, 88, 12, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#EA580C", marginBottom: "16px" }}>
+            <Users size={32} />
+          </div>
+          <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "8px" }}>No riders found</h3>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", maxWidth: "250px" }}>
+            Adjust your search or filters to see more results, or add a new rider.
+          </p>
+        </div>
+      ) : (
+        <AdminTable
+          columns={columns}
+          data={filteredRiders}
+          loading={loading}
+        />
+      )}
 
       {/* Slide-over Profile Drawer */}
       {selectedRider && (
@@ -298,70 +400,72 @@ export default function AdminRiders() {
           <div
             onClick={() => setSelectedRiderId(null)}
             style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(2px)', zIndex: 99,
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)', zIndex: 99,
             }}
           />
           <div style={{
             position: 'fixed', right: 0, top: 0, bottom: 0, width: 'min(480px, 100vw)',
-            background: 'var(--bg-card)', borderLeft: '1px solid var(--border)',
-            boxShadow: '-4px 0 24px rgba(0,0,0,0.15)', zIndex: 100,
-            display: 'flex', flexDirection: 'column', animation: 'slide-in 0.25s ease',
+            background: 'var(--bg-primary)', borderLeft: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-xl)', zIndex: 100,
+            display: 'flex', flexDirection: 'column', animation: 'slide-in 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
             overflowY: 'auto',
           }}>
             <style>{`@keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
           
           {/* Drawer Header */}
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-card)' }}>
             <h3 style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text-primary)' }}>Rider Control Panel</h3>
-            <button onClick={() => setSelectedRiderId(null)} style={{ padding: '4px', color: 'var(--text-secondary)' }}>
-              <X size={20} />
+            <button onClick={() => setSelectedRiderId(null)} style={{ padding: '6px', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', borderRadius: '50%', border: 'none', cursor: 'pointer' }}>
+              <X size={18} />
             </button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
             {/* Summary */}
-            <div style={{ padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', gap: '16px', alignItems: 'center', background: 'var(--bg-secondary)' }}>
               <div style={{
                 width: '64px', height: '64px', borderRadius: '50%',
-                background: 'var(--grad-maroon)', color: '#fff',
+                background: 'linear-gradient(135deg, #EA580C, #9A3412)', color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 800, fontSize: '1.5rem'
+                fontWeight: 800, fontSize: '1.5rem',
+                boxShadow: 'var(--shadow-md)'
               }}>
                 {selectedRider.name.substring(0, 2).toUpperCase()}
               </div>
               <div style={{ flex: 1 }}>
                 <h4 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>{selectedRider.name}</h4>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '6px' }}>
-                  <StatusBadge status={selectedRider.riderProfile?.status || 'INACTIVE'} dot />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--saffron)' }}>
-                    <Star size={13} fill="var(--saffron)" /> {selectedRider.riderProfile?.rating ?? '4.8'}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px' }}>
+                  <RiderStatusBadge status={selectedRider.riderProfile?.status || 'INACTIVE'} dot />
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#EA580C', background: 'rgba(234, 88, 12, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                    <Star size={13} fill="#EA580C" /> {selectedRider.riderProfile?.rating ?? '4.8'}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Actions Bar */}
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '8px', background: 'var(--bg-card)', flexWrap: 'wrap' }}>
-              <button onClick={() => handleStatusChange('ACTIVE')} className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem', padding: '6px' }}>Activate</button>
-              <button onClick={() => handleStatusChange('INACTIVE')} className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem', padding: '6px' }}>Deactivate</button>
-              <button onClick={() => handleStatusChange('SUSPENDED')} className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem', padding: '6px', color: 'var(--error)' }}>Suspend</button>
-              <button onClick={() => setResetPwdModalOpen(true)} className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem', padding: '6px' }}><Key size={14} /></button>
-              <button onClick={() => setDeleteDialogOpen(true)} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px', color: 'var(--error)', border: '1px solid var(--error)' }}><Trash2 size={14} /></button>
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', gap: '8px', background: 'var(--bg-card)', flexWrap: 'wrap' }}>
+              <button onClick={() => handleStatusChange('ACTIVE')} className="btn-warm-outline" style={{ flex: 1, padding: '8px', fontSize: '0.8rem' }}>Activate</button>
+              <button onClick={() => handleStatusChange('ON_DELIVERY')} className="btn-warm-solid" style={{ flex: 1, padding: '8px', fontSize: '0.8rem' }}>On Delivery</button>
+              <button onClick={() => handleStatusChange('INACTIVE')} className="btn-warm-outline" style={{ flex: 1, padding: '8px', fontSize: '0.8rem', borderColor: '#6B7280', color: '#6B7280' }}>Deactivate</button>
+              <button onClick={() => setResetPwdModalOpen(true)} className="btn-warm-outline" style={{ padding: '8px 12px' }} title="Reset Password"><Key size={14} /></button>
+              <button onClick={() => setDeleteDialogOpen(true)} className="btn-warm-outline" style={{ padding: '8px 12px', borderColor: '#EF4444', color: '#EF4444' }} title="Delete Rider"><Trash2 size={14} /></button>
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
               {(['info', 'documents', 'performance'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   style={{
-                    flex: 1, padding: '12px 8px', border: 'none', background: 'none',
-                    fontSize: '0.8rem', fontWeight: 700, textTransform: 'capitalize',
-                    color: activeTab === tab ? 'var(--saffron)' : 'var(--text-secondary)',
-                    borderBottom: activeTab === tab ? '3px solid var(--saffron)' : 'none',
-                    cursor: 'pointer'
+                    flex: 1, padding: '14px 8px', border: 'none', background: 'none',
+                    fontSize: '0.85rem', fontWeight: 700, textTransform: 'capitalize',
+                    color: activeTab === tab ? '#EA580C' : 'var(--text-secondary)',
+                    borderBottom: activeTab === tab ? '3px solid #EA580C' : '3px solid transparent',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)'
                   }}
                 >
                   {tab}
@@ -372,66 +476,81 @@ export default function AdminRiders() {
             {/* Tab Body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
               {activeTab === 'info' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Phone Contact</span>
-                    <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{selectedRider.phone}</p>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Email</span>
-                    <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{selectedRider.email || 'No email associated'}</p>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Vehicle Plate / Type</span>
-                    <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{selectedRider.riderProfile?.vehicleNumber || 'No plate number'} ({selectedRider.riderProfile?.vehicleType})</p>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Residential Address</span>
-                    <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px', fontSize: '0.85rem' }}>{selectedRider.riderProfile?.fullAddress || 'Address not registered'}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }} className="fade-in">
+                  <div className="rider-profile-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Phone Contact</span>
+                      <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px' }}>{selectedRider.phone}</p>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Email</span>
+                      <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px' }}>{selectedRider.email || 'No email associated'}</p>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Vehicle Plate / Type</span>
+                      <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px' }}>{selectedRider.riderProfile?.vehicleNumber || 'No plate number'} ({selectedRider.riderProfile?.vehicleType})</p>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Residential Address</span>
+                      <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px', fontSize: '0.85rem', lineHeight: 1.5 }}>{selectedRider.riderProfile?.fullAddress || 'Address not registered'}</p>
+                    </div>
                   </div>
                 </div>
               )}
 
               {activeTab === 'documents' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>CNIC Number</span>
-                    <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{selectedRider.riderProfile?.cnicNumber || 'Not specified'}</p>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>CNIC Front Image URL</label>
-                    <input
-                      type="text"
-                      defaultValue={selectedRider.riderProfile?.cnicFrontUrl || ''}
-                      onBlur={(e) => handleUpdateDocs('cnicFrontUrl', e.target.value)}
-                      placeholder="Paste image link..."
-                      style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>CNIC Back Image URL</label>
-                    <input
-                      type="text"
-                      defaultValue={selectedRider.riderProfile?.cnicBackUrl || ''}
-                      onBlur={(e) => handleUpdateDocs('cnicBackUrl', e.target.value)}
-                      placeholder="Paste image link..."
-                      style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
-                    />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }} className="fade-in">
+                  <div className="rider-profile-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>CNIC Number</span>
+                      <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px' }}>{selectedRider.riderProfile?.cnicNumber || 'Not specified'}</p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>CNIC Front Image URL</label>
+                      <input
+                        type="text"
+                        defaultValue={selectedRider.riderProfile?.cnicFrontUrl || ''}
+                        onBlur={(e) => handleUpdateDocs('cnicFrontUrl', e.target.value)}
+                        placeholder="Paste image link..."
+                        className="warm-input"
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', transition: 'all var(--transition-fast)' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>CNIC Back Image URL</label>
+                      <input
+                        type="text"
+                        defaultValue={selectedRider.riderProfile?.cnicBackUrl || ''}
+                        onBlur={(e) => handleUpdateDocs('cnicBackUrl', e.target.value)}
+                        placeholder="Paste image link..."
+                        className="warm-input"
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', transition: 'all var(--transition-fast)' }}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
 
               {activeTab === 'performance' && (
-                <div className="form-grid-2col">
-                  <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Deliveries Today</span>
-                    <h5 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '4px 0 0' }}>0</h5>
+                <div className="form-grid-2col fade-in">
+                  <div className="rider-profile-card" style={{ padding: '20px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Deliveries Today</span>
+                    <h5 style={{ fontSize: '2rem', fontWeight: 800, margin: '8px 0 0', color: 'var(--text-primary)' }}>{selectedRider.riderProfile?.deliveriesToday || 0}</h5>
                   </div>
-                  <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Overall Rating</span>
-                    <h5 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '4px 0 0', color: 'var(--saffron)' }}>
-                      {selectedRider.riderProfile?.rating ?? '4.8'}
+                  <div className="rider-profile-card" style={{ padding: '20px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Active Deliveries</span>
+                    <h5 style={{ fontSize: '2rem', fontWeight: 800, margin: '8px 0 0', color: '#EA580C' }}>
+                      {selectedRider.riderProfile?.activeDeliveries || 0}
                     </h5>
+                  </div>
+                  <div className="rider-profile-card col-span-2" style={{ padding: '20px', textAlign: 'center', background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.05), transparent)' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Overall Rating</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '8px' }}>
+                      <Star size={24} fill="#EA580C" color="#EA580C" />
+                      <h5 style={{ fontSize: '2rem', fontWeight: 800, margin: 0, color: '#EA580C' }}>
+                        {selectedRider.riderProfile?.rating ?? '4.8'}
+                      </h5>
+                    </div>
                   </div>
                 </div>
               )}
@@ -449,102 +568,111 @@ export default function AdminRiders() {
         footer={
           <>
             <button onClick={() => setCreateModalOpen(false)} className="btn btn-secondary">Cancel</button>
-            <button type="submit" form="create-rider-form" disabled={createLoading} className="btn" style={{ background: 'var(--saffron)', color: '#fff' }}>
+            <button type="submit" form="create-rider-form" disabled={createLoading} className="btn-warm-solid" style={{ padding: '10px 20px' }}>
               {createLoading ? 'Creating...' : 'Register Rider'}
             </button>
           </>
         }
       >
         <form id="create-rider-form" onSubmit={handleCreateRider} className="form-grid-2col">
-          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Rider Name *</label>
             <input
               type="text" required
               value={newRider.name}
               onChange={(e) => setNewRider(n => ({ ...n, name: e.target.value }))}
               placeholder="Full name"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              className="warm-input"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Phone Number *</label>
             <input
               type="text" required
               value={newRider.phone}
               onChange={(e) => setNewRider(n => ({ ...n, phone: e.target.value }))}
               placeholder="e.g. +923000000000"
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              className="warm-input"
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Email Address</label>
             <input
               type="email"
               value={newRider.email}
               onChange={(e) => setNewRider(n => ({ ...n, email: e.target.value }))}
               placeholder="rider@example.com"
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              className="warm-input"
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Password *</label>
             <input
               type="password" required
               value={newRider.password}
               onChange={(e) => setNewRider(n => ({ ...n, password: e.target.value }))}
               placeholder="At least 6 chars"
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              className="warm-input"
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>CNIC Number *</label>
             <input
               type="text" required
               value={newRider.cnicNumber}
               onChange={(e) => setNewRider(n => ({ ...n, cnicNumber: e.target.value }))}
               placeholder="e.g. 4210112345678"
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              className="warm-input"
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Date of Birth</label>
             <input
               type="date"
               value={newRider.dateOfBirth}
               onChange={(e) => setNewRider(n => ({ ...n, dateOfBirth: e.target.value }))}
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              className="warm-input"
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Gender</label>
             <select
               value={newRider.gender}
               onChange={(e) => setNewRider(n => ({ ...n, gender: e.target.value }))}
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              className="warm-input"
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
             >
               <option value="MALE">Male</option>
               <option value="FEMALE">Female</option>
             </select>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Vehicle Type</label>
             <select
               value={newRider.vehicleType}
               onChange={(e) => setNewRider(n => ({ ...n, vehicleType: e.target.value }))}
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              className="warm-input"
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
             >
               <option value="BIKE">Motorcycle</option>
               <option value="CAR">Car</option>
             </select>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Vehicle Plate Number</label>
             <input
               type="text"
               value={newRider.vehicleNumber}
               onChange={(e) => setNewRider(n => ({ ...n, vehicleNumber: e.target.value }))}
               placeholder="e.g. KHI-1234"
-              style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              className="warm-input"
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
             />
           </div>
         </form>
@@ -558,7 +686,7 @@ export default function AdminRiders() {
         footer={
           <>
             <button onClick={() => setResetPwdModalOpen(false)} className="btn btn-secondary">Cancel</button>
-            <button type="submit" form="pwd-form" className="btn" style={{ background: 'var(--saffron)', color: '#fff' }}>Change Password</button>
+            <button type="submit" form="pwd-form" className="btn-warm-solid" style={{ padding: '10px 20px' }}>Change Password</button>
           </>
         }
       >
@@ -569,7 +697,8 @@ export default function AdminRiders() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="Min 6 characters"
-            style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+            className="warm-input"
+            style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', transition: 'all var(--transition-fast)' }}
           />
         </form>
       </AdminModal>

@@ -87,7 +87,7 @@ export default function CartScreen({ navigation }: any) {
           <Text style={styles.emptyEmoji}>🛒</Text>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Cart is Empty</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-            Browse our menu and add some delicious biryani!
+            Browse our menu and add some delicious food!
           </Text>
           <TouchableOpacity
             style={[styles.browseBtn, { backgroundColor: colors.primary }]}

@@ -446,21 +446,43 @@ async function createOrderAndPayment(
 
 export async function expireCheckoutSessions(): Promise<number> {
   const now = new Date();
-  const expired = await prisma.checkoutSession.findMany({
-    where: { status: 'PENDING', expiresAt: { lt: now } },
-    select: { id: true },
-  });
+  let expired: { id: string }[] = [];
+  try {
+    expired = await prisma.checkoutSession.findMany({
+      where: { status: 'PENDING', expiresAt: { lt: now } },
+      select: { id: true },
+    });
+  } catch (err: any) {
+    // Prisma initialization / connection errors are expected when DB is down in dev.
+    // Do not let scheduled tasks crash the process — log and skip.
+    console.warn('[CHECKOUT EXPIRATION] Skipping — database unavailable or error during query:', err?.message || err);
+    return 0;
+  }
 
   if (expired.length === 0) return 0;
 
-  await prisma.checkoutSession.updateMany({
-    where: { id: { in: expired.map((s) => s.id) }, status: 'PENDING' },
-    data: { status: 'EXPIRED' },
-  });
+  try {
+    await prisma.checkoutSession.updateMany({
+      where: { id: { in: expired.map((s) => s.id) }, status: 'PENDING' },
+      data: { status: 'EXPIRED' },
+    });
+  } catch (err: any) {
+    console.error('[CHECKOUT EXPIRATION] Failed to mark sessions expired:', err?.message || err);
+    // Continue to attempt per-session cleanup where possible
+  }
 
   for (const session of expired) {
-    await releaseInventoryForSession(session.id);
-    await logAudit('CHECKOUT_EXPIRED', 'SUCCESS', { checkoutSessionId: session.id });
+    try {
+      await releaseInventoryForSession(session.id);
+      // audit logging may hit the DB; guard it as well
+      try {
+        await logAudit('CHECKOUT_EXPIRED', 'SUCCESS', { checkoutSessionId: session.id });
+      } catch (auditErr) {
+        console.warn('[CHECKOUT EXPIRATION] audit logging skipped due to error:', (auditErr as any)?.message || auditErr);
+      }
+    } catch (sessErr) {
+      console.warn('[CHECKOUT EXPIRATION] Failed to release inventory for session', session.id, (sessErr as any)?.message || sessErr);
+    }
   }
 
   return expired.length;

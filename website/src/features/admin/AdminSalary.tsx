@@ -196,7 +196,7 @@ function SalarySlipModal({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
               <h2 style={{ fontSize: "1.3rem", fontWeight: 800, margin: 0 }}>Salary Slip</h2>
-              <p style={{ margin: "4px 0 0", opacity: 0.85, fontSize: "0.9rem" }}>Karachi Naseeb Baryani & Pulao – UCP</p>
+              <p style={{ margin: "4px 0 0", opacity: 0.85, fontSize: "0.9rem" }}>Delivery Platform</p>
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: "0.85rem", opacity: 0.9, fontWeight: 600 }}>{monthName} {year}</div>

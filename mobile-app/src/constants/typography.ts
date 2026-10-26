@@ -1,38 +1,50 @@
-import { Platform } from 'react-native';
-
 export const FontFamily = {
-  regular:    Platform.select({ ios: 'System', android: 'Roboto', default: 'System' }),
-  medium:     Platform.select({ ios: 'System', android: 'Roboto-Medium', default: 'System' }),
-  semibold:   Platform.select({ ios: 'System', android: 'Roboto-Bold', default: 'System' }),
-  bold:       Platform.select({ ios: 'System', android: 'Roboto-Bold', default: 'System' }),
-  mono:       Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+  regular: 'System',
+  bold: 'System',
+  medium: 'System',
 };
 
 export const FontSize = {
-  xs:   11,
-  sm:   13,
-  base: 15,
-  md:   16,
-  lg:   18,
-  xl:   20,
-  '2xl': 24,
-  '3xl': 28,
-  '4xl': 32,
-  '5xl': 38,
+  xs: 11, sm: 12, md: 14, base: 15, lg: 17, xl: 20, xxl: 24, xxxl: 30, display: 36,
+};
+
+export const FontWeight = {
+  regular: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
+  extrabold: '800' as const,
 };
 
 export const LineHeight = {
-  tight:   1.2,
-  snug:    1.35,
-  normal:  1.5,
-  relaxed: 1.65,
+  tight: 1.2, normal: 1.5, relaxed: 1.7,
 };
 
-export const FontWeight: Record<string, '400' | '500' | '600' | '700' | '800' | '900'> = {
-  regular:   '400',
-  medium:    '500',
-  semibold:  '600',
-  bold:      '700',
-  extrabold: '800',
-  black:     '900',
+// New consolidated export
+const Typography = {
+  // Font families
+  fontBold:    'System',  // Platform default bold
+  fontRegular: 'System',  // Platform default
+
+  displayXL: { fontSize: 36, fontWeight: '800' as const, lineHeight: 42, letterSpacing: -0.5 },
+  displayLG: { fontSize: 30, fontWeight: '800' as const, lineHeight: 36, letterSpacing: -0.3 },
+  h1: { fontSize: 26, fontWeight: '700' as const, lineHeight: 32, letterSpacing: -0.2 },
+  h2: { fontSize: 22, fontWeight: '700' as const, lineHeight: 28, letterSpacing: -0.1 },
+  h3: { fontSize: 18, fontWeight: '600' as const, lineHeight: 24 },
+  h4: { fontSize: 16, fontWeight: '600' as const, lineHeight: 22 },
+  bodyLG: { fontSize: 17, fontWeight: '400' as const, lineHeight: 26 },
+  body: { fontSize: 15, fontWeight: '400' as const, lineHeight: 22 },
+  bodySM: { fontSize: 13, fontWeight: '400' as const, lineHeight: 19 },
+  label: { fontSize: 13, fontWeight: '600' as const, lineHeight: 18, letterSpacing: 0.1 },
+  caption: { fontSize: 12, fontWeight: '400' as const, lineHeight: 16, letterSpacing: 0.1 },
+  micro: { fontSize: 11, fontWeight: '600' as const, lineHeight: 14, letterSpacing: 0.08 },
+  button: { fontSize: 15, fontWeight: '700' as const, lineHeight: 20, letterSpacing: 0.02 },
+  price: { fontSize: 18, fontWeight: '800' as const, lineHeight: 22, letterSpacing: -0.1 },
+  badge: { fontSize: 11, fontWeight: '700' as const, lineHeight: 14, letterSpacing: 0.05 },
+  FontFamily,
+  FontSize,
+  FontWeight,
+  LineHeight,
 };
+
+export default Typography;

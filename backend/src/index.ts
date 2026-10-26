@@ -249,8 +249,13 @@ async function seedDefaultConfig() {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
-  await seedDefaultConfig();
-  await seedDefaultBranch();
-  await seedSystemConfig();
+  try {
+    await seedDefaultConfig();
+    await seedDefaultBranch();
+    await seedSystemConfig();
+  } catch (err: any) {
+    console.warn('[STARTUP SEED] Database unavailable or seeding failed — starting in degraded mode.');
+    console.warn('[STARTUP SEED] Error:', err?.message || err);
+  }
 });
 

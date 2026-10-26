@@ -100,7 +100,7 @@ export default function AdminDashboard() {
   const isRevenueEmpty = dailyData.length === 0 || dailyData.every((d: any) => !d.revenue);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }} className="fade-in">
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px", background: "var(--bg-secondary)", minHeight: "100vh" }} className="fade-in">
       <style>{`
         @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes pulse-card {
@@ -160,63 +160,55 @@ export default function AdminDashboard() {
           </>
         ) : (
           <>
-            <div className="card" style={{ padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>Period Revenue</span>
-                <h3 style={{ fontSize: "1.75rem", fontWeight: 800, margin: "6px 0 0", color: "var(--text-primary)" }}>
-                  Rs. {totalRevenue.toLocaleString()}
-                </h3>
-              </div>
-              <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "rgba(16,185,129,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--success)" }}>
-                <DollarSign size={24} />
-              </div>
-            </div>
-
-            <div className="card" style={{ padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>Total Orders</span>
-                <h3 style={{ fontSize: "1.75rem", fontWeight: 800, margin: "6px 0 0", color: "var(--text-primary)" }}>
-                  {totalOrders}
-                </h3>
-              </div>
-              <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "rgba(217,119,6,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--saffron)" }}>
-                <ShoppingBag size={24} />
+            {/* Period Revenue */}
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', padding: '2px' }}>
+              <div style={{ background: 'var(--bg-card)', borderRadius: 'calc(var(--radius-xl) - 2px)', padding: '20px', boxShadow: 'var(--shadow-card)', height: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(194,65,12,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '16px', color: '#C2410C' }}>
+                    <DollarSign size={24} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>Rs. {totalRevenue.toLocaleString()}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>Period Revenue</div>
               </div>
             </div>
 
-            <div
-              className={`card${hasPending ? " pulse-card" : ""}`}
-              style={{
-                padding: "20px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                border: hasPending ? "2px solid rgba(239,68,68,0.5)" : undefined,
-                transition: "border 0.3s ease",
-              }}
-            >
-              <div>
-                <span style={{ fontSize: "0.85rem", color: hasPending ? "#ef4444" : "var(--text-secondary)", fontWeight: 600 }}>
-                  {hasPending ? "🔴 Pending Orders" : "Pending Orders"}
-                </span>
-                <h3 style={{ fontSize: "1.75rem", fontWeight: 800, margin: "6px 0 0", color: hasPending ? "#ef4444" : "var(--text-primary)" }}>
-                  {pendingOrders}
-                </h3>
-              </div>
-              <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: hasPending ? "rgba(239,68,68,0.15)" : "rgba(139,92,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: hasPending ? "#ef4444" : "rgb(139,92,246)" }}>
-                <TrendingUp size={24} />
+            {/* Total Orders */}
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', padding: '2px' }}>
+              <div style={{ background: 'var(--bg-card)', borderRadius: 'calc(var(--radius-xl) - 2px)', padding: '20px', boxShadow: 'var(--shadow-card)', height: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(194,65,12,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '16px', color: '#C2410C' }}>
+                    <ShoppingBag size={24} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{totalOrders}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>Total Orders</div>
               </div>
             </div>
 
-            <div className="card" style={{ padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>Total Customers</span>
-                <h3 style={{ fontSize: "1.75rem", fontWeight: 800, margin: "6px 0 0", color: "var(--text-primary)" }}>
-                  {totalCustomers}
-                </h3>
+            {/* Pending Orders */}
+            <div className={hasPending ? "pulse-card" : ""} style={{ background: 'var(--bg-secondary)', border: hasPending ? '2px solid rgba(239,68,68,0.5)' : '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', padding: '2px', transition: 'border 0.3s ease' }}>
+              <div style={{ background: 'var(--bg-card)', borderRadius: 'calc(var(--radius-xl) - 2px)', padding: '20px', boxShadow: 'var(--shadow-card)', height: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: hasPending ? 'rgba(239,68,68,0.15)' : 'rgba(194,65,12,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '16px', color: hasPending ? '#ef4444' : '#C2410C' }}>
+                    <TrendingUp size={24} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: hasPending ? '#ef4444' : 'var(--text-primary)', lineHeight: 1 }}>{pendingOrders}</div>
+                <div style={{ fontSize: '0.8rem', color: hasPending ? '#ef4444' : 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>{hasPending ? '🔴 Pending Orders' : 'Pending Orders'}</div>
               </div>
-              <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgb(59,130,246)" }}>
-                <Users size={24} />
+            </div>
+
+            {/* Total Customers */}
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', padding: '2px' }}>
+              <div style={{ background: 'var(--bg-card)', borderRadius: 'calc(var(--radius-xl) - 2px)', padding: '20px', boxShadow: 'var(--shadow-card)', height: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(194,65,12,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '16px', color: '#C2410C' }}>
+                    <Users size={24} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{totalCustomers}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>Total Customers</div>
               </div>
             </div>
           </>

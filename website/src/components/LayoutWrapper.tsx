@@ -43,32 +43,38 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     }
   }, [isLoading, token, user, pathname, isAdminRoute, isRiderRoute, isCheckoutRoute, router]);
 
-  if (isLoading) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-          <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "4px solid var(--border)", borderTopColor: "var(--saffron)", animation: "spin 1s linear infinite" }} />
-          <style jsx global>{`
-            @keyframes spin { to { transform: rotate(360deg); } }
-          `}</style>
-          <span>Loading Naseeb Baryani...</span>
-        </div>
-      </div>
-    );
-  }
-
   // Render Admin Layout
   if (isAdminRoute) {
+    if (isLoading) {
+      return (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "4px solid var(--border)", borderTopColor: "var(--saffron)", animation: "spin 1s linear infinite" }} />
+            <span>Loading Admin Console...</span>
+          </div>
+        </div>
+      );
+    }
     if (user?.role?.toUpperCase() !== "ADMIN") {
-      return null; // Prevents flashing dashboard before redirect triggers
+      return null;
     }
     return <>{children}</>;
   }
 
   // Render Rider Layout
   if (isRiderRoute) {
+    if (isLoading) {
+      return (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "4px solid var(--border)", borderTopColor: "var(--saffron)", animation: "spin 1s linear infinite" }} />
+            <span>Loading Rider Portal...</span>
+          </div>
+        </div>
+      );
+    }
     if (user?.role?.toUpperCase() !== "RIDER") {
-      return null; // Prevents flashing rider dashboard before redirect triggers
+      return null;
     }
     return <RiderLayout>{children}</RiderLayout>;
   }
@@ -78,7 +84,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     <>
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <Navbar />
-      <main id="main-content" className="flex-1 page-offset">{children}</main>
+      <main id="main-content" className="flex-1 min-h-[calc(100vh-80px)]">{children}</main>
       <Footer />
       <PWAInstallPrompt />
       <FloatingWhatsApp />

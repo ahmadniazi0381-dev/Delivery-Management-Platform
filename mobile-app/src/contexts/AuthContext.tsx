@@ -18,9 +18,11 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const TOKEN_KEY = "@naseeb_token";
-const USER_KEY = "@naseeb_user";
-const BIOMETRIC_ENABLED_KEY = "@naseeb_biometric_enabled";
+const TOKEN_KEY = "@delivery_platform_token";
+const USER_KEY = "@delivery_platform_user";
+const BIOMETRIC_ENABLED_KEY = "@delivery_platform_biometric_enabled";
+const LEGACY_TOKEN_KEY = "@naseeb_token";
+const LEGACY_USER_KEY = "@naseeb_user";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
@@ -32,8 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function loadStoredAuth() {
       try {
-        const storedToken = await AsyncStorage.getItem(TOKEN_KEY);
-        const storedUser = await AsyncStorage.getItem(USER_KEY);
+        const storedToken = (await AsyncStorage.getItem(TOKEN_KEY)) || (await AsyncStorage.getItem(LEGACY_TOKEN_KEY));
+        const storedUser = (await AsyncStorage.getItem(USER_KEY)) || (await AsyncStorage.getItem(LEGACY_USER_KEY));
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUserState(JSON.parse(storedUser));
@@ -64,6 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.removeItem(TOKEN_KEY);
       await AsyncStorage.removeItem(USER_KEY);
       await AsyncStorage.removeItem(BIOMETRIC_ENABLED_KEY);
+      await AsyncStorage.removeItem(LEGACY_TOKEN_KEY);
+      await AsyncStorage.removeItem(LEGACY_USER_KEY);
       setToken(null);
       setUserState(null);
     } catch (e) {

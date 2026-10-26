@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 
 interface FAQItem {
   q: string;
@@ -11,7 +12,7 @@ export default function FAQPage() {
   const faqs: FAQItem[] = [
     {
       q: "What is your delivery service area?",
-      a: "We deliver exclusively within a 2.2 km radius from our UCP (University of Central Punjab) branch in Johar Town, Lahore. This ensures that the biryani reaches your location steaming hot in under 30 minutes. If your coordinates are outside this area, our website will block checkout."
+      a: "We deliver within our configured delivery radius. This ensures that food reaches your location steaming hot in under 30 minutes. If your coordinates are outside our service area, our website will block checkout."
     },
     {
       q: "How do you verify my address coordinates?",
@@ -31,11 +32,11 @@ export default function FAQPage() {
     },
     {
       q: "Is your food spicy? Can I customize the spice level?",
-      a: "Our Karachi Special Biryani is cooked in authentic, mildly hot spices typical of street-style biryani. We mark spicy items on our menu with a 🌶️ icon. Because biryani and pulao are cooked in large batches (Deegs), we cannot adjust individual spice levels per plate, but you can select optional side raitas to balance the spice."
+      a: "We mark spicy items on our menu with a 🌶️ icon so you can choose according to your preference."
     },
     {
-      q: "Are you affiliated with Foodpanda?",
-      a: "No! We operate as a single-branch independent restaurant and manage our own direct delivery riders. This allows us to maintain strict quality control and eliminate third-party service fees."
+      q: "How do deliveries work?",
+      a: "We manage direct delivery riders. This allows us to maintain strict quality control and ensure fast, reliable delivery without third-party delay."
     },
     {
       q: "How can I track my order live?",
@@ -50,28 +51,22 @@ export default function FAQPage() {
   };
 
   return (
-    <div style={{ background: "var(--bg-secondary)", minHeight: "92vh", padding: "60px 20px" }}>
-      <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-        
-        {/* Title */}
-        <div style={{ textAlign: "center", marginBottom: "48px" }}>
-          <div className="section-tag" style={{ display: "inline-flex" }}>❓ Support Help</div>
-          <h1 style={{
-            fontFamily: "Poppins, sans-serif",
-            fontSize: "clamp(1.75rem, 4vw, 2.25rem)",
-            fontWeight: 900,
-            color: "var(--text-primary)",
-            marginTop: "12px"
-          }}>
+    <div style={{ background: "var(--bg-primary)", minHeight: "92vh" }}>
+      <div style={{ background: "var(--bg-secondary)", padding: "60px 20px 40px" }}>
+        <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
+          <div className="section-tag" style={{ display: "inline-block", color: "#C2410C", background: "#FFF4E8", padding: "6px 12px", borderRadius: "var(--radius-full)", fontWeight: 700, fontSize: "0.85rem", marginBottom: "12px" }}>❓ Support Help</div>
+          <h1 className="section-title" style={{ fontFamily: "Poppins, sans-serif", fontSize: "clamp(1.75rem, 4vw, 2.5rem)", fontWeight: 900, color: "var(--text-primary)", marginTop: "12px", lineHeight: 1.2 }}>
             Frequently Asked Questions
           </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "1.0625rem", marginTop: "8px", maxWidth: "560px", margin: "8px auto 0" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "1.1rem", marginTop: "16px", lineHeight: 1.6, maxWidth: "600px", margin: "16px auto 0" }}>
             Got questions? We have answers. Find general information about orders and delivery here.
           </p>
         </div>
+      </div>
 
+      <div style={{ padding: "40px 20px 60px", maxWidth: "800px", margin: "0 auto" }}>
         {/* FAQ Accordion */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }} role="list">
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }} role="list">
           {faqs.map((faq, i) => {
             const isOpen = activeIndex === i;
             const panelId = `faq-panel-${i}`;
@@ -83,9 +78,11 @@ export default function FAQPage() {
                 style={{
                   padding: 0,
                   overflow: "hidden",
-                  border: isOpen ? "1.5px solid var(--saffron)" : "1px solid var(--border-color)",
-                  transition: "border-color var(--transition-fast), box-shadow var(--transition-fast)",
-                  boxShadow: isOpen ? "var(--shadow-saffron)" : "var(--shadow-card)",
+                  background: "var(--bg-card)",
+                  borderRadius: "var(--radius-lg)",
+                  border: isOpen ? "1.5px solid #EA580C" : "1px solid var(--border-subtle)",
+                  transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                  boxShadow: isOpen ? "0 4px 12px rgba(234, 88, 12, 0.15)" : "var(--shadow-sm)",
                 }}
                 role="listitem"
               >
@@ -96,33 +93,37 @@ export default function FAQPage() {
                   onClick={() => toggleAccordion(i)}
                   style={{
                     width: "100%",
-                    padding: "20px 24px",
+                    padding: "24px",
                     textAlign: "left",
-                    background: "transparent",
+                    background: isOpen ? "#FFF4E8" : "transparent",
                     cursor: "pointer",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
                     gap: "16px",
+                    border: "none",
+                    outline: "none",
+                    transition: "background 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}
                 >
                   <span style={{
-                    fontSize: "0.9375rem",
+                    fontSize: "1.05rem",
                     fontWeight: 700,
-                    color: "var(--text-primary)",
-                    lineHeight: 1.4,
+                    color: isOpen ? "#C2410C" : "var(--text-primary)",
+                    lineHeight: 1.5,
+                    transition: "color 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}>
                     {faq.q}
                   </span>
                   <span
                     aria-hidden="true"
                     style={{
-                      fontSize: "1.1rem",
-                      color: "var(--saffron)",
+                      fontSize: "1.5rem",
+                      color: isOpen ? "#EA580C" : "var(--text-muted)",
                       transform: isOpen ? "rotate(45deg)" : "none",
-                      transition: "transform var(--transition-base)",
+                      transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
                       flexShrink: 0,
-                      fontWeight: 700,
+                      fontWeight: 400,
                       lineHeight: 1,
                     }}
                   >
@@ -136,18 +137,20 @@ export default function FAQPage() {
                   aria-labelledby={buttonId}
                   hidden={!isOpen}
                   style={{
-                    padding: isOpen ? "0 24px 20px" : "0 24px",
+                    padding: isOpen ? "0 24px 24px" : "0 24px",
                     maxHeight: isOpen ? "600px" : "0",
                     overflow: "hidden",
-                    transition: "max-height var(--transition-slow)",
+                    opacity: isOpen ? 1 : 0,
+                    background: isOpen ? "#FFF4E8" : "transparent",
+                    transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}
                 >
                   <div
                     style={{
-                      borderTop: "1px solid var(--border-subtle)",
-                      paddingTop: "16px",
+                      borderTop: "1px solid rgba(234, 88, 12, 0.2)",
+                      paddingTop: "20px",
                       color: "var(--text-secondary)",
-                      fontSize: "0.9rem",
+                      fontSize: "0.95rem",
                       lineHeight: 1.75,
                     }}
                   >
@@ -162,22 +165,33 @@ export default function FAQPage() {
         {/* Bottom CTA */}
         <div style={{
           textAlign: "center",
-          marginTop: "48px",
-          padding: "32px 24px",
+          marginTop: "60px",
+          padding: "40px 24px",
           background: "var(--bg-card)",
-          borderRadius: "var(--radius-lg)",
-          border: "1px solid var(--border-color)",
+          borderRadius: "var(--radius-xl)",
+          border: "1px solid var(--border-subtle)",
+          boxShadow: "var(--shadow-md)"
         }}>
-          <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: "12px" }}>
+          <p style={{ fontWeight: 700, fontSize: "1.2rem", color: "var(--text-primary)", marginBottom: "16px" }}>
             Still have questions?
           </p>
-          <a
+          <Link
             href="/contact"
             className="btn btn-primary"
-            style={{ display: "inline-flex" }}
+            style={{ 
+              display: "inline-flex", 
+              padding: "12px 32px", 
+              fontSize: "1.05rem", 
+              fontWeight: 700, 
+              borderRadius: "var(--radius-full)", 
+              background: "linear-gradient(135deg, #EA580C, #C2410C)", 
+              color: "#fff", 
+              textDecoration: "none",
+              boxShadow: "var(--shadow-sm)"
+            }}
           >
             Contact Us
-          </a>
+          </Link>
         </div>
 
       </div>

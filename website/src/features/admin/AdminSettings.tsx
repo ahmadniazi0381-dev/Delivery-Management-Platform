@@ -139,7 +139,7 @@ export default function AdminSettings() {
   useEffect(() => {
     if (shopData) {
       setShopForm({
-        shopName: shopData.shopName || 'Karachi Naseeb Baryani & Pulao UCP',
+        shopName: shopData.shopName || 'Delivery Platform',
         contactNumber: shopData.contactNumber || '+923054311118',
         openingTime: shopData.openingTime || '11:00',
         closingTime: shopData.closingTime || '23:00',
@@ -256,7 +256,7 @@ export default function AdminSettings() {
               </div>
               <div>
                 <label className="form-label">Business Email</label>
-                <input className="form-input" type="email" defaultValue="owner@naseebbaryani.com" />
+                <input className="form-input" type="email" defaultValue="owner@deliveryplatform.com" />
               </div>
               <div>
                 <label className="form-label">WhatsApp Hotline</label>

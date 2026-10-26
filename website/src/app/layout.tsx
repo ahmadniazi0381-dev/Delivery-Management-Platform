@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, Inter } from "next/font/google";
+import { Poppins, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import LayoutWrapper from "@/components/LayoutWrapper";
@@ -11,32 +11,61 @@ const poppins = Poppins({
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Karachi Naseeb Baryani & Pulao | UCP Branch - Order Online",
+  title: {
+    default: "Delivery Platform — Order Fresh Food Online",
+    template: "%s | Delivery Platform",
+  },
   description:
-    "Order fresh, authentic Karachi Baryani and Pulao online from the UCP branch. Fast delivery within 2.2km. Pay via Cash, JazzCash, Easypaisa, or Card.",
+    "Fast and reliable food delivery platform. Order hot, flavorful meals online with real-time live tracking, fast 30-minute delivery, and secure payments.",
   keywords: [
-    "Karachi biryani Lahore",
-    "Naseeb Baryani UCP",
-    "biryani delivery Lahore",
-    "pulao delivery UCP",
-    "online food order UCP",
+    "Delivery Platform",
+    "Food Delivery",
+    "Order Food Online",
+    "Fast Delivery",
+    "Online Food Order",
+    "Order Biryani Online",
   ],
+  robots: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large" as const,
+    "max-snippet": -1,
+    "max-video-preview": -1,
+  },
   openGraph: {
-    title: "Karachi Naseeb Baryani & Pulao | UCP",
-    description: "Authentic Karachi biryani delivered fresh to your doorstep.",
+    title: "Delivery Platform — Order Fresh Food Online",
+    description:
+      "Order hot, flavorful meals online with real-time tracking and fast delivery.",
     type: "website",
-    locale: "en_PK",
+    locale: "en_US",
+    siteName: "Delivery Platform",
+    url: "https://karachinaseebbiryani.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Delivery Platform — Order Fresh Food Online",
+    description:
+      "Fresh meals delivered hot in 30 mins. Order now!",
   },
   icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
+  },
+  metadataBase: new URL("https://karachinaseebbiryani.com"),
+  alternates: {
+    canonical: "/",
   },
 };
 
@@ -48,11 +77,57 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${inter.variable} h-full scroll-smooth`}
+      className={`${poppins.variable} ${jakarta.variable} h-full scroll-smooth`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col antialiased">
-        <a href="#main-content" className="skip-nav">Skip to main content</a>
+      <body className="min-h-full flex flex-col antialiased" suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Restaurant",
+              name: "Delivery Platform",
+              image: "https://karachinaseebbiryani.com/logo.jpg",
+              url: "https://karachinaseebbiryani.com",
+              telephone: "+923054311118",
+              email: "info@deliveryplatform.com",
+              servesCuisine: ["Pakistani", "Fast Food", "Continental"],
+              priceRange: "$$",
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "Shop #15, Near UCP, Khayaban-e-Jinnah",
+                addressLocality: "Johar Town, Lahore",
+                addressRegion: "Punjab",
+                addressCountry: "PK",
+              },
+              geo: {
+                "@type": "GeoCoordinates",
+                latitude: 31.4475531,
+                longitude: 74.2690347,
+              },
+              openingHoursSpecification: {
+                "@type": "OpeningHoursSpecification",
+                dayOfWeek: [
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday",
+                  "Saturday",
+                  "Sunday",
+                ],
+                opens: "11:00",
+                closes: "23:00",
+              },
+              aggregateRating: {
+                "@type": "AggregateRating",
+                ratingValue: "4.8",
+                reviewCount: "5000",
+              },
+            }),
+          }}
+        />
         <Providers>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>

@@ -155,7 +155,7 @@ export default function RiderLayout({ children }: { children: React.ReactNode })
                   Rider Portal
                 </span>
                 <span style={{ fontSize: "0.7rem", color: "var(--saffron)", textTransform: "uppercase", letterSpacing: "1px" }}>
-                  Naseeb Delivery
+                  Delivery Platform
                 </span>
               </div>
             </div>
@@ -313,7 +313,7 @@ export default function RiderLayout({ children }: { children: React.ReactNode })
                       Rider Portal
                     </span>
                     <span style={{ fontSize: "0.7rem", color: "var(--saffron)", textTransform: "uppercase", letterSpacing: "1px" }}>
-                      Naseeb Delivery
+                      Delivery Platform
                     </span>
                   </div>
                 </div>

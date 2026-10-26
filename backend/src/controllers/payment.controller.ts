@@ -15,7 +15,7 @@ import { logAudit } from '../services/audit.service';
 const ONLINE_METHODS = ['CARD', 'JAZZCASH', 'EASYPAISA'];
 
 function frontendRedirect(path: string): string {
-  const base = (process.env.FRONTEND_URL || process.env.PUBLIC_WEB_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const base = (process.env.FRONTEND_URL || process.env.PUBLIC_WEB_URL || 'http://localhost:3000').replace(/\/$/, '');
   return `${base}${path.startsWith('/') ? path : `/${path}`}`;
 }
 

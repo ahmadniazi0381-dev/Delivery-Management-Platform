@@ -1,83 +1,82 @@
 @import "tailwindcss";
 
-
 /* ============================================================
-   NASEEB BARYANI & PULAO — CUSTOMER WEBSITE DESIGN SYSTEM
-   Spice-Inspired Color Palette & Premium Visual Language
+   FOOD DELIVERY PLATFORM — DESIGN SYSTEM
+   Premium warm-brand system for the Delivery Platform experience
    ============================================================ */
 
 :root {
-  /* Brand Colors */
-  --saffron:        #D97706;
-  --saffron-light:  #F59E0B;
-  --saffron-dark:   #B45309;
-  --maroon:         #7C2D12;
-  --maroon-light:   #9A3412;
-  --maroon-dark:    #5C1A08;
-  --cardamom:       #14532D;
-  --turmeric:       #CA8A04;
-  --cream:          #FEF3C7;
-  --rose-water:     #FDF2F8;
+  --saffron: #D97706;
+  --saffron-light: #F59E0B;
+  --saffron-dark: #B45309;
+  --maroon: #7C2D12;
+  --maroon-light: #9A3412;
+  --maroon-dark: #5C1A08;
+  --burnt-orange: #C2410C;
+  --burnt-orange-light: #EA580C;
+  --burnt-orange-dark: #9A3412;
+  --golden: #F59E0B;
+  --golden-light: #FBBF24;
+  --golden-dark: #D97706;
+  --cardamom: #14532D;
+  --turmeric: #CA8A04;
+  --cream: #FEF3C7;
+  --rose-water: #FDF2F8;
 
-  /* Surfaces */
-  --bg-primary:     #FFFBF5;
-  --bg-secondary:   #FEF9F0;
-  --bg-card:        #FFFFFF;
-  --bg-input:       #FFF8EE;
-  --surface:        #FEF3C7;
+  --bg-primary: #FFF9F3;
+  --bg-secondary: #FFF4E8;
+  --bg-card: #FFFFFF;
+  --bg-input: #FFF8EE;
+  --surface: #FEF3C7;
 
-  /* Text */
-  --text-primary:   #1C0A00;
+  --text-primary: #1C0A00;
   --text-secondary: #6B4226;
-  --text-muted:     #9A7B6A;
-  --text-inverse:   #FFFFFF;
+  --text-muted: #9A7B6A;
+  --text-inverse: #FFFFFF;
 
-  /* Borders */
-  --border-color:   #F5E6D0;
-  --border-subtle:  #FAF0E0;
-  --border:         var(--border-color);
-  --card-bg:        var(--bg-card);
-  --success:        #15803D;
-  --error:          #B91C1C;
-  --warning:        #92400E;
-  --focus-ring:     rgba(217, 119, 6, 0.24);
+  --border-color: #F5E6D0;
+  --border-subtle: #FAF0E0;
+  --border: var(--border-color);
+  --card-bg: var(--bg-card);
+  --success: #15803D;
+  --error: #B91C1C;
+  --warning: #92400E;
+  --focus-ring: rgba(217, 119, 6, 0.24);
 
-  /* Shadows */
-  --shadow-sm:      0 1px 3px rgba(124, 45, 18, 0.08);
-  --shadow-md:      0 4px 16px rgba(124, 45, 18, 0.12);
-  --shadow-lg:      0 8px 32px rgba(124, 45, 18, 0.16);
-  --shadow-xl:      0 16px 48px rgba(124, 45, 18, 0.20);
-  --shadow-saffron: 0 4px 20px rgba(217, 119, 6, 0.30);
-  --shadow-card:    0 2px 12px rgba(124, 45, 18, 0.08), 0 1px 4px rgba(124, 45, 18, 0.04);
+  --shadow-sm: 0 1px 3px rgba(124, 45, 18, 0.08);
+  --shadow-md: 0 6px 18px rgba(124, 45, 18, 0.12);
+  --shadow-lg: 0 14px 30px rgba(124, 45, 18, 0.18);
+  --shadow-xl: 0 20px 50px rgba(124, 45, 18, 0.22);
+  --shadow-saffron: 0 10px 32px rgba(217, 119, 6, 0.28);
+  --shadow-card: 0 2px 12px rgba(124, 45, 18, 0.08), 0 1px 4px rgba(124, 45, 18, 0.04);
+  --shadow-ambient: 0 24px 80px rgba(124, 45, 18, 0.10), 0 8px 32px rgba(124, 45, 18, 0.06);
+  --shadow-float: 0 8px 24px rgba(217, 119, 6, 0.14), 0 1px 8px rgba(124, 45, 18, 0.08);
 
-  /* Radius */
-  --radius-sm:      6px;
-  --radius-md:      12px;
-  --radius-lg:      18px;
-  --radius-xl:      24px;
-  --radius-full:    9999px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
 
-  /* Gradients */
-  --grad-saffron:   linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
-  --grad-maroon:    linear-gradient(135deg, #5C1A08 0%, #7C2D12 100%);
-  --grad-hero:      linear-gradient(160deg, #7C2D12 0%, #B45309 40%, #D97706 100%);
-  --grad-card:      linear-gradient(145deg, #FFF8EE 0%, #FEF3C7 100%);
-  --grad-subtle:    linear-gradient(180deg, #FFFBF5 0%, #FEF9F0 100%);
+  --grad-saffron: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+  --grad-maroon: linear-gradient(135deg, #5C1A08 0%, #7C2D12 100%);
+  --grad-hero: linear-gradient(160deg, #7C2D12 0%, #B45309 40%, #D97706 100%);
+  --grad-card: linear-gradient(145deg, #FFF8EE 0%, #FEF3C7 100%);
+  --grad-subtle: linear-gradient(180deg, #FFFBF5 0%, #FEF9F0 100%);
 
-  /* Transitions */
-  --transition-fast:   0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base:   0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow:   0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 0.15s cubic-bezier(0.32, 0.72, 0, 1);
+  --transition-base: 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  --transition-slow: 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+  --transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-spring: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Nav */
   --nav-height: 72px;
 }
 
 [data-theme="dark"] {
-  --bg-primary:     #0F0804;
-  --bg-secondary:   #1A0D06;
-  --bg-card:        #1F1008;
+  --bg-primary:     #0C0705;
+  --bg-secondary:   #120A06;
+  --bg-card:        #1A0E08;
   --bg-input:       #2A1A0A;
   --surface:        #241510;
 
@@ -111,27 +110,68 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 body {
-  font-family: var(--font-inter), var(--font-poppins), -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-primary);
+  font-family: var(--font-jakarta), var(--font-poppins), -apple-system, BlinkMacSystemFont, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(245, 158, 11, 0.08), transparent 28%),
+    linear-gradient(180deg, var(--bg-primary) 0%, #fffaf5 100%);
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background var(--transition-slow), color var(--transition-slow);
   min-height: 100vh;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-poppins), var(--font-inter), sans-serif;
-  font-weight: 700;
-  line-height: 1.2;
+::selection {
+  background: rgba(217, 119, 6, 0.18);
   color: var(--text-primary);
 }
 
-p { line-height: 1.7; }
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+}
+
+.skip-link:focus {
+  left: 16px;
+  top: 16px;
+  z-index: 2000;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.page-offset {
+  padding-top: 92px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-poppins), var(--font-jakarta), sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+
+p {
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
 
 a {
   color: inherit;
@@ -220,6 +260,26 @@ img { display: block; max-width: 100%; }
   to { transform: scale(4); opacity: 0; }
 }
 
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes expandWidth {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(194, 65, 12, 0.3); }
+  50%       { box-shadow: 0 0 40px rgba(194, 65, 12, 0.6); }
+}
+
+@keyframes reveal-mask {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0); }
+}
+
 /* ============================================================
    UTILITY ANIMATIONS
    ============================================================ */
@@ -231,6 +291,8 @@ img { display: block; max-width: 100%; }
 .animate-spin-slow  { animation: spin-slow 8s linear infinite; }
 .animate-badge      { animation: badge-pulse 2s ease-in-out infinite; }
 .animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+.animate-slide-up   { animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
 
 /* Stagger delays */
 .delay-100 { animation-delay: 0.1s; }
@@ -238,6 +300,32 @@ img { display: block; max-width: 100%; }
 .delay-300 { animation-delay: 0.3s; }
 .delay-400 { animation-delay: 0.4s; }
 .delay-500 { animation-delay: 0.5s; }
+.delay-600 { animation-delay: 0.6s; }
+.delay-700 { animation-delay: 0.7s; }
+.delay-800 { animation-delay: 0.8s; }
+
+/* Subtle Background Patterns */
+.bg-warm-dots {
+  background-image: radial-gradient(rgba(194, 65, 12, 0.07) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+.bg-warm-mesh {
+  background-image:
+    radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(194, 65, 12, 0.06) 0px, transparent 50%);
+}
+.card-elevated {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 20px -2px rgba(124, 45, 18, 0.08), 0 2px 6px -1px rgba(124, 45, 18, 0.04);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-fast);
+}
+.card-elevated:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -4px rgba(194, 65, 12, 0.16), 0 4px 12px -2px rgba(124, 45, 18, 0.06);
+  border-color: rgba(234, 88, 12, 0.3);
+}
 
 /* ============================================================
    SKELETON LOADER
@@ -301,14 +389,15 @@ img { display: block; max-width: 100%; }
 }
 .btn:hover::before  { opacity: 1; }
 .btn:active         { transform: scale(0.97); }
+.btn:focus-visible  { outline: 2px solid var(--saffron); outline-offset: 2px; }
 
 .btn-primary {
-  background: var(--grad-saffron);
+  background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%);
   color: #fff;
-  box-shadow: var(--shadow-saffron);
+  box-shadow: 0 4px 20px rgba(194, 65, 12, 0.35);
 }
 .btn-primary:hover {
-  box-shadow: 0 6px 28px rgba(217, 119, 6, 0.45);
+  box-shadow: 0 6px 30px rgba(194, 65, 12, 0.5);
   transform: translateY(-1px);
 }
 
@@ -663,6 +752,24 @@ img { display: block; max-width: 100%; }
   transform: translateY(-5px);
   box-shadow: var(--shadow-xl);
   border-color: var(--saffron-light);
+}
+
+/* ============================================================
+   BURNT ORANGE GRADIENT UTILITIES
+   ============================================================ */
+.bg-burnt-orange { background: #C2410C; }
+.bg-burnt-orange-light { background: #EA580C; }
+.text-burnt-orange { color: #C2410C; }
+.text-golden { color: #F59E0B; }
+.grad-burnt-orange { background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%); }
+.grad-warm-dark { background: linear-gradient(135deg, #0C0705 0%, #1A0E08 100%); }
+
+/* Motion utilities */
+.motion-safe-transition {
+  transition: transform var(--transition-base), opacity var(--transition-base);
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe-transition { transition: none; }
 }
 .food-card-img {
   position: relative;

@@ -100,9 +100,12 @@ async function runLaunchReadinessTests() {
 
   // ── Priority 4: Admin audit action types exist in source ──
   try {
-    const auditSource = await import('fs/promises').then((fs) =>
-      fs.readFile(require('path').join(__dirname, 'services/audit.service.ts'), 'utf8')
-    );
+    const fs = await import('fs');
+    const path = await import('path');
+    const directPath = path.join(__dirname, 'services/audit.service.ts');
+    const srcPath = path.join(__dirname, '../src/services/audit.service.ts');
+    const auditFile = fs.existsSync(directPath) ? directPath : srcPath;
+    const auditSource = await fs.promises.readFile(auditFile, 'utf8');
     assert(auditSource.includes('ADMIN_ASSIGN_RIDER'), 'Audit log includes ADMIN_ASSIGN_RIDER');
     assert(auditSource.includes('ADMIN_REFUND_PAYMENT'), 'Audit log includes ADMIN_REFUND_PAYMENT');
     assert(auditSource.includes('ADMIN_RESET_RIDER_PASSWORD'), 'Audit log includes ADMIN_RESET_RIDER_PASSWORD');

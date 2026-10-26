@@ -15,35 +15,54 @@ const MOCK_CATEGORIES: MenuCategory[] = [
 ];
 
 const MOCK_ITEMS: MenuItem[] = [
-  { id: 1, name: "Karachi Special Biryani", description: "The original Karachi-style beef biryani with fragrant basmati, saffron, and whole spices.", price: 380, categoryId: 1, isAvailable: true, isFeatured: true, isSpicy: true, preparationTime: 20 },
-  { id: 2, name: "Chicken Biryani",         description: "Tender chicken pieces cooked with aromatic spices and layered with perfectly cooked rice.", price: 320, categoryId: 1, isAvailable: true, isFeatured: true, preparationTime: 18 },
-  { id: 3, name: "Mutton Pulao",            description: "Slow-cooked mutton with whole spices, served with aromatic rice infused with the bone stock.", price: 420, categoryId: 2, isAvailable: true, isFeatured: true, isSpicy: false, preparationTime: 25 },
-  { id: 4, name: "Chicken Pulao",           description: "Flavourful chicken pulao with a light, golden broth that elevates every grain of rice.", price: 290, categoryId: 2, isAvailable: true, preparationTime: 20 },
-  { id: 5, name: "Dahi Raita",              description: "Fresh whipped yogurt with roasted cumin, mint, and a hint of red chilli.", price: 80, categoryId: 3, isAvailable: true, preparationTime: 5 },
-  { id: 6, name: "Aloo Raita",              description: "Chunky potato raita with spiced yogurt — the perfect side for our biryani.", price: 90, categoryId: 3, isAvailable: true, preparationTime: 5 },
-  { id: 7, name: "Lassi (Sweet)",           description: "Creamy, chilled sweet lassi made with fresh yogurt — a Pakistani classic.", price: 120, categoryId: 4, isAvailable: true, preparationTime: 3 },
-  { id: 8, name: "Rooh Afza Drink",         description: "Refreshing chilled Rooh Afza with milk and a touch of rose water.", price: 100, categoryId: 4, isAvailable: true, preparationTime: 3 },
+  { id: 1, name: "Special Biryani", description: "Fragrant basmati, saffron, and whole spices.", price: 380, categoryId: 1, isAvailable: true, isFeatured: true, isSpicy: true, preparationTime: 20 },
+  { id: 2, name: "Chicken Biryani", description: "Tender chicken pieces cooked with aromatic spices and layered with perfectly cooked rice.", price: 320, categoryId: 1, isAvailable: true, isFeatured: true, preparationTime: 18 },
+  { id: 3, name: "Mutton Pulao", description: "Slow-cooked mutton with whole spices, served with aromatic rice infused with the bone stock.", price: 420, categoryId: 2, isAvailable: true, isFeatured: true, isSpicy: false, preparationTime: 25 },
+  { id: 4, name: "Chicken Pulao", description: "Flavourful chicken pulao with a light, golden broth that elevates every grain of rice.", price: 290, categoryId: 2, isAvailable: true, preparationTime: 20 },
+  { id: 5, name: "Dahi Raita", description: "Fresh whipped yogurt with roasted cumin, mint, and a hint of red chilli.", price: 80, categoryId: 3, isAvailable: true, preparationTime: 5 },
+  { id: 6, name: "Aloo Raita", description: "Chunky potato raita with spiced yogurt.", price: 90, categoryId: 3, isAvailable: true, preparationTime: 5 },
+  { id: 7, name: "Lassi (Sweet)", description: "Creamy, chilled sweet lassi made with fresh yogurt.", price: 120, categoryId: 4, isAvailable: true, preparationTime: 3 },
+  { id: 8, name: "Rooh Afza Drink", description: "Refreshing chilled drink with milk and a touch of rose water.", price: 100, categoryId: 4, isAvailable: true, preparationTime: 3 },
 ];
 
-// ── Stats Data ──────────────────────────────────────────────
 const STATS = [
-  { value: "5,000+", label: "Happy Customers" },
-  { value: "4.8★",   label: "Average Rating" },
-  { value: "30min",  label: "Avg Delivery" },
-  { value: "2.2km",  label: "Delivery Radius" },
+  { value: "5,000+", label: "Happy Customers",  icon: "😊" },
+  { value: "4.8★",   label: "Average Rating",    icon: "⭐" },
+  { value: "30min",  label: "Avg Delivery Time",  icon: "🚴" },
+  { value: "2.2km",  label: "Delivery Radius",   icon: "📍" },
 ];
 
-// ── Why Choose Us ───────────────────────────────────────────
 const FEATURES = [
-  { icon: "🌿", title: "Fresh & Authentic", text: "Prepared daily with original Karachi spice blends and premium ingredients." },
-  { icon: "🚴", title: "Fast Delivery",     text: "Our riders deliver hot food to your doorstep within 30 minutes." },
-  { icon: "🔒", title: "Secure Payments",   text: "Pay via Cash, JazzCash, Easypaisa, or Credit Card — all secured." },
-  { icon: "📱", title: "Easy Ordering",     text: "Order in seconds — track your food in real-time on our website or app." },
+  { icon: "🌿", title: "Fresh & Authentic",   text: "Prepared daily with premium ingredients and curated spice blends." },
+  { icon: "🚴", title: "Fast Delivery",        text: "Our riders deliver hot food to your doorstep within 30 minutes." },
+  { icon: "🔒", title: "Secure Payments",      text: "Pay via Cash, JazzCash, Easypaisa or Cards — fully secured." },
+  { icon: "📱", title: "Real-time Tracking",   text: "Order and track your food in real-time from kitchen to door." },
 ];
+
+function useScrollReveal() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+    );
+    const elements = document.querySelectorAll(".reveal");
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+}
 
 export default function HomePage() {
   const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading]         = useState(true);
+
+  useScrollReveal();
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -66,387 +85,265 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ── HERO SECTION ──────────────────────────────────── */}
+      <style>{`
+        /* Scroll reveal */
+        .reveal {
+          opacity: 0;
+          transform: translateY(28px);
+          transition:
+            opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+            transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal.is-visible { opacity: 1; transform: translateY(0); }
+        .reveal-d1 { transition-delay: 80ms; }
+        .reveal-d2 { transition-delay: 160ms; }
+        .reveal-d3 { transition-delay: 240ms; }
+        .reveal-d4 { transition-delay: 320ms; }
+        .reveal-d5 { transition-delay: 400ms; }
+
+        /* Hero floating elements */
+        @keyframes hero-float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          33%       { transform: translateY(-10px) rotate(2deg); }
+          66%       { transform: translateY(-6px) rotate(-1deg); }
+        }
+        @keyframes hero-float-alt {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50%       { transform: translateY(-14px) rotate(-3deg); }
+        }
+        .float-hero    { animation: hero-float     4s ease-in-out infinite; }
+        .float-hero-alt { animation: hero-float-alt 5s ease-in-out infinite; }
+
+        /* Stat counter shimmer */
+        .stat-shine:hover::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(194,65,12,0.08) 0%, transparent 60%);
+          border-radius: inherit;
+          pointer-events: none;
+        }
+        .stat-shine { position: relative; }
+
+        /* Category card hover */
+        .cat-card {
+          transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                      box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                      border-color 0.2s ease;
+        }
+        .cat-card:hover { transform: translateY(-4px); }
+
+        /* Feature card hover */
+        .feat-card {
+          transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                      box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .feat-card:hover { transform: translateY(-4px); }
+
+        @media (prefers-reduced-motion: reduce) {
+          .reveal, .cat-card, .feat-card { transition: opacity 0.3s ease; transform: none !important; }
+          .float-hero, .float-hero-alt { animation: none; }
+        }
+      `}</style>
+
+      {/* ── HERO ─────────────────────────────────────────────── */}
+      {/* ── HERO ─────────────────────────────────────────────── */}
       <section
-        className="hero-pattern"
+        className="relative overflow-hidden pt-10 pb-20 md:pt-16 md:pb-28"
         style={{
-          background: "var(--grad-hero)",
-          minHeight: "92vh",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          position: "relative",
-          overflow: "hidden",
+          background: "linear-gradient(160deg, #0C0705 0%, #1A0E08 50%, #24130B 100%)",
+          color: "#fff",
         }}
       >
-        {/* Decorative blobs */}
-        <div
-          style={{
-            position: "absolute",
-            top: "-120px",
-            right: "-120px",
-            width: "480px",
-            height: "480px",
-            borderRadius: "50%",
-            background: "rgba(245, 158, 11, 0.12)",
-            filter: "blur(60px)",
-            pointerEvents: "none",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: "-80px",
-            left: "-80px",
-            width: "360px",
-            height: "360px",
-            borderRadius: "50%",
-            background: "rgba(124, 45, 18, 0.2)",
-            filter: "blur(50px)",
-            pointerEvents: "none",
-          }}
-        />
-        {/* Floating spice orbs */}
-        {["🌶️", "🍃", "⭐", "✨"].map((s, i) => (
-          <span
-            key={i}
-            className="animate-float"
-            style={{
-              position: "absolute",
-              fontSize: "1.8rem",
-              opacity: 0.25,
-              top: `${20 + i * 18}%`,
-              left: i % 2 === 0 ? `${8 + i * 3}%` : undefined,
-              right: i % 2 !== 0 ? `${8 + i * 3}%` : undefined,
-              animationDelay: `${i * 0.7}s`,
-              pointerEvents: "none",
-            }}
-          >
-            {s}
-          </span>
-        ))}
+        {/* Warm glow orbs */}
+        <div className="absolute top-[-8%] left-[-8%] w-[52%] h-[52%] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(194,65,12,0.18) 0%, transparent 70%)" }} />
+        <div className="absolute bottom-[-10%] right-[-8%] w-[44%] h-[44%] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(234,88,12,0.14) 0%, transparent 70%)" }} />
+        <div className="absolute top-[30%] right-[15%] w-[28%] h-[28%] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(245,158,11,0.10) 0%, transparent 70%)" }} />
 
-        <div className="container" style={{ position: "relative", zIndex: 1 }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              alignItems: "center",
-              gap: "48px",
-              padding: "80px 0 60px",
-            }}
-          >
+        <div className="container relative z-10 px-6 mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
             {/* Left — Text */}
-            <div style={{ maxWidth: "560px" }}>
-              <div
-                className="animate-fade-up"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  background: "rgba(254, 243, 199, 0.15)",
-                  backdropFilter: "blur(8px)",
-                  border: "1px solid rgba(254, 243, 199, 0.25)",
-                  borderRadius: "99px",
-                  padding: "7px 18px",
-                  fontSize: "0.825rem",
-                  fontWeight: 600,
-                  color: "#FEF3C7",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  marginBottom: "20px",
-                }}
-              >
-                🍛 UCP Branch · Now Open
+            <div className="max-w-2xl">
+              {/* Eyebrow badge */}
+              <div className="reveal inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-6 text-xs font-semibold tracking-[0.12em] uppercase" style={{ background: "rgba(194,65,12,0.15)", border: "1px solid rgba(194,65,12,0.3)", color: "#FBBF24" }}>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "#10b981" }} />
+                  <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#10b981" }} />
+                </span>
+                Delivery Platform • Fast &amp; Reliable
               </div>
 
-              <h1
-                className="animate-fade-up delay-100"
-                style={{
-                  fontFamily: "Poppins, sans-serif",
-                  fontWeight: 900,
-                  fontSize: "clamp(2.4rem, 5vw, 3.75rem)",
-                  lineHeight: 1.1,
-                  color: "#FEF3C7",
-                  marginBottom: "20px",
-                }}
-              >
-                The Taste of{" "}
-                <span
-                  style={{
-                    color: "#F59E0B",
-                    display: "block",
-                  }}
-                >
-                  Karachi Biryani
+              <h1 className="reveal reveal-d1 font-extrabold leading-[1.08] mb-6 tracking-tight" style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)" }}>
+                GOOD FOOD.<br />
+                <span style={{
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  backgroundImage: "linear-gradient(135deg, #F59E0B 0%, #EA580C 60%, #C2410C 100%)",
+                }}>
+                  DELIVERED FAST.
                 </span>
-                In Lahore
               </h1>
 
-              <p
-                className="animate-fade-up delay-200"
-                style={{
-                  fontSize: "1.0625rem",
-                  color: "rgba(254, 243, 199, 0.82)",
-                  lineHeight: 1.7,
-                  marginBottom: "36px",
-                  maxWidth: "460px",
-                }}
-              >
-                Authentic, fresh, and fragrant — straight from Karachi&apos;s famous
-                streets to your doorstep. Fast delivery within the UCP area.
+              <p className="reveal reveal-d2 leading-relaxed mb-8 max-w-[46ch]" style={{ fontSize: "1.1rem", color: "rgba(255,249,243,0.76)" }}>
+                Delicious food delivered fast to your doorstep. Freshly prepared meals, live real-time tracking, and doorstep delivery in under 30 minutes.
               </p>
 
-              <div
-                className="animate-fade-up delay-300"
-                style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}
-              >
+              {/* CTAs */}
+              <div className="reveal reveal-d3 flex flex-wrap gap-4 items-center mb-8">
                 <Link
                   href="/menu"
+                  className="group inline-flex items-center justify-center gap-3 font-bold rounded-full transition-all"
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "15px 32px",
-                    borderRadius: "99px",
-                    background: "#F59E0B",
-                    color: "#1C0A00",
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                    textDecoration: "none",
-                    boxShadow: "0 6px 28px rgba(245, 158, 11, 0.45)",
-                    transition: "all 0.2s ease",
+                    background: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+                    color: "#fff",
+                    padding: "14px 28px",
+                    boxShadow: "0 4px 24px rgba(194,65,12,0.40)",
+                    fontSize: "0.9375rem",
                   }}
                 >
-                  🛒 Order Now
+                  Order Now
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-transform duration-300 group-hover:translate-x-1" style={{ background: "rgba(255,255,255,0.18)" }}>→</span>
                 </Link>
-                <a
-                  href="https://wa.me/923054311118?text=Hello%20Muhammad%20Abdullah%2C%20I%20would%20like%20to%20place%20an%20order."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "15px 28px",
-                    borderRadius: "99px",
-                    background: "linear-gradient(135deg, #F97316 0%, #EA580C 50%, #D97706 100%)",
-                    color: "#FFFFFF",
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                    textDecoration: "none",
-                    boxShadow: "0 6px 24px rgba(234, 88, 12, 0.4)",
-                    transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                  }}
-                  className="whatsapp-hero-btn"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.05 4.91A9.816 9.816 0 0 0 12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01zm-7.01 15.24c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.2 8.2 0 0 1 2.42 5.83c0 4.54-3.7 8.23-8.23 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.8-.23-.09-.39-.12-.56.12-.17.25-.66.8-.81.97-.15.17-.3.19-.55.07-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.15-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.18-.47-.3z" />
-                  </svg>
-                  Order on WhatsApp
-                </a>
+
                 <Link
                   href="/menu"
+                  className="inline-flex items-center justify-center gap-2 font-semibold rounded-full"
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "15px 28px",
-                    borderRadius: "99px",
-                    background: "rgba(254, 243, 199, 0.1)",
-                    color: "#FEF3C7",
-                    fontWeight: 600,
-                    fontSize: "1rem",
-                    border: "2px solid rgba(254, 243, 199, 0.3)",
-                    textDecoration: "none",
+                    padding: "14px 28px",
+                    border: "1px solid rgba(255,249,243,0.18)",
+                    color: "rgba(255,249,243,0.85)",
+                    background: "rgba(255,249,243,0.06)",
                     backdropFilter: "blur(8px)",
-                    transition: "all 0.2s ease",
+                    fontSize: "0.9375rem",
                   }}
                 >
-                  View Menu →
+                  Explore Menu
                 </Link>
               </div>
 
-              {/* Delivery note */}
-              <div
-                className="animate-fade-up delay-400"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginTop: "24px",
-                  fontSize: "0.875rem",
-                  color: "rgba(254, 243, 199, 0.65)",
-                }}
-              >
-                <span>✅</span>
-                <span>Free delivery on orders above Rs. 500 · COD available</span>
+              {/* Delivery Badge */}
+              <div className="reveal reveal-d4 inline-flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: "rgba(255,249,243,0.07)", border: "1px solid rgba(255,249,243,0.12)", backdropFilter: "blur(8px)" }}>
+                <span className="text-xl">🚴</span>
+                <span style={{ fontSize: "0.875rem", color: "rgba(255,249,243,0.8)" }}>Average Delivery Time: <span style={{ color: "#F59E0B", fontWeight: 700 }}>25–30 Mins</span></span>
               </div>
             </div>
 
-            {/* Right — Hero Visual */}
-            <div
-              className="animate-scale-in delay-200"
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <div
-                className="animate-float"
-                style={{
-                  width: "clamp(280px, 40vw, 420px)",
-                  height: "clamp(280px, 40vw, 420px)",
-                  borderRadius: "50%",
-                  background:
-                    "radial-gradient(circle at 35% 35%, rgba(245,158,11,0.25), rgba(124,45,18,0.15))",
-                  border: "2px solid rgba(245, 158, 11, 0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "clamp(8rem, 15vw, 13rem)",
-                  boxShadow:
-                    "0 30px 80px rgba(0,0,0,0.35), inset 0 0 60px rgba(245,158,11,0.08)",
-                  backdropFilter: "blur(4px)",
-                  position: "relative",
-                }}
-              >
-                🍛
-                {/* Orbiting elements */}
-                {["🌶️", "🧅", "⭐", "🍃"].map((s, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      position: "absolute",
-                      fontSize: "1.6rem",
-                      top: `${50 + 42 * Math.sin((i * Math.PI * 2) / 4)}%`,
-                      left: `${50 + 42 * Math.cos((i * Math.PI * 2) / 4)}%`,
-                      transform: "translate(-50%, -50%)",
-                      animation: `spin-slow ${8 + i}s linear infinite`,
-                      transformOrigin: `${-42 * Math.cos((i * Math.PI * 2) / 4)}px ${-42 * Math.sin((i * Math.PI * 2) / 4)}px`,
-                    }}
-                  >
-                    {s}
-                  </span>
-                ))}
+            {/* Right — Featured Food Showcase Card */}
+            <div className="reveal reveal-d2 relative hidden lg:flex justify-center items-center">
+              <div className="relative w-full max-w-md rounded-3xl p-6 shadow-2xl" style={{
+                background: "linear-gradient(145deg, rgba(36,19,11,0.92) 0%, rgba(20,10,5,0.96) 100%)",
+                border: "1px solid rgba(245,158,11,0.22)",
+                boxShadow: "0 24px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
+              }}>
+                {/* Dish Presentation */}
+                <div className="relative rounded-2xl overflow-hidden p-8 flex flex-col items-center justify-center text-center mb-5" style={{
+                  background: "radial-gradient(circle at 50% 50%, rgba(234,88,12,0.2) 0%, rgba(12,7,5,0.7) 100%)",
+                  border: "1px solid rgba(194,65,12,0.2)",
+                  minHeight: "220px",
+                }}>
+                  <div className="text-7xl mb-3 select-none filter drop-shadow-[0_12px_24px_rgba(234,88,12,0.4)]">
+                    🍛
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" style={{ background: "rgba(245,158,11,0.2)", color: "#FBBF24" }}>
+                    🔥 Signature Dish
+                  </div>
+                </div>
+
+                {/* Info row */}
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-1">Special Biryani</h3>
+                    <p className="text-xs" style={{ color: "rgba(255,249,243,0.7)" }}>Aromatic basmati, saffron &amp; whole spices</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs block text-amber-400 font-semibold uppercase">Price</span>
+                    <span className="text-2xl font-black text-amber-500 tabular-nums">Rs. 380</span>
+                  </div>
+                </div>
+
+                {/* Bottom perks strip */}
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t" style={{ borderColor: "rgba(255,249,243,0.1)" }}>
+                  <div className="flex items-center gap-2 text-xs" style={{ color: "rgba(255,249,243,0.8)" }}>
+                    <span className="text-amber-400">⭐</span>
+                    <span className="font-semibold">4.8 Rating</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs justify-end" style={{ color: "rgba(255,249,243,0.8)" }}>
+                    <span className="text-emerald-400">⚡</span>
+                    <span className="font-semibold">Hot &amp; Fresh</span>
+                  </div>
+                </div>
               </div>
             </div>
+
           </div>
+        </div>
+      </section>
 
-          {/* Stats Row */}
-          <div
-            className="animate-fade-up delay-500"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "1px",
-              background: "rgba(254, 243, 199, 0.1)",
-              borderRadius: "var(--radius-xl)",
-              overflow: "hidden",
-              border: "1px solid rgba(254, 243, 199, 0.15)",
-              backdropFilter: "blur(8px)",
-              marginBottom: "40px",
-            }}
-          >
+      {/* ── STATS ────────────────────────────────────────────── */}
+      <section className="relative z-20" style={{ marginTop: "-3rem", padding: "0 1.5rem" }}>
+        <div className="mx-auto max-w-5xl reveal">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-0 overflow-hidden rounded-3xl" style={{ border: "1px solid rgba(194,65,12,0.15)", boxShadow: "0 8px 40px rgba(12,7,5,0.25)" }}>
             {STATS.map((stat, i) => (
               <div
                 key={i}
+                className="stat-shine text-center p-6 md:p-8"
                 style={{
-                  padding: "24px",
-                  textAlign: "center",
-                  background: "rgba(254, 243, 199, 0.05)",
+                  background: i % 2 === 0 ? "var(--bg-card)" : "var(--bg-secondary)",
+                  borderRight: i < 3 ? "1px solid var(--border-color)" : "none",
+                  borderBottom: i < 2 ? "1px solid var(--border-color)" : "none",
                 }}
               >
-                <div
-                  style={{
-                    fontFamily: "Poppins, sans-serif",
-                    fontWeight: 800,
-                    fontSize: "1.75rem",
-                    color: "#F59E0B",
-                  }}
-                >
+                <div className="text-2xl mb-1">{stat.icon}</div>
+                <div className="font-black mb-1" style={{
+                  fontSize: "clamp(1.5rem, 3vw, 2rem)",
+                  background: "linear-gradient(135deg, #F59E0B 0%, #EA580C 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}>
                   {stat.value}
                 </div>
-                <div
-                  style={{
-                    fontSize: "0.8rem",
-                    color: "rgba(254, 243, 199, 0.65)",
-                    fontWeight: 500,
-                    marginTop: "4px",
-                  }}
-                >
+                <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                   {stat.label}
                 </div>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Wave divider */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: -2,
-            left: 0,
-            right: 0,
-            lineHeight: 0,
-          }}
-        >
-          <svg
-            viewBox="0 0 1440 80"
-            xmlns="http://www.w3.org/2000/svg"
-            style={{ display: "block", width: "100%" }}
-          >
-            <path
-              d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z"
-              fill="var(--bg-primary)"
-            />
-          </svg>
-        </div>
       </section>
 
-      {/* ── CATEGORY SECTION ──────────────────────────────── */}
-      <section className="section" style={{ paddingBottom: "40px" }}>
-        <div className="container">
-          <div style={{ textAlign: "center", marginBottom: "40px" }}>
-            <div className="section-tag">🍽️ Explore Our Menu</div>
-            <h2 className="section-title">Browse by Category</h2>
-            <p className="section-sub" style={{ margin: "10px auto 0" }}>
-              From fragrant biryanis to refreshing drinks — we have something
-              for every craving.
-            </p>
+      {/* ── CATEGORIES ───────────────────────────────────────── */}
+      <section className="py-28 relative bg-warm-dots" style={{ background: "var(--bg-secondary)" }}>
+        <div className="container mx-auto max-w-7xl px-6">
+          <div className="text-center mb-16 reveal">
+            <span className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-4 text-xs font-bold tracking-[0.12em] uppercase" style={{ background: "rgba(194,65,12,0.1)", color: "#C2410C" }}>🍽️ Explore Menu</span>
+            <h2 className="font-bold" style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)", color: "var(--text-primary)" }}>Browse by Category</h2>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "14px",
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-          >
-            {MOCK_CATEGORIES.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/menu?category=${cat.id}`}
-                style={{ textDecoration: "none" }}
-              >
-                <div
-                  className="category-pill animate-scale-in"
-                  style={{ minWidth: "100px" }}
+          <div className="flex flex-wrap justify-center gap-4">
+            {MOCK_CATEGORIES.map((cat, i) => (
+              <Link key={cat.id} href={`/menu?category=${cat.id}`} className={`reveal reveal-d${i + 1}`}>
+                <div className="cat-card group flex flex-col items-center justify-center rounded-3xl p-6 min-w-[120px] cursor-pointer"
+                  style={{
+                    background: "var(--bg-card)",
+                    border: "1.5px solid var(--border-color)",
+                    boxShadow: "var(--shadow-card)",
+                  }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.borderColor = "#EA580C";
+                    el.style.boxShadow = "0 8px 24px rgba(194,65,12,0.18)";
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.borderColor = "var(--border-color)";
+                    el.style.boxShadow = "var(--shadow-card)";
+                  }}
                 >
-                  <span style={{ fontSize: "2rem" }}>{cat.emoji}</span>
-                  <span
-                    style={{
-                      fontSize: "0.875rem",
-                      fontWeight: 600,
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    {cat.name}
-                  </span>
+                  <span className="text-4xl mb-3 block transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110">{cat.emoji}</span>
+                  <span className="text-sm font-semibold transition-colors duration-200" style={{ color: "var(--text-secondary)" }}>{cat.name}</span>
                 </div>
               </Link>
             ))}
@@ -454,54 +351,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── FEATURED ITEMS ────────────────────────────────── */}
-      <section className="section" style={{ background: "var(--bg-secondary)" }}>
-        <div className="container">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "36px",
-              flexWrap: "wrap",
-              gap: "16px",
-            }}
-          >
+      {/* ── FEATURED ITEMS ───────────────────────────────────── */}
+      <section className="py-28" style={{ background: "var(--bg-primary)" }}>
+        <div className="container mx-auto max-w-7xl px-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 reveal">
             <div>
-              <div className="section-tag">⭐ Fan Favourites</div>
-              <h2 className="section-title">Most Popular Items</h2>
+              <span className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-3 text-xs font-bold tracking-[0.12em] uppercase" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706" }}>⭐ Fan Favourites</span>
+              <h2 className="font-bold" style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)", color: "var(--text-primary)" }}>Trending Now</h2>
             </div>
-            <Link href="/menu" className="btn btn-secondary">
-              See Full Menu →
+            <Link href="/menu" className="inline-flex items-center gap-2 font-semibold transition-colors duration-200 group" style={{ color: "#EA580C" }}>
+              See Full Menu
+              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
             </Link>
           </div>
 
           {isLoading ? (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                gap: "24px",
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="skeleton" style={{ height: "320px" }} />
+                <div key={i} className="h-[360px] rounded-3xl skeleton" />
               ))}
             </div>
           ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                gap: "24px",
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {featuredItems.map((item, i) => (
-                <div
-                  key={item.id}
-                  className="animate-fade-up"
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                >
+                <div key={item.id} className={`reveal reveal-d${Math.min(i + 1, 5)}`}>
                   <FoodCard item={item} />
                 </div>
               ))}
@@ -510,226 +383,62 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── WHY CHOOSE US ─────────────────────────────────── */}
-      <section className="section">
-        <div className="container">
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <div className="section-tag">💎 Why Choose Us</div>
-            <h2 className="section-title">Made with Passion, Delivered with Care</h2>
+      {/* ── WHY CHOOSE US ────────────────────────────────────── */}
+      <section className="py-28 relative bg-warm-mesh" style={{ background: "var(--bg-secondary)" }}>
+        <div className="container mx-auto max-w-7xl px-6">
+          <div className="text-center mb-16 reveal">
+            <span className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-4 text-xs font-bold tracking-[0.12em] uppercase" style={{ background: "rgba(194,65,12,0.1)", color: "#C2410C" }}>💎 Why Choose Us</span>
+            <h2 className="font-bold" style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)", color: "var(--text-primary)" }}>Made with Passion, Delivered with Care</h2>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "24px",
-            }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map((f, i) => (
               <div
                 key={i}
-                className="card animate-fade-up"
+                className={`feat-card reveal reveal-d${i + 1} rounded-3xl p-8`}
                 style={{
-                  padding: "32px 24px",
-                  textAlign: "center",
-                  animationDelay: `${i * 0.1}s`,
-                  background: "var(--grad-card)",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-color)",
+                  boxShadow: "var(--shadow-card)",
                 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-lg)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-card)"; }}
               >
-                <div style={{ fontSize: "2.8rem", marginBottom: "16px" }}>
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-6" style={{ background: "rgba(194,65,12,0.1)" }}>
                   {f.icon}
                 </div>
-                <h3
-                  style={{
-                    fontFamily: "Poppins, sans-serif",
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                    marginBottom: "8px",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {f.title}
-                </h3>
-                <p
-                  style={{
-                    fontSize: "0.875rem",
-                    color: "var(--text-muted)",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {f.text}
-                </p>
+                <h3 className="text-lg font-bold mb-3" style={{ color: "var(--text-primary)" }}>{f.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{f.text}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── HOW TO ORDER ──────────────────────────────────── */}
-      <section
-        className="section"
-        style={{
-          background: "var(--grad-maroon)",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage:
-              "radial-gradient(circle at 20% 50%, rgba(245,158,11,0.12) 0%, transparent 60%), radial-gradient(circle at 80% 30%, rgba(92,26,8,0.3) 0%, transparent 50%)",
-          }}
-        />
-        <div className="container" style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <div
-              className="section-tag"
-              style={{
-                background: "rgba(245,158,11,0.2)",
-                color: "#F59E0B",
-              }}
-            >
-              📱 How It Works
-            </div>
-            <h2
-              className="section-title"
-              style={{ color: "#FEF3C7" }}
-            >
-              Order in 3 Simple Steps
-            </h2>
-          </div>
-
-          <div
+      {/* ── CTA BANNER ───────────────────────────────────────── */}
+      <section className="py-28" style={{ background: "linear-gradient(135deg, #0C0705 0%, #1A0E08 100%)" }}>
+        <div className="container mx-auto max-w-4xl px-6 text-center reveal">
+          <h2 className="font-extrabold mb-4" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "#FFF9F3" }}>Ready to Order?</h2>
+          <p className="mb-10 max-w-md mx-auto" style={{ color: "rgba(255,249,243,0.6)", fontSize: "1.0625rem" }}>Fresh food, real-time tracking, and seamless delivery — all in one place.</p>
+          <Link
+            href="/menu"
+            className="group inline-flex items-center gap-3 font-bold rounded-full"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "32px",
-              position: "relative",
+              background: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+              color: "#fff",
+              padding: "16px 36px",
+              fontSize: "1.0625rem",
+              boxShadow: "0 8px 32px rgba(194,65,12,0.5)",
+              transition: "transform 0.28s cubic-bezier(0.22,1,0.36,1), box-shadow 0.28s cubic-bezier(0.22,1,0.36,1)",
             }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px) scale(1.02)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0) scale(1)"; }}
           >
-            {/* Connector line */}
-            <div
-              style={{
-                position: "absolute",
-                top: "40px",
-                left: "calc(16.66% + 20px)",
-                right: "calc(16.66% + 20px)",
-                height: "3px",
-                background:
-                  "linear-gradient(to right, rgba(245,158,11,0.4), rgba(245,158,11,0.4))",
-                borderRadius: "99px",
-              }}
-            />
-
-            {[
-              { step: "01", icon: "🛒", title: "Browse & Add", text: "Explore our menu and add your favourite items to your cart." },
-              { step: "02", icon: "📍", title: "Set Location",  text: "Enter your delivery address (within 2.2km of UCP campus)." },
-              { step: "03", icon: "🚴", title: "Enjoy!",        text: "Place your order and wait — hot food delivered in ~30 min." },
-            ].map((s, i) => (
-              <div
-                key={i}
-                className="animate-fade-up"
-                style={{
-                  textAlign: "center",
-                  animationDelay: `${i * 0.15}s`,
-                }}
-              >
-                <div
-                  style={{
-                    width: "80px",
-                    height: "80px",
-                    borderRadius: "50%",
-                    background: "rgba(245, 158, 11, 0.15)",
-                    border: "2px solid rgba(245, 158, 11, 0.4)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    margin: "0 auto 20px",
-                    fontSize: "2rem",
-                    position: "relative",
-                    zIndex: 1,
-                  }}
-                >
-                  {s.icon}
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: "-8px",
-                      right: "-8px",
-                      width: "26px",
-                      height: "26px",
-                      borderRadius: "50%",
-                      background: "#F59E0B",
-                      color: "#1C0A00",
-                      fontSize: "0.65rem",
-                      fontWeight: 800,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {s.step}
-                  </span>
-                </div>
-                <h3
-                  style={{
-                    fontFamily: "Poppins, sans-serif",
-                    fontWeight: 700,
-                    fontSize: "1.1rem",
-                    color: "#FEF3C7",
-                    marginBottom: "8px",
-                  }}
-                >
-                  {s.title}
-                </h3>
-                <p style={{ fontSize: "0.9rem", color: "rgba(254,243,199,0.68)", lineHeight: 1.6 }}>
-                  {s.text}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <div style={{ textAlign: "center", marginTop: "48px" }}>
-            <Link
-              href="/menu"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "16px 40px",
-                borderRadius: "99px",
-                background: "#F59E0B",
-                color: "#1C0A00",
-                fontWeight: 700,
-                fontSize: "1rem",
-                textDecoration: "none",
-                boxShadow: "0 8px 32px rgba(245, 158, 11, 0.4)",
-                transition: "all 0.2s ease",
-              }}
-            >
-              🍛 Start Ordering
-            </Link>
-          </div>
+            Explore Full Menu
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-transform duration-300 group-hover:translate-x-1" style={{ background: "rgba(255,255,255,0.2)" }}>→</span>
+          </Link>
         </div>
       </section>
-
-      {/* Responsive grid for hero */}
-      <style>{`
-        @media (max-width: 768px) {
-          [data-hero-grid] {
-            grid-template-columns: 1fr !important;
-          }
-          [data-stats-grid] {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
-          [data-steps-grid] {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
     </>
   );
 }

@@ -21,7 +21,6 @@ const CATEGORY_EMOJIS: Record<string, string> = {
 export default function FoodCard({ item, className = "" }: FoodCardProps) {
   const { addItem, increment, decrement, getItemQty } = useCart();
   const [added, setAdded] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const qty = getItemQty(item.id);
 
   const handleAdd = () => {
@@ -36,278 +35,137 @@ export default function FoodCard({ item, className = "" }: FoodCardProps) {
 
   return (
     <div
-      className={`food-card ${className}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        borderRadius: "16px",
-        overflow: "hidden",
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        boxShadow: isHovered
-          ? "0 16px 36px -8px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(245, 158, 11, 0.15)"
-          : "0 4px 16px -2px rgba(0, 0, 0, 0.08)",
-        transform: isHovered ? "translateY(-4px)" : "translateY(0)",
-        transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-        display: "flex",
-        flexDirection: "column",
-      }}
+      className={`group rounded-3xl border border-black/5 dark:border-white/10 bg-black/5 p-2 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:shadow-xl ${className}`}
     >
-      {/* Image Area */}
-      <div
-        className="food-card-img"
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "190px",
-          overflow: "hidden",
-          background: "#1E293B",
-        }}
-      >
-        {item.imageUrl ? (
-          <img
-            src={item.imageUrl}
-            alt={item.name}
-            loading="lazy"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transform: isHovered ? "scale(1.08)" : "scale(1)",
-              transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "linear-gradient(135deg, #7C2D12 0%, #B45309 50%, #D97706 100%)",
-              fontSize: "3.5rem",
-              transform: isHovered ? "scale(1.08)" : "scale(1)",
-              transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
-          >
-            {emoji}
-          </div>
-        )}
-
-        {/* Badges Overlay */}
-        <div
-          style={{
-            position: "absolute",
-            top: "12px",
-            left: "12px",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "6px",
-            zIndex: 2,
-          }}
-        >
-          {item.isFeatured && (
-            <span
-              style={{
-                background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
-                color: "#1C0A00",
-                fontSize: "0.725rem",
-                fontWeight: 800,
-                padding: "4px 10px",
-                borderRadius: "20px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                letterSpacing: "0.02em",
-              }}
-            >
-              🔥 Bestseller
-            </span>
-          )}
-          {item.isSpicy && (
-            <span
-              style={{
-                background: "linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)",
-                color: "#FFFFFF",
-                fontSize: "0.725rem",
-                fontWeight: 800,
-                padding: "4px 10px",
-                borderRadius: "20px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-              }}
-            >
-              🌶️ Spicy
-            </span>
-          )}
-        </div>
-
-        {/* Availability Badge */}
-        <div
-          style={{
-            position: "absolute",
-            top: "12px",
-            right: "12px",
-            zIndex: 2,
-          }}
-        >
-          <span
-            style={{
-              background: item.isAvailable && item.inStock !== false ? "rgba(16, 185, 129, 0.9)" : "rgba(239, 68, 68, 0.9)",
-              color: "#FFFFFF",
-              backdropFilter: "blur(4px)",
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              padding: "4px 8px",
-              borderRadius: "6px",
-            }}
-          >
-            {item.isAvailable && item.inStock !== false ? "In Stock" : "Out of Stock"}
-          </span>
-        </div>
-
-        {/* Unavailable Overlay */}
-        {(!item.isAvailable || item.inStock === false) && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "rgba(15, 23, 42, 0.75)",
-              backdropFilter: "blur(2px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#FFFFFF",
-              fontWeight: 800,
-              fontSize: "0.95rem",
-              letterSpacing: "0.03em",
-              zIndex: 3,
-            }}
-          >
-            Currently Unavailable
-          </div>
-        )}
-      </div>
-
-      {/* Info Area */}
-      <div
-        style={{
-          padding: "18px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          flex: 1,
-        }}
-      >
-        <div>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
-            <h3
-              style={{
-                fontFamily: "Poppins, sans-serif",
-                fontWeight: 800,
-                fontSize: "1.05rem",
-                color: "var(--text-primary)",
-                lineHeight: 1.3,
-                marginBottom: "4px",
-              }}
-            >
-              {item.name}
-            </h3>
-          </div>
-
-          {item.description && (
-            <p
-              className="line-clamp-2"
-              style={{
-                fontSize: "0.825rem",
-                color: "var(--text-secondary)",
-                lineHeight: 1.5,
-              }}
-            >
-              {item.description}
-            </p>
-          )}
-        </div>
-
-        {/* Prep Time & Meta */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            fontSize: "0.78rem",
-            color: "var(--text-secondary)",
-            fontWeight: 600,
-            marginTop: "auto",
-            paddingTop: "4px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <span>⏱️</span>
-            <span>{item.preparationTime || 20} mins prep</span>
-          </div>
-          <span>•</span>
-          <div style={{ color: "#F59E0B" }}>
-            Fresh Daily
-          </div>
-        </div>
-
-        {/* Price & Action */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            paddingTop: "10px",
-            borderTop: "1px solid var(--border)",
-            marginTop: "6px",
-          }}
-        >
-          <div>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", display: "block" }}>Price</span>
-            <span style={{ fontSize: "1.15rem", fontWeight: 900, color: "var(--saffron)" }}>
-              Rs. {parseFloat(item.price.toString()).toLocaleString()}
-            </span>
-          </div>
-
-          {!item.isAvailable || item.inStock === false ? (
-            <span
-              style={{
-                fontSize: "0.8rem",
-                color: "var(--text-muted)",
-                fontStyle: "italic",
-              }}
-            >
-              Unavailable
-            </span>
-          ) : qty === 0 ? (
-            <button
-              onClick={handleAdd}
-              style={{
-                background: added ? "var(--success)" : "var(--saffron)",
-                color: "#1C0A00",
-                border: "none",
-                fontWeight: 800,
-                fontSize: "0.85rem",
-                padding: "9px 20px",
-                borderRadius: "20px",
-                cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(245, 158, 11, 0.35)",
-                transition: "all 0.2s ease",
-                transform: added ? "scale(0.96)" : "scale(1)",
-              }}
-            >
-              {added ? "✓ Added!" : "+ Add to Cart"}
-            </button>
+      <div className="relative flex flex-col h-full overflow-hidden rounded-2xl border border-black/5 dark:border-white/5" style={{ background: "var(--bg-card)" }}>
+        {/* Image Area */}
+        <div className="relative w-full h-[190px] overflow-hidden flex items-center justify-center text-5xl shrink-0" style={{ background: "var(--surface)" }}>
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105"
+            />
           ) : (
-            <div className="qty-control" style={{ display: "flex", alignItems: "center", gap: "10px", background: "var(--bg-secondary)", padding: "4px 10px", borderRadius: "20px", border: "1px solid var(--border)" }}>
-              <button onClick={() => decrement(item.id)} aria-label="Decrease" style={{ border: "none", background: "none", cursor: "pointer", fontWeight: 800, color: "var(--text-primary)", fontSize: "1rem" }}>
-                −
-              </button>
-              <span style={{ fontWeight: 800, fontSize: "0.9rem" }}>{qty}</span>
-              <button onClick={() => increment(item.id)} aria-label="Increase" style={{ border: "none", background: "none", cursor: "pointer", fontWeight: 800, color: "var(--text-primary)", fontSize: "1rem" }}>
-                +
-              </button>
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-5xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
+              {emoji}
             </div>
           )}
+
+          {/* Badges Overlay */}
+          <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+            {item.isFeatured && (
+              <span className="bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm tracking-wide">
+                🔥 Bestseller
+              </span>
+            )}
+            {item.isSpicy && (
+              <span className="bg-gradient-to-br from-red-400 to-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm tracking-wide">
+                🌶️ Spicy
+              </span>
+            )}
+          </div>
+
+          {/* Availability Badge */}
+          <div className="absolute top-3 right-3 z-10">
+            <span
+              className={`text-white text-[11px] font-bold px-2 py-1 rounded-md backdrop-blur-md ${
+                item.isAvailable && item.inStock !== false ? "bg-emerald-500/90" : "bg-red-500/90"
+              }`}
+            >
+              {item.isAvailable && item.inStock !== false ? "In Stock" : "Out of Stock"}
+            </span>
+          </div>
+
+          {/* Unavailable Overlay */}
+          {(!item.isAvailable || item.inStock === false) && (
+            <div className="absolute inset-0 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center text-white font-bold text-sm tracking-wide z-20">
+              Currently Unavailable
+            </div>
+          )}
+        </div>
+
+        {/* Info Area */}
+        <div className="p-4 flex flex-col gap-2.5 flex-1">
+          <div>
+            <h3 className="font-semibold text-base leading-tight mb-1" style={{ color: "var(--text-primary)" }}>
+              {item.name}
+            </h3>
+            {item.description && (
+              <p className="line-clamp-2 text-sm leading-snug" style={{ color: "var(--text-secondary)" }}>
+                {item.description}
+              </p>
+            )}
+          </div>
+
+          {/* Prep Time & Meta */}
+          <div className="flex items-center gap-3 text-xs font-medium mt-auto pt-1" style={{ color: "var(--text-muted)" }}>
+            <div className="flex items-center gap-1">
+              <span>⏱️</span>
+              <span>{item.preparationTime || 20} mins prep</span>
+            </div>
+            <span>•</span>
+            <div className="text-amber-500">Fresh Daily</div>
+          </div>
+
+          {/* Price & Action */}
+          <div className="flex items-center justify-between pt-3 mt-1" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+            <div>
+              <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Price</span>
+              <span className="text-lg font-bold text-amber-500 tabular-nums">
+                Rs. {parseFloat(item.price.toString()).toLocaleString()}
+              </span>
+            </div>
+
+            {!item.isAvailable || item.inStock === false ? (
+              <span className="text-xs text-slate-400 italic">Unavailable</span>
+            ) : qty === 0 ? (
+              <button
+                onClick={handleAdd}
+                className={`group/btn relative flex items-center justify-center h-9 px-4 rounded-full font-bold text-sm transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                  added 
+                    ? "bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-95" 
+                    : "bg-amber-500 text-amber-950 hover:bg-amber-400 shadow-md hover:shadow-xl hover:-translate-y-0.5"
+                }`}
+              >
+                {added ? (
+                  <span className="flex items-center gap-1">Added! ✓</span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    Add
+                    <span className="bg-white/20 rounded-full w-5 h-5 flex items-center justify-center text-[10px] transition-transform group-hover/btn:rotate-180">
+                      +
+                    </span>
+                  </span>
+                )}
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 p-1 rounded-full" style={{ background: "var(--surface)", border: "1px solid var(--border-color)" }}>
+                <button
+                  onClick={() => decrement(item.id)}
+                  aria-label="Decrease"
+                  className="w-7 h-7 flex items-center justify-center rounded-full font-bold transition-colors shadow-sm"
+                  style={{ color: "var(--text-primary)", background: "var(--bg-card)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--saffron)"; (e.currentTarget as HTMLElement).style.color = "#fff"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-card)"; (e.currentTarget as HTMLElement).style.color = "var(--text-primary)"; }}
+                >
+                  −
+                </button>
+                <span className="font-bold text-sm w-4 text-center">{qty}</span>
+                <button
+                  onClick={() => increment(item.id)}
+                  aria-label="Increase"
+                  className="w-7 h-7 flex items-center justify-center rounded-full font-bold transition-colors shadow-sm"
+                  style={{ color: "var(--text-primary)", background: "var(--bg-card)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--saffron)"; (e.currentTarget as HTMLElement).style.color = "#fff"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-card)"; (e.currentTarget as HTMLElement).style.color = "var(--text-primary)"; }}
+                >
+                  +
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

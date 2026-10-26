@@ -34,18 +34,12 @@ import {
 // ─── Navigation links ─────────────────────────────────────────────────────────
 
 const ADMIN_LINKS = [
-  { href: "/dashboard",             label: "Dashboard",           icon: LayoutDashboard },
+  { href: "/dashboard",             label: "Overview",            icon: LayoutDashboard },
   { href: "/dashboard/orders",      label: "Orders",              icon: ShoppingBag },
-  { href: "/dashboard/kds",         label: "Kitchen Display",     icon: Monitor },
-  { href: "/dashboard/menu",        label: "Menu & Categories",   icon: Utensils },
-  { href: "/dashboard/inventory",   label: "Inventory",           icon: Package },
-  { href: "/dashboard/customers",   label: "Customers",           icon: Users },
+  { href: "/dashboard/menu",        label: "Menu",                icon: Utensils },
   { href: "/dashboard/riders",      label: "Riders",              icon: Bike },
   { href: "/dashboard/staff",       label: "Staff",               icon: UserCog },
-  { href: "/dashboard/salary",      label: "Salary & Payroll",    icon: DollarSign },
-  { href: "/dashboard/activity",    label: "Activity Center",     icon: Activity },
-  { href: "/dashboard/analytics",   label: "Advanced Analytics",  icon: TrendingUp },
-  { href: "/dashboard/reports",     label: "Reports",             icon: BarChart2 },
+  { href: "/dashboard/analytics",   label: "Analytics",           icon: TrendingUp },
   { href: "/dashboard/settings",    label: "Settings",            icon: Settings },
 ];
 
@@ -89,6 +83,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   // ── Order alerts (runs for the entire admin session) ──────────────────────
   const { pendingCount } = useOrderAlerts({
     onNewOrder: (order) => {
+      try {
+        const audio = new Audio('/alert.mp3'); // Fallback or assume public asset
+        audio.play().catch(e => console.log('Audio play failed', e));
+      } catch (e) {}
+
       addToast({
         type: "warning",
         title: "🔴 New Order Received!",
@@ -213,7 +212,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             background: "var(--bg-card)",
             borderRight: "1px solid var(--border)",
             flexDirection: "column",
-            transition: "width 0.2s ease",
+            transition: "width 0.35s cubic-bezier(0.22, 1, 0.36, 1)",
             position: "sticky",
             top: 0,
             height: "100vh",
@@ -235,10 +234,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             {!collapsed && (
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ fontWeight: 800, color: "var(--maroon)", fontSize: "1.1rem" }}>
-                  Naseeb Admin
+                  Delivery Platform
                 </span>
                 <span style={{ fontSize: "0.7rem", color: "var(--saffron)", textTransform: "uppercase", letterSpacing: "1px" }}>
-                  Control Center
+                  Admin Console
                 </span>
               </div>
             )}
@@ -268,6 +267,18 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      (e.currentTarget as HTMLElement).style.background = 'rgba(194,65,12,0.06)';
+                      (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      (e.currentTarget as HTMLElement).style.background = 'transparent';
+                      (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
+                    }
+                  }}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -278,7 +289,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                     background: active ? "rgba(217,119,6,0.08)" : "transparent",
                     fontWeight: active ? 600 : 500,
                     textDecoration: "none",
-                    transition: "all 0.2s ease",
+                    transition: "all 0.22s cubic-bezier(0.22, 1, 0.36, 1)",
                     justifyContent: collapsed ? "center" : "flex-start",
                     position: "relative",
                     borderLeft: active ? "3px solid var(--saffron)" : "3px solid transparent",
@@ -332,25 +343,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Sidebar Footer */}
           <div style={{ padding: "12px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "6px" }}>
             <button
-              onClick={toggleTheme}
-              style={{
-                display: "flex", alignItems: "center", gap: "12px",
-                padding: "12px", borderRadius: "8px", width: "100%",
-                background: "none", border: "none", cursor: "pointer",
-                color: "var(--text-secondary)",
-                justifyContent: collapsed ? "center" : "flex-start",
-              }}
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              {!collapsed && <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>}
-            </button>
-            <button
               onClick={() => { logout(); window.location.href = "/"; }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
               style={{
                 display: "flex", alignItems: "center", gap: "12px",
                 padding: "12px", borderRadius: "8px", width: "100%",
                 background: "none", border: "none", cursor: "pointer",
                 color: "var(--error)",
+                transition: "background 0.22s ease",
                 justifyContent: collapsed ? "center" : "flex-start",
               }}
             >
@@ -362,36 +363,38 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* ── Mobile Off-Canvas Drawer (Overlay) ────────────────────────────── */}
         <div className="admin-mobile-drawer">
-          {mobileOpen && (
-            <>
-              {/* Dark Backdrop Overlay */}
-              <div
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  background: "rgba(0, 0, 0, 0.6)",
-                  backdropFilter: "blur(4px)",
-                  zIndex: 999,
-                  animation: "fadeIn 0.2s ease-out",
-                }}
-              />
-              {/* Off-canvas Drawer Panel */}
-              <aside
-                style={{
-                  position: "fixed",
-                  top: 0,
-                  left: 0,
-                  bottom: 0,
-                  width: "min(280px, 85vw)",
-                  background: "var(--bg-card)",
-                  zIndex: 1000,
-                  display: "flex",
-                  flexDirection: "column",
-                  boxShadow: "4px 0 24px rgba(0,0,0,0.25)",
-                  animation: "slideRight 0.25s ease-out",
-                }}
-              >
+          <>
+            {/* Dark Backdrop Overlay */}
+            <div
+              onClick={() => setMobileOpen(false)}
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0, 0, 0, 0.6)",
+                backdropFilter: "blur(4px)",
+                zIndex: 999,
+                opacity: mobileOpen ? 1 : 0,
+                pointerEvents: mobileOpen ? 'all' : 'none',
+                transition: 'opacity 0.25s ease',
+              }}
+            />
+            {/* Off-canvas Drawer Panel */}
+            <aside
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: "min(280px, 85vw)",
+                background: "var(--bg-card)",
+                zIndex: 1000,
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "4px 0 24px rgba(0,0,0,0.25)",
+                transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
+                transition: 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+              }}
+            >
                 {/* Mobile Drawer Header */}
                 <div
                   style={{
@@ -405,10 +408,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 >
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontWeight: 800, color: "var(--maroon)", fontSize: "1.1rem" }}>
-                      Naseeb Admin
+                      Delivery Platform
                     </span>
                     <span style={{ fontSize: "0.7rem", color: "var(--saffron)", textTransform: "uppercase", letterSpacing: "1px" }}>
-                      Control Center
+                      Admin Console
                     </span>
                   </div>
                   <button
@@ -475,18 +478,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 {/* Mobile Drawer Footer */}
                 <div style={{ padding: "16px 12px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "6px" }}>
                   <button
-                    onClick={toggleTheme}
-                    style={{
-                      display: "flex", alignItems: "center", gap: "12px",
-                      padding: "12px", borderRadius: "8px", width: "100%",
-                      background: "none", border: "none", cursor: "pointer",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-                    <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
-                  </button>
-                  <button
                     onClick={() => { setMobileOpen(false); logout(); window.location.href = "/"; }}
                     style={{
                       display: "flex", alignItems: "center", gap: "12px",
@@ -500,8 +491,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                   </button>
                 </div>
               </aside>
-            </>
-          )}
+          </>
         </div>
 
         {/* ── Main Content Container ────────────────────────────────────────── */}
@@ -548,13 +538,55 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
             <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
               {/* Global Search Ctrl+K trigger */}
-              <GlobalSearchTrigger onClick={() => { const evt = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }); window.dispatchEvent(evt); }} />
+              <div
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(194,65,12,0.08)';
+                  (e.currentTarget as HTMLElement).style.border = '1px solid rgba(194,65,12,0.2)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.background = 'transparent';
+                  (e.currentTarget as HTMLElement).style.border = '1px solid transparent';
+                }}
+                style={{
+                  borderRadius: '6px',
+                  border: '1px solid transparent',
+                  transition: 'all 0.22s ease',
+                  display: 'flex',
+                }}
+              >
+                <GlobalSearchTrigger onClick={() => { const evt = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }); window.dispatchEvent(evt); }} />
+              </div>
+
               {/* Socket status dot */}
-              <span
-                className="socket-dot"
-                title={isConnected ? "Live — connected" : "Disconnected"}
-                style={{ background: isConnected ? "#10b981" : "#6b7280" }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span
+                  className="socket-dot"
+                  title={isConnected ? 'Live — connected' : 'Offline'}
+                  style={{
+                    background: isConnected ? '#10b981' : '#6b7280',
+                    boxShadow: isConnected ? '0 0 6px rgba(16,185,129,0.5)' : 'none',
+                    transition: 'background 0.4s ease, box-shadow 0.4s ease',
+                  }}
+                />
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  {isConnected ? 'LIVE' : 'OFFLINE'}
+                </span>
+              </div>
+
+              <button
+                onClick={toggleTheme}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#EA580C'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'}
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  color: "var(--text-secondary)", padding: "6px",
+                  display: "flex", alignItems: "center",
+                  transition: "color 0.22s ease",
+                }}
+                title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
 
               {/* Bell icon with pending count badge */}
               <Link
@@ -572,7 +604,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 <Bell size={22} />
                 {hasPending && (
                   <span
-                    className="badge-pop"
+                    className="badge-pop pending-pulse"
                     style={{
                       position: "absolute",
                       top: "0px",
@@ -606,10 +638,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                     fontWeight: 700, fontSize: "0.9rem", flexShrink: 0,
                   }}
                 >
-                  A
+                  {user?.name?.charAt(0)?.toUpperCase() || 'A'}
                 </div>
                 <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }} className="hide-mobile">
-                  Owner Mode
+                  {user?.name || 'Administrator'}
                 </span>
               </div>
             </div>

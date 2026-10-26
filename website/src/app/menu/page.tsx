@@ -16,7 +16,7 @@ const MOCK_CATEGORIES: MenuCategory[] = [
 ];
 
 const MOCK_ITEMS: MenuItem[] = [
-  { id: 1, name: "Karachi Special Biryani",   description: "Authentic Karachi-style beef biryani with fragrant basmati, saffron, and whole spices — our signature dish.", price: 380, categoryId: 1, isAvailable: true, isFeatured: true,  isSpicy: true,  preparationTime: 20 },
+  { id: 1, name: "Special Biryani",   description: "Authentic beef biryani with fragrant basmati, saffron, and whole spices — our signature dish.", price: 380, categoryId: 1, isAvailable: true, isFeatured: true,  isSpicy: true,  preparationTime: 20 },
   { id: 2, name: "Chicken Biryani",            description: "Tender chicken with aromatic spices and perfectly cooked, layered basmati rice.", price: 320, categoryId: 1, isAvailable: true, isFeatured: true,  isSpicy: false, preparationTime: 18 },
   { id: 3, name: "Beef Biryani",               description: "Rich, slow-cooked beef biryani with a deep masala base and golden fried onions on top.", price: 360, categoryId: 1, isAvailable: true,                   isSpicy: true,  preparationTime: 22 },
   { id: 4, name: "Mutton Biryani",             description: "Premium mutton pieces cooked in aromatic whole spices — a royal treat.", price: 440, categoryId: 1, isAvailable: true,                   isSpicy: true,  preparationTime: 30 },
@@ -212,6 +212,7 @@ function MenuContent() {
                 flexDirection: "row",
                 gap: "6px",
                 fontSize: "0.875rem",
+                ...(activeCategory === cat.id ? { background: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)", color: "white", borderColor: "transparent" } : {})
               }}
               id={`cat-pill-${cat.id}`}
               role="tab"
@@ -264,7 +265,12 @@ function MenuContent() {
           <div
             style={{
               textAlign: "center",
-              padding: "80px 0",
+              padding: "80px 20px",
+              background: "var(--bg-card)",
+              borderRadius: "var(--radius-xl)",
+              border: "1px solid var(--border-color)",
+              margin: "40px auto",
+              maxWidth: "600px",
             }}
             role="status"
           >
@@ -275,17 +281,17 @@ function MenuContent() {
                 fontWeight: 700,
                 marginBottom: "8px",
                 color: "var(--text-primary)",
+                fontSize: "1.5rem"
               }}
             >
               No items found
             </h3>
-            <p style={{ color: "var(--text-muted)" }}>
-              Try a different search term or category.
+            <p style={{ color: "var(--text-secondary)", marginBottom: "24px" }}>
+              Try different filters or search terms.
             </p>
             <button
               onClick={() => { setSearch(""); setActive(0); }}
               className="btn btn-primary"
-              style={{ marginTop: "20px" }}
             >
               Clear Filters
             </button>

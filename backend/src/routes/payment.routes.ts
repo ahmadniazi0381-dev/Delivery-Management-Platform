@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../middleware/auth.middleware';
+import { authenticate, requireRole, authenticateWithQueryToken } from '../middleware/auth.middleware';
 import {
   validateBody,
   checkoutLimiter,
@@ -34,7 +34,7 @@ router.post('/payments/callback/:gateway', paymentCallback);
 router.post('/payments/initiate', paymentLimiter, authenticate, validateBody(InitiatePaymentSchema), initiatePayment);
 router.get('/payments/:orderId/status', paymentLimiter, authenticate, getPaymentStatus);
 router.get('/payments/verify/:paymentId', paymentLimiter, authenticate, verifyPayment);
-router.get('/payments/redirect/:sessionId', paymentLimiter, authenticate, paymentRedirectPage);
+router.get('/payments/redirect/:sessionId', paymentLimiter, authenticateWithQueryToken, paymentRedirectPage);
 router.get('/payments/session/:sessionId/status', paymentLimiter, authenticate, getSessionPaymentStatus);
 
 router.post('/payments/webhook', webhookLimiter, webhook);

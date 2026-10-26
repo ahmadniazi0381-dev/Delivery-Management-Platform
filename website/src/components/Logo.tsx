@@ -6,21 +6,31 @@ interface LogoProps {
   style?: React.CSSProperties;
 }
 
-export default function Logo({ size = 48, className = "", style = {} }: LogoProps) {
+export default function Logo({ size = 40, className = "", style = {} }: LogoProps) {
   return (
-    <img
-      src="/logo.jpg"
-      alt="Karachi Naseeb Baryani & Pulao"
-      width={size}
-      height={size}
-      className={`rounded-full object-cover ${className}`}
+    <div
+      className={`inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 via-orange-600 to-amber-700 text-white shadow-lg transition-transform duration-300 hover:scale-105 ${className}`}
       style={{
-        borderRadius: "50%",
-        border: "2px solid var(--saffron, #D97706)",
-        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        width: size,
+        height: size,
+        boxShadow: "0 8px 20px -4px rgba(217, 119, 6, 0.4)",
         ...style,
       }}
-    />
+    >
+      <svg
+        width={size * 0.6}
+        height={size * 0.6}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 2a8 8 0 0 0-8 8v12h16V10a8 8 0 0 0-8-8z" />
+        <path d="M12 6v4" />
+        <circle cx="12" cy="14" r="2" fill="currentColor" />
+      </svg>
+    </div>
   );
 }
-

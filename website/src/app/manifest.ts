@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Karachi Naseeb Baryani & Pulao",
-    short_name: "Naseeb Baryani",
-    description: "Order fresh, authentic Karachi Baryani and Pulao online from the UCP branch. Fast delivery within 2.2km.",
+    name: "Delivery Management Platform",
+    short_name: "DeliveryPlatform",
+    description: "Order fresh food online with real-time live map tracking and fast 30-minute delivery.",
     start_url: "/",
     scope: "/",
     display: "standalone",

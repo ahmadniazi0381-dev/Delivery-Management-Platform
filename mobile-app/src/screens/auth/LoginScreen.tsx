@@ -213,8 +213,8 @@ export default function LoginScreen({ navigation }: any) {
               borderWidth: 1.5, borderColor: colors.primary, marginBottom: 12,
             }}
           />
-          <Text style={[styles.logoText, { color: colors.primary }]}>Karachi Naseeb Baryani</Text>
-          <Text style={[styles.logoSubtext, { color: colors.textSecondary }]}>& Pulao UCP Branch</Text>
+          <Text style={[styles.logoText, { color: colors.primary }]}>Food Delivery Platform</Text>
+          <Text style={[styles.logoSubtext, { color: colors.textSecondary }]}>Good food. Delivered fast.</Text>
         </View>
 
         {/* Auth Mode switcher tab */}

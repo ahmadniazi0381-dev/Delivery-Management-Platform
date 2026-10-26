@@ -9,7 +9,7 @@
  *       decrements pendingCount; stops loop when pendingCount reaches 0
  *   - On socket reconnect: fetches PENDING orders from API → restarts loop if needed
  *   - Browser Notification API (if permitted)
- *   - Tab title updates: "(N) New Orders — Naseeb Admin"
+ *   - Tab title updates: "(N) New Orders — Delivery Platform Admin"
  *   - Exposes pendingCount, pendingOrders[], latestOrder for UI consumption
  *   - Multi-admin sync: events from backend broadcast to ALL admin room members
  */
@@ -61,7 +61,7 @@ function showBrowserNotification(order: PendingOrder) {
 
 // ─── Tab title management ─────────────────────────────────────────────────────
 
-const ORIGINAL_TITLE = "Naseeb Admin";
+const ORIGINAL_TITLE = "Delivery Platform Admin";
 
 function setTabTitle(count: number) {
   if (typeof document === "undefined") return;

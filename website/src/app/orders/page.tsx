@@ -57,35 +57,35 @@ export default function OrdersPage() {
   const getStatusBadgeStyles = (status: string) => {
     switch (status) {
       case "PENDING":
-        return { bg: "#FEF3C7", text: "#D97706" }; // Amber
+        return { bg: "#FFF8ED", text: "#C2410C", border: "#EA580C30" }; // Amber
       case "ACCEPTED":
       case "PREPARING":
-        return { bg: "#FFEDD5", text: "#EA580C" }; // Orange
       case "READY":
+        return { bg: "#EFF6FF", text: "#1D4ED8", border: "#1D4ED820" }; // Blue
       case "OUT_FOR_DELIVERY":
-        return { bg: "#DBEAFE", text: "#2563EB" }; // Blue
+        return { bg: "#FFF8ED", text: "#EA580C", border: "#EA580C30" }; // Orange
       case "DELIVERED":
-        return { bg: "#DCFCE7", text: "#16A34A" }; // Green
+        return { bg: "#ECFDF5", text: "#15803D", border: "#15803D20" }; // Green
       case "CANCELLED":
       case "REJECTED":
       default:
-        return { bg: "#FEE2E2", text: "#DC2626" }; // Red
+        return { bg: "#FEF2F2", text: "#B91C1C", border: "#B91C1C20" }; // Red
     }
   };
 
   if (isLoading) {
     return (
-      <div style={{ background: "var(--bg-secondary)", minHeight: "92vh", padding: "40px 20px" }}>
+      <div style={{ background: "var(--bg-primary, #FFF9F3)", minHeight: "92vh", padding: "40px 20px" }}>
         <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-          <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: "1.75rem", marginBottom: "24px" }}>
-            My Orders
+          <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: "1.75rem", marginBottom: "24px", color: "var(--text-primary)" }}>
+            <span style={{ color: "#C2410C", marginRight: "8px" }}>|</span>My Orders
           </h1>
           {/* Skeleton Loaders */}
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="card shimmer"
-              style={{ height: "120px", marginBottom: "16px", background: "var(--bg-card)" }}
+              className="card skeleton"
+              style={{ height: "120px", marginBottom: "16px", background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-xl)" }}
             />
           ))}
         </div>
@@ -94,14 +94,14 @@ export default function OrdersPage() {
   }
 
   return (
-    <div style={{ background: "var(--bg-secondary)", minHeight: "92vh", padding: "40px 20px" }}>
+    <div style={{ background: "var(--bg-primary, #FFF9F3)", minHeight: "92vh", padding: "40px 20px" }}>
       <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-        <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: "1.75rem", marginBottom: "24px", color: "var(--text-primary)" }}>
-          My Orders
+        <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: "1.75rem", marginBottom: "24px", color: "var(--text-primary)", fontWeight: 700 }}>
+          <span style={{ color: "#C2410C", marginRight: "8px" }}>|</span>My Orders
         </h1>
 
         {error && (
-          <div style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", color: "var(--error)", padding: "12px", borderRadius: "var(--radius-md)", marginBottom: "20px" }}>
+          <div style={{ background: "rgba(185,28,28,0.06)", border: "1px solid rgba(185,28,28,0.2)", borderRadius: "var(--radius-md)", padding: "12px 16px", color: "#991B1B", minHeight: "44px", marginBottom: "20px" }}>
             {error}
           </div>
         )}
@@ -120,25 +120,34 @@ export default function OrdersPage() {
             const itemsSummary = order.orderItems.map((i) => `${i.itemName} x${i.quantity}`).join(", ");
 
             return (
-              <Link key={order.id} href={`/orders/${order.id}`}>
+              <Link key={order.id} href={`/track?orderId=${order.id}`}>
                 <div
-                  className="card"
+                  className="card order-card"
                   style={{
                     padding: "20px",
                     display: "flex",
+                    flexWrap: "wrap",
+                    gap: "16px",
                     justifyContent: "space-between",
                     alignItems: "center",
                     cursor: "pointer",
-                    transition: "all var(--transition-fast)"
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-color)",
+                    borderRadius: "var(--radius-xl)",
+                    boxShadow: "var(--shadow-sm)",
+                    transition: "transform var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1), box-shadow var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1), border-color var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1)"
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "var(--shadow-md)"; e.currentTarget.style.borderColor = "#EA580C"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--shadow-sm)"; e.currentTarget.style.borderColor = "var(--border-color)"; }}
                 >
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, paddingRight: "16px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: "1 1 240px", paddingRight: "16px" }}>
                     <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                      <strong style={{ fontSize: "1.05rem" }}>Order #{order.id.slice(0, 8).toUpperCase()}</strong>
+                      <strong style={{ fontSize: "1.05rem", color: "var(--text-primary)" }}>Order #{order.id.slice(0, 8).toUpperCase()}</strong>
                       <span
                         style={{
                           background: badge.bg,
                           color: badge.text,
+                          border: `1px solid ${badge.border}`,
                           padding: "4px 10px",
                           borderRadius: "12px",
                           fontSize: "0.75rem",
@@ -154,12 +163,12 @@ export default function OrdersPage() {
                     </p>
                   </div>
 
-                  <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end" }}>
-                    <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--saffron-dark)" }}>
+                  <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-end" }}>
+                    <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--text-primary)" }}>
                       Rs. {parseFloat(order.total.toString()).toFixed(0)}
                     </span>
-                    <span style={{ fontSize: "0.8rem", color: "var(--saffron)", display: "flex", alignItems: "center", gap: "2px" }}>
-                      Track Order ➔
+                    <span style={{ fontSize: "0.85rem", color: "#C2410C", border: "1px solid #C2410C", padding: "6px 12px", borderRadius: "var(--radius-full)", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px" }}>
+                      Track Order <span style={{ fontSize: "1.1rem" }}>➔</span>
                     </span>
                   </div>
                 </div>
@@ -168,16 +177,29 @@ export default function OrdersPage() {
           })}
 
           {orders.length === 0 && (
-            <div className="card" style={{ padding: "40px", textAlign: "center" }}>
-              <div style={{ fontSize: "3.5rem", marginBottom: "16px" }}>📦</div>
-              <h3 style={{ fontSize: "1.15rem", marginBottom: "8px" }}>No orders placed yet</h3>
+            <div className="card" style={{ padding: "40px", textAlign: "center", background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-sm)" }}>
+              <div style={{ fontSize: "3.5rem", marginBottom: "16px" }}>🛍️</div>
+              <h3 style={{ fontSize: "1.15rem", marginBottom: "8px", color: "var(--text-primary)" }}>No orders yet</h3>
               <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "20px" }}>
-                Fragrant, steaming hot biryani is waiting for you!
+                Delicious food is waiting for you!
               </p>
-              <Link href="/menu">
-                <button className="btn btn-primary" style={{ padding: "10px 24px" }}>
-                  Browse Menu 🍛
-                </button>
+              <Link
+                href="/menu"
+                style={{
+                  display: "inline-block",
+                  padding: "10px 24px",
+                  background: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+                  color: "#fff",
+                  borderRadius: "var(--radius-md)",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  boxShadow: "0 4px 20px rgba(194,65,12,0.35)",
+                  transition: "transform var(--transition-base) cubic-bezier(0.22, 1, 0.36, 1)",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+              >
+                Browse Menu
               </Link>
             </div>
           )}

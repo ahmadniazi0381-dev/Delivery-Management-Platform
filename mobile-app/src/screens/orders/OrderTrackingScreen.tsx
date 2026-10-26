@@ -64,25 +64,27 @@ export default function OrderTrackingScreen({ route, navigation }: any) {
       case 'PENDING':
         return 0;
       case 'ACCEPTED':
-      case 'PREPARING':
         return 1;
-      case 'READY':
+      case 'PREPARING':
         return 2;
-      case 'OUT_FOR_DELIVERY':
+      case 'READY':
         return 3;
-      case 'DELIVERED':
+      case 'OUT_FOR_DELIVERY':
         return 4;
+      case 'DELIVERED':
+        return 5;
       default:
         return -1;
     }
   };
 
   const steps = [
-    { title: 'Order Submitted', desc: 'Awaiting restaurant approval' },
-    { title: 'In the Kitchen', desc: 'Preparing Karachi spices' },
-    { title: 'Piping Hot & Ready', desc: 'Waiting for rider assignment' },
+    { title: 'Order Placed', desc: 'Awaiting restaurant approval' },
+    { title: 'Confirmed', desc: 'Order confirmed' },
+    { title: 'Preparing', desc: 'In the kitchen' },
+    { title: 'Ready', desc: 'Waiting for rider assignment' },
     { title: 'Out for Delivery', desc: 'Rider is on their way' },
-    { title: 'Delivered', desc: 'Enjoy Naseeb Biryani!' },
+    { title: 'Delivered', desc: 'Enjoy your food!' },
   ];
 
   const currentStep = getStatusStepIndex(order?.status || 'PENDING');

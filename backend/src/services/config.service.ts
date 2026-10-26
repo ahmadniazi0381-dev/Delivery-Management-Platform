@@ -27,13 +27,17 @@ const DEFAULTS: Record<string, { value: string; category: string; label: string 
 };
 
 async function refreshCache(): Promise<Map<string, string>> {
-  const rows = await prisma.systemConfig.findMany();
   const map = new Map<string, string>();
   for (const [key, def] of Object.entries(DEFAULTS)) {
     map.set(key, def.value);
   }
-  for (const row of rows) {
-    map.set(row.key, row.value);
+  try {
+    const rows = await prisma.systemConfig.findMany();
+    for (const row of rows) {
+      map.set(row.key, row.value);
+    }
+  } catch (err: any) {
+    console.warn('[CONFIG SERVICE] Database unavailable; using system defaults:', err?.message || err);
   }
   cache = map;
   cacheLoadedAt = Date.now();

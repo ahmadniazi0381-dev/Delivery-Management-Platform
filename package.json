@@ -1,0 +1,17 @@
+{
+  "name": "delivery-management-platform",
+  "version": "1.0.0",
+  "description": "Delivery Management Platform — Multi-client online ordering, dispatch, and delivery management platform",
+  "private": true,
+  "scripts": {
+    "backend:build": "npm --prefix backend run build",
+    "backend:test": "npm --prefix backend run test",
+    "website:build": "npm --prefix website run build",
+    "website:lint": "npm --prefix website run lint",
+    "mobile:typecheck": "npm --prefix mobile-app run typecheck"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.3"
+  }
+}
